@@ -21,7 +21,9 @@ import org.cytoscape.model.CyTableManager;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.TaskMonitor;
 
-public class MatrixMarket {
+import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
+
+public class MatrixMarket implements Matrix {
 	public static String HEADER = "%%MatrixMarket";
 	public static String COMMENT = "%";
 	public static String delimiter = null;
@@ -144,21 +146,21 @@ public class MatrixMarket {
 
 	private int[] colIndex;
 
-	private final MTXManager mtxManager;
+	private final MatrixManager matrixManager;
 	private final CyTableFactory tableFactory;
 	private final CyTableManager tableManager;
 
-	public MatrixMarket(final MTXManager manager) {
+	public MatrixMarket(final MatrixManager manager) {
 		this(manager, null, null);
 	}
 
-	public MatrixMarket(final MTXManager manager, 
+	public MatrixMarket(final MatrixManager manager, 
 	                    List<String[]> rowTable, List<String[]> colTable) {
-		this.mtxManager = manager;
+		this.matrixManager = manager;
 		this.rowTable = rowTable;
 		this.colTable = colTable;
-		this.tableFactory = mtxManager.getService(CyTableFactory.class);
-		this.tableManager = mtxManager.getService(CyTableManager.class);
+		this.tableFactory = matrixManager.getService(CyTableFactory.class);
+		this.tableManager = matrixManager.getService(CyTableManager.class);
 		rowMap = new HashMap<>();
 		colMap = new HashMap<>();
 		if (rowTable != null)
@@ -183,34 +185,61 @@ public class MatrixMarket {
 		return sym;
 	}
 
+	@Override
+	public String getMatrixType() { return "MatrixMarket"; }
+
+	@Override
 	public String toString() { return name; }
 
+	@Override
 	public int getNCols() { return transposed ? nRows : nCols; }
+
+	@Override
 	public int getNRows() { return transposed ? nCols : nRows; }
+
+	@Override
 	public int getNonZeroCount() { return nonZeros; }
+
+	@Override
 	public boolean isTransposed() { return transposed; }
+
+	@Override
 	public void setTranspose(boolean t) { transposed = t; }
+
+	@Override
 	public List<String> getRowLabels() { 
 		return transposed ? colLabels : rowLabels;
 	}
+
+	@Override
 	public void setRowLabels(List<String> rLabels) { rowLabels = rLabels; }
+
+	@Override
 	public List<String> getColLabels() { 
 		return transposed ? rowLabels : colLabels;
 	}
+
+	@Override
 	public void setColLabels(List<String> cLabels) { colLabels = cLabels; }
+
+	@Override
 	public void setRowTable(List<String[]> rTable) { 
 		this.rowTable = rTable; 
 		this.rowLabels = getLabels(rowTable);
 	}
+
+	@Override
 	public void setColumnTable(List<String[]> cTable) { 
 		this.colTable = cTable; 
 		this.colLabels = getLabels(colTable);
 	}
 
+	@Override
 	public String getRowLabel(int row) {
 		return transposed ? colLabels.get(row) : rowLabels.get(row);
 	}
 
+	@Override
 	public String getColumnLabel(int col) {
 		return transposed ? rowLabels.get(col) : colLabels.get(col);
 	}

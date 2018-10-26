@@ -21,7 +21,6 @@ import org.json.simple.parser.JSONParser;
 
 import org.cytoscape.work.TaskMonitor;
 
-import edu.ucsf.rbvi.scNetViz.internal.model.GXAEntry;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class HTTPUtils {
@@ -42,8 +41,7 @@ public class HTTPUtils {
 		return null;
 	}
 
-	public static void showResults(scNVManager manager, GXAEntry entry, TaskMonitor monitor) {
-		String uri = manager.getResultsURL(entry);
+	public static void showWebPage(ScNVManager manager, String uri, TaskMonitor monitor) {
 		Map<String, Object> args = new HashMap<>();
 		args.put("newTab", "true");
 		args.put("id", "GXA");

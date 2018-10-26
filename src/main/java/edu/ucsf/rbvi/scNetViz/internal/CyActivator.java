@@ -36,7 +36,7 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.ucsf.rbvi.gxaReader.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class CyActivator extends AbstractCyActivator {
 
@@ -50,6 +50,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		final ScNVManager scNVManager = new ScNVManager(serviceRegistrar);
 
+		/*
 		{
 			// This is for the basic reader.  Note that we'll also load a more advanced one below
 			final BasicCyFileFilter mtxFileFilter = new BasicCyFileFilter(new String[] { "mtx" },
@@ -65,6 +66,7 @@ public class CyActivator extends AbstractCyActivator {
 			mtxImporterProps.setProperty(TITLE, "Import MTX files");
 			registerService(bc, mtxReaderFactory, TaskFactory.class, mtxImporterProps);
 		}
+		*/
 
 	}
 }

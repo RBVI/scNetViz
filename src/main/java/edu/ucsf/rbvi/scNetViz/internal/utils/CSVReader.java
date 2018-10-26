@@ -21,9 +21,6 @@ import org.apache.http.util.EntityUtils;
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.work.TaskMonitor;
 
-import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
-import edu.ucsf.rbvi.scNetViz.internal.model.MTXManager;
-
 public class CSVReader {
 	public static String delimiter = null;
 	static Logger logger = Logger.getLogger(CyUserLog.NAME);

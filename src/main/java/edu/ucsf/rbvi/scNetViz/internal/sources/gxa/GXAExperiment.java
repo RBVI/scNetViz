@@ -1,4 +1,4 @@
-package edu.ucsf.rbvi.scNetViz.internal.model;
+package edu.ucsf.rbvi.scNetViz.internal.sources.gxa;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,40 +26,46 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
 import org.cytoscape.application.CyUserLog;
-import org.cytoscape.model.CyRow;
-import org.cytoscape.model.CyTable;
-import org.cytoscape.model.CyTableFactory;
-import org.cytoscape.model.CyTableManager;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
+import edu.ucsf.rbvi.scNetViz.internal.api.Source;
+import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
+import edu.ucsf.rbvi.scNetViz.internal.model.MatrixManager;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 
 public class GXAExperiment implements Experiment {
+	public static String RESULTS_URL = "https://www.ebi.ac.uk/gxa/sc/experiments/%s/Results";
 	public static String GXA_MTX_URI = "https://www.ebi.ac.uk/gxa/sc/experiment/%s/download/zip?fileType=quantification-filtered";
 	final Logger logger;
 
 	String accession = null;
 	List<String[]> rowTable = null;
 	List<String[]> colTable = null;
-	Matrix mtx = null;
-	GXAEntry gxaEntry = null;
+	MatrixMarket mtx = null;
+	GXAMetadata gxaMetadata = null;
 	List<Category> categories;
 	// GXACluster gxaCluster = null;
 	// GXAIDF gxaIDF = null;
 	// GXADesign gxaDesign = null;
 
-	final ScNVGXAManager scNVManager;
-	final MTXManager mtxManager;
+	final ScNVManager scNVManager;
+	final MatrixManager matrixManager;
 	final GXAExperiment gxaExperiment;
+	final GXASource source;
 
-	public GXAExperiment (ScNVManager manager) {
+	public GXAExperiment (ScNVManager manager, GXASource source) {
 		this.scNVManager = manager;
-		this.mtxManager = manager.getMTXManager();
+		this.matrixManager = manager.getMatrixManager();
 		logger = Logger.getLogger(CyUserLog.NAME);
 		this.gxaExperiment = this;
+		categories = new ArrayList<>(2);
+		this.source = source;
 	}
 
 	public Matrix getMatrix() { return mtx; }
@@ -68,10 +74,14 @@ public class GXAExperiment implements Experiment {
 	public List<String[]> getColumnLabels() { return colTable; }
 	public List<String[]> getRowLabels() { return rowTable; }
 
-	/*
-	public GXACluster getClusters() { return gxaCluster; }
-	public GXADesign getDesign() { return gxaDesign; }
-	*/
+	// public GXACluster getClusters() { return gxaCluster; }
+	// public GXADesign getDesign() { return gxaDesign; }
+
+	public List<Category> getCategories() { return categories; }
+
+	public Metadata getMetadata() { return gxaMetadata; }
+
+	public Source getSource() { return source; }
 
 	public void fetchMTX (final String accession, final TaskMonitor monitor) {
 		this.accession = accession;
@@ -103,7 +113,7 @@ public class GXAExperiment implements Experiment {
 						if (mtx != null) 
 							mtx.setRowTable(rowTable);
 					} else if (name.endsWith(".mtx")) {
-						mtx = new MatrixMarket(mtxManager, rowTable, colTable);
+						mtx = new MatrixMarket(matrixManager, rowTable, colTable);
 						mtx.readMTX(monitor, zipStream, name);
 					}
 					zipStream.closeEntry();
@@ -115,13 +125,12 @@ public class GXAExperiment implements Experiment {
 				response1.close();
 			}
 		} catch (Exception e) {}
-		gxaManager.addExperiment(accession, this);
-		gxaEntry = gxaManager.getGXAEntry(accession); 
-		mtxManager.addMatrix(mtx.toString(), mtx);
+		scNVManager.addExperiment(accession, this);
+		matrixManager.addMatrix(mtx.toString(), mtx);
 	}
 
 	public void fetchClusters (final TaskMonitor monitor) {
-		gxaCluster =  GXACluster.fetchCluster(gxaManager, accession, this, monitor);
+		categories.add(0,GXACluster.fetchCluster(scNVManager, accession, this, monitor));
 
 		// Sanity check
 	}
@@ -131,7 +140,7 @@ public class GXAExperiment implements Experiment {
 	}
 
 	public void fetchDesign (final TaskMonitor monitor) {
-		gxaDesign =  GXADesign.fetchDesign(gxaManager, accession, this, monitor);
+		categories.add(1,GXADesign.fetchDesign(scNVManager, accession, this, monitor));
 
 		// Sanity check
 	}
@@ -161,20 +170,20 @@ public class GXAExperiment implements Experiment {
 	}
 
 	public String toString() {
-		return gxaEntry.toString();
+		return gxaMetadata.toString();
 	}
 
 	class FetchClusterThread implements Runnable {
 		@Override
 		public void run() {
-			gxaCluster =  GXACluster.fetchCluster(gxaManager, accession, gxaExperiment, null);
+			categories.add(0,GXACluster.fetchCluster(scNVManager, accession, gxaExperiment, null));
 		}
 	}
 
 	class FetchDesignThread implements Runnable {
 		@Override
 		public void run() {
-			gxaDesign =  GXADesign.fetchDesign(gxaManager, accession, gxaExperiment, null);
+			categories.add(1,GXADesign.fetchDesign(scNVManager, accession, gxaExperiment, null));
 		}
 	}
 }

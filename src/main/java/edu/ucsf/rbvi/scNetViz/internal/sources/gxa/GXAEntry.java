@@ -1,4 +1,4 @@
-package edu.ucsf.rbvi.scNetViz.internal.model;
+package edu.ucsf.rbvi.scNetViz.internal.sources.gxa;
 
 import java.util.ArrayList;
 import java.util.List;
