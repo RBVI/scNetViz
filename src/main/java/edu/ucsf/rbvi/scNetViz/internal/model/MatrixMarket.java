@@ -168,12 +168,14 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 	public void setRowTable(List<String[]> rowTable) {
 		this.rowTable = rowTable;
-		rowLabels = getLabels(rowTable);
+		if (rowTable != null)
+			rowLabels = getLabels(rowTable);
 	}
 
 	public void setColumnTable(List<String[]> colTable) {
 		this.colTable = colTable;
-		colLabels = getLabels(colTable);
+		if (colTable != null)
+			colLabels = getLabels(colTable);
 	}
 
 	public void readMTX(TaskMonitor taskMonitor, File mmInputName) throws FileNotFoundException, IOException {

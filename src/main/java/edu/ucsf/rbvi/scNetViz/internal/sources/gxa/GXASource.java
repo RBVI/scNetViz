@@ -1,28 +1,12 @@
 package edu.ucsf.rbvi.scNetViz.internal.sources.gxa;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
 import org.json.simple.JSONArray;
@@ -30,6 +14,7 @@ import org.json.simple.JSONObject;
 
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.service.util.CyServiceRegistrar;
+import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
@@ -37,6 +22,22 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.utils.HTTPUtils;
+import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.tasks.GXAShowEntriesTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.view.GXAEntryFrame;
+
+import static org.cytoscape.work.ServiceProperties.COMMAND;
+import static org.cytoscape.work.ServiceProperties.COMMAND_DESCRIPTION;
+import static org.cytoscape.work.ServiceProperties.COMMAND_NAMESPACE;
+import static org.cytoscape.work.ServiceProperties.ID;
+import static org.cytoscape.work.ServiceProperties.IN_MENU_BAR;
+import static org.cytoscape.work.ServiceProperties.IN_TOOL_BAR;
+import static org.cytoscape.work.ServiceProperties.INSERT_SEPARATOR_BEFORE;
+import static org.cytoscape.work.ServiceProperties.LARGE_ICON_URL;
+import static org.cytoscape.work.ServiceProperties.MENU_GRAVITY;
+import static org.cytoscape.work.ServiceProperties.PREFERRED_MENU;
+import static org.cytoscape.work.ServiceProperties.TITLE;
+import static org.cytoscape.work.ServiceProperties.TOOL_BAR_GRAVITY;
+import static org.cytoscape.work.ServiceProperties.TOOLTIP;
 
 public class GXASource implements Source {
 	public static String EXPERIMENTS_URL = "https://www.ebi.ac.uk/gxa/sc/json/experiments";
@@ -44,6 +45,7 @@ public class GXASource implements Source {
 	final Logger logger;
 	final ScNVManager scNVManager;
 	final Map<String, GXAMetadata> metadataMap;
+	GXAEntryFrame entryFrame = null;
 
 	public GXASource (ScNVManager manager) {
 		scNVManager = manager;
@@ -51,6 +53,25 @@ public class GXASource implements Source {
 
 		// Read in all of the metadata (entries) for gxa
 		metadataMap = new HashMap<>();
+
+		{
+			Properties props = new Properties();
+			props.put(SOURCENAME, "gxa");
+			scNVManager.registerService(this, Source.class, props);
+		}
+
+		// Register our task factories
+		{
+			Properties props = new Properties();
+			props.put(TITLE, "Browse Single Cell Array Express");
+			props.put(PREFERRED_MENU, "Apps.ScNetViz");
+			props.setProperty(IN_TOOL_BAR, "TRUE");
+			props.setProperty(TOOL_BAR_GRAVITY, "100f");
+			props.setProperty(TOOLTIP, "Show Experiments Table");
+			String ebiLogoURL = getClass().getResource("/images/EMBL-EBI-Logo-36x36.png").toString();
+			props.setProperty(LARGE_ICON_URL, ebiLogoURL);
+			scNVManager.registerService(new GXAShowEntriesTaskFactory(manager, this), TaskFactory.class, props);
+		}
 	}
 
 	public String getName() { return "EBI GXA"; }
@@ -95,5 +116,17 @@ public class GXASource implements Source {
 		exp.fetchClusters();
 		exp.fetchDesign();
 		return exp;
+	}
+
+	public GXAEntryFrame getEntryFrame() { return entryFrame; }
+
+	public void showEntriesTable(boolean showHide) {
+		if (entryFrame == null && showHide) {
+			entryFrame = new GXAEntryFrame(scNVManager, this);
+		} else if (showHide) {
+			entryFrame.setVisible(true);
+		} else if (entryFrame != null)
+			entryFrame.setVisible(false);
+		
 	}
 }
