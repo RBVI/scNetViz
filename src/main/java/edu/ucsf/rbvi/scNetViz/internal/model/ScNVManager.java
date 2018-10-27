@@ -20,27 +20,42 @@ import org.cytoscape.work.TaskManager;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 
 public class ScNVManager {
 
-	final MatrixManager matrixManager;
 	final AvailableCommands availableCommands;
 	final CommandExecutorTaskFactory ceTaskFactory;
 	final TaskManager taskManager;
 
 	final Map<String, Experiment> experimentMap;
+	final Map<String, Source> sourceMap;
 	final CyServiceRegistrar registrar; 
 
 	public ScNVManager(final CyServiceRegistrar registrar) {
 		experimentMap = new HashMap<>();
+		sourceMap = new HashMap<>();
 		this.registrar = registrar;
-		this.matrixManager = new MatrixManager(this);
 		this.availableCommands = registrar.getService(AvailableCommands.class);
 		this.ceTaskFactory = registrar.getService(CommandExecutorTaskFactory.class);
 		this.taskManager = registrar.getService(TaskManager.class);
 	}
 
-	public MatrixManager getMatrixManager() { return matrixManager; }
+	public void addSource(Source source) {
+		sourceMap.put(source.getName(), source);
+	}
+
+	public void addSource(String name, Source source) {
+		sourceMap.put(name, source);
+	}
+
+	public List<Source> getSources() {
+		return new ArrayList<>(sourceMap.values());
+	}
+
+	public Source getSource(String name) {
+		return sourceMap.get(name);
+	}
 
 	public void addExperiment(String accession, Experiment exp) {
 		experimentMap.put(accession, exp);

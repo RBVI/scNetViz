@@ -21,9 +21,10 @@ import org.cytoscape.model.CyTableManager;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.TaskMonitor;
 
-import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 
-public class MatrixMarket implements Matrix {
+public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerMatrix {
 	public static String HEADER = "%%MatrixMarket";
 	public static String COMMENT = "%";
 	public static String delimiter = null;
@@ -126,47 +127,24 @@ public class MatrixMarket implements Matrix {
 	private Map<String, Integer> rowMap;
 	private Map<String, Integer> colMap;
 
-	private boolean transposed = false;
-
-	private int nRows;
-	private int nCols;
-	private int nonZeros;
-
-	private List<String[]> rowTable;
-	private List<String[]> colTable;
-
-	private List<String> rowLabels;
-	private List<String> colLabels;
-
-	private String name;
-
 	// We only support real and integer at this point
 	private int[][] intMatrix;
 	private double[][] doubleMatrix;
 
 	private int[] colIndex;
 
-	private final MatrixManager matrixManager;
-	private final CyTableFactory tableFactory;
-	private final CyTableManager tableManager;
+	private List<String[]> rowTable;
+	private List<String[]> colTable;
 
-	public MatrixMarket(final MatrixManager manager) {
+	public MatrixMarket(final ScNVManager manager) {
 		this(manager, null, null);
 	}
 
-	public MatrixMarket(final MatrixManager manager, 
-	                    List<String[]> rowTable, List<String[]> colTable) {
-		this.matrixManager = manager;
-		this.rowTable = rowTable;
-		this.colTable = colTable;
-		this.tableFactory = matrixManager.getService(CyTableFactory.class);
-		this.tableManager = matrixManager.getService(CyTableManager.class);
+	public MatrixMarket(final ScNVManager manager, 
+	                    List<String> rowLabels, List<String> colLabels) {
+		super(manager, rowLabels, colLabels);
 		rowMap = new HashMap<>();
 		colMap = new HashMap<>();
-		if (rowTable != null)
-			this.rowLabels = getLabels(rowTable);
-		if (colTable != null)
-			this.colLabels = getLabels(colTable);
 	}
 
 	public MTXFORMAT getFormat() {
@@ -188,60 +166,14 @@ public class MatrixMarket implements Matrix {
 	@Override
 	public String getMatrixType() { return "MatrixMarket"; }
 
-	@Override
-	public String toString() { return name; }
-
-	@Override
-	public int getNCols() { return transposed ? nRows : nCols; }
-
-	@Override
-	public int getNRows() { return transposed ? nCols : nRows; }
-
-	@Override
-	public int getNonZeroCount() { return nonZeros; }
-
-	@Override
-	public boolean isTransposed() { return transposed; }
-
-	@Override
-	public void setTranspose(boolean t) { transposed = t; }
-
-	@Override
-	public List<String> getRowLabels() { 
-		return transposed ? colLabels : rowLabels;
+	public void setRowTable(List<String[]> rowTable) {
+		this.rowTable = rowTable;
+		rowLabels = getLabels(rowTable);
 	}
 
-	@Override
-	public void setRowLabels(List<String> rLabels) { rowLabels = rLabels; }
-
-	@Override
-	public List<String> getColLabels() { 
-		return transposed ? rowLabels : colLabels;
-	}
-
-	@Override
-	public void setColLabels(List<String> cLabels) { colLabels = cLabels; }
-
-	@Override
-	public void setRowTable(List<String[]> rTable) { 
-		this.rowTable = rTable; 
-		this.rowLabels = getLabels(rowTable);
-	}
-
-	@Override
-	public void setColumnTable(List<String[]> cTable) { 
-		this.colTable = cTable; 
-		this.colLabels = getLabels(colTable);
-	}
-
-	@Override
-	public String getRowLabel(int row) {
-		return transposed ? colLabels.get(row) : rowLabels.get(row);
-	}
-
-	@Override
-	public String getColumnLabel(int col) {
-		return transposed ? rowLabels.get(col) : colLabels.get(col);
+	public void setColumnTable(List<String[]> colTable) {
+		this.colTable = colTable;
+		colLabels = getLabels(colTable);
 	}
 
 	public void readMTX(TaskMonitor taskMonitor, File mmInputName) throws FileNotFoundException, IOException {
@@ -448,7 +380,18 @@ public class MatrixMarket implements Matrix {
 		return null;
 	}
 
-	public double getValue(String rowLabel, String colLabel) {
+	public int getIntegerValue(String rowLabel, String colLabel) {
+		int row = rowLabels.indexOf(rowLabel);
+		int col = colLabels.indexOf(colLabel);
+		if (transposed) {
+			int tmp = row; row = col; col = tmp;
+		}
+		int v = getIntegerValue(row+1, col+1);
+		// System.out.println("Value for "+rowLabel+":"+row+","+colLabel+":"+col+" = "+v);
+		return v;
+	}
+
+	public double getDoubleValue(String rowLabel, String colLabel) {
 		int row = rowLabels.indexOf(rowLabel);
 		int col = colLabels.indexOf(colLabel);
 		if (transposed) {
@@ -607,13 +550,5 @@ public class MatrixMarket implements Matrix {
 		if (intMatrix[index1][0] == row) return index1;
 		if (intMatrix[indexMid][0] == row) return indexMid;
 		return index2;
-	}
-
-	private List<String> getLabels(List<String[]> labelTable) {
-		List<String> labels = new ArrayList<>(labelTable.size());
-		for (String[] row: labelTable) {
-			labels.add(row[LABEL_INDEX]);
-		}
-		return labels;
 	}
 }

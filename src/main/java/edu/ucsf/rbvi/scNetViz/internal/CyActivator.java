@@ -50,6 +50,8 @@ public class CyActivator extends AbstractCyActivator {
 
 		final ScNVManager scNVManager = new ScNVManager(serviceRegistrar);
 
+		// Register our sources
+
 		/*
 		{
 			// This is for the basic reader.  Note that we'll also load a more advanced one below

@@ -53,7 +53,7 @@ public class GXASource implements Source {
 		metadataMap = new HashMap<>();
 	}
 
-	public String getSourceName() { return "EBI GXA"; }
+	public String getName() { return "EBI GXA"; }
 
 	public void loadGXAEntries(TaskMonitor taskMonitor) {
 		if (metadataMap.size() > 0) return;

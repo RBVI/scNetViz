@@ -22,10 +22,13 @@ import org.cytoscape.application.CyUserLog;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
+import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.model.SimpleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 
-public class GXACluster implements Category {
+public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix {
 	public static String GXA_CLUSTER_URI = "https://www.ebi.ac.uk/gxa/sc/experiment/%s/download?fileType=cluster";
 
 	final ScNVManager scManager;
@@ -45,9 +48,6 @@ public class GXACluster implements Category {
 	// The clusters
 	int[][] clusters;
 
-	// The headers
-	String[] headers;
-
 	// K-sort
 	int sortedK = -1;
 
@@ -55,6 +55,7 @@ public class GXACluster implements Category {
 	// GXAClusterTableModel tableModel = null;
 
 	public GXACluster(final ScNVManager scManager, final GXAExperiment experiment) {
+		super(scManager, null, null);
 		this.scManager = scManager;
 		this.experiment = experiment;
 
@@ -63,6 +64,28 @@ public class GXACluster implements Category {
 
 	@Override
 	public String getCategoryType() { return "Cluster";}
+
+	@Override
+	public Matrix getMatrix() { return this; }
+
+	@Override
+	public String getMatrixType() { return "Simple Integer Matrix"; }
+
+	@Override
+	public int getIntegerValue(int row, int column) {
+		return clusters[row][column];
+	}
+
+	@Override
+	public int getIntegerValue(String row, String column) {
+		int col = colLabels.indexOf(column);
+
+		int intRow = Integer.valueOf(row);
+		return clusters[intRow-minK][col-2];
+	}
+
+	@Override
+	public int[][] getIntegerMatrix(int missing) { return clusters; }
 
 	public int[] getCluster() {
 		if (k == 0)
@@ -93,7 +116,7 @@ public class GXACluster implements Category {
 			if (!clusterMap.containsKey(cluster)) {
 				clusterMap.put(cluster, new ArrayList<>());
 			}
-			clusterMap.get(cluster).add(headers[i+2]);
+			clusterMap.get(cluster).add(colLabels.get(i+2));
 		}
 		return clusterMap;
 	}
@@ -114,7 +137,8 @@ public class GXACluster implements Category {
 		for (String[] line: input) {
 			if (first) {
 				first = false;
-				gxaCluster.headers = line;
+				gxaCluster.setColLabels(Arrays.asList(line));
+				// gxaCluster.headers = line;
 				continue;
 			}
 			int thisK = Integer.parseInt(line[1]);

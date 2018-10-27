@@ -36,7 +36,6 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
-import edu.ucsf.rbvi.scNetViz.internal.model.MatrixManager;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 
 public class GXAExperiment implements Experiment {
@@ -55,13 +54,11 @@ public class GXAExperiment implements Experiment {
 	// GXADesign gxaDesign = null;
 
 	final ScNVManager scNVManager;
-	final MatrixManager matrixManager;
 	final GXAExperiment gxaExperiment;
 	final GXASource source;
 
 	public GXAExperiment (ScNVManager manager, GXASource source) {
 		this.scNVManager = manager;
-		this.matrixManager = manager.getMatrixManager();
 		logger = Logger.getLogger(CyUserLog.NAME);
 		this.gxaExperiment = this;
 		categories = new ArrayList<>(2);
@@ -113,7 +110,9 @@ public class GXAExperiment implements Experiment {
 						if (mtx != null) 
 							mtx.setRowTable(rowTable);
 					} else if (name.endsWith(".mtx")) {
-						mtx = new MatrixMarket(matrixManager, rowTable, colTable);
+						mtx = new MatrixMarket(scNVManager, null, null);
+						mtx.setRowTable(rowTable);
+						mtx.setColumnTable(colTable);
 						mtx.readMTX(monitor, zipStream, name);
 					}
 					zipStream.closeEntry();
@@ -126,7 +125,6 @@ public class GXAExperiment implements Experiment {
 			}
 		} catch (Exception e) {}
 		scNVManager.addExperiment(accession, this);
-		matrixManager.addMatrix(mtx.toString(), mtx);
 	}
 
 	public void fetchClusters (final TaskMonitor monitor) {

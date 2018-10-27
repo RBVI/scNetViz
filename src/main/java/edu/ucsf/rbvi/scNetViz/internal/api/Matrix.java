@@ -11,12 +11,13 @@ public interface Matrix {
 	public int getNonZeroCount();
 	public boolean isTransposed();
 	public void setTranspose(boolean t);
+
 	public List<String> getRowLabels();
 	public void setRowLabels(List<String> rLabels);
+
 	public List<String> getColLabels();
 	public void setColLabels(List<String> cLabels);
-	public void setRowTable(List<String[]> rTable);
-	public void setColumnTable(List<String[]> cTable);
+
 	public String getRowLabel(int row);
 
 	public String getColumnLabel(int col);
