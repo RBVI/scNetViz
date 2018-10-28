@@ -22,6 +22,7 @@ import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelName;
 import org.cytoscape.model.CyTable;
 import org.cytoscape.work.AbstractTask;
+import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.Task;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskFactory;
@@ -32,6 +33,8 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAExperiment;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAMetadata;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ProcessAllTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTask;
 import edu.ucsf.rbvi.scNetViz.internal.view.HeaderRenderer;
 
 public class GXAEntryTable extends JTable {
@@ -104,6 +107,7 @@ public class GXAEntryTable extends JTable {
 
 		@Override
 		public void run(TaskMonitor taskMonitor) {
+			taskMonitor.setTitle("Loading Single Cell Expression Atlas experiment "+accession);
 			GXAExperiment experiment = (GXAExperiment)gxaSource.getExperiment(accession, taskMonitor);
 			if (experiment != null)
 				scNVManager.addExperiment(accession,experiment);
@@ -115,10 +119,15 @@ public class GXAEntryTable extends JTable {
 			// the experiments table or process the data
 			if (gxaSource.getEntryFrame().isLoadOnly()) {
 				// Create the Experiment table and show it
+				insertTasksAfterCurrentTask(new ShowExperimentTableTask(scNVManager, experiment));
 			} else {
 				// Create the autoprocess task and append it
+				insertTasksAfterCurrentTask(new ProcessAllTask(scNVManager, experiment));
 			}
 		}
+
+		@ProvidesTitle
+		public String getTitle() {return "Load Single Cell Expression Atlas Experiment "+accession;}
 	}
 
 }

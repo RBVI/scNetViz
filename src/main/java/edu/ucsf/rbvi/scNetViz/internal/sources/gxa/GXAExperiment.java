@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.table.TableModel;
+
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -57,12 +59,14 @@ public class GXAExperiment implements Experiment {
 	final GXAExperiment gxaExperiment;
 	final GXASource source;
 
-	public GXAExperiment (ScNVManager manager, GXASource source) {
+	public GXAExperiment (ScNVManager manager, GXASource source, GXAMetadata entry) {
 		this.scNVManager = manager;
 		logger = Logger.getLogger(CyUserLog.NAME);
 		this.gxaExperiment = this;
 		categories = new Category[2];
 		this.source = source;
+		this.gxaMetadata = entry;
+		this.accession = (String)gxaMetadata.get(Metadata.ACCESSION);
 	}
 
 	public Matrix getMatrix() { return mtx; }
@@ -80,8 +84,9 @@ public class GXAExperiment implements Experiment {
 
 	public Source getSource() { return source; }
 
-	public void fetchMTX (final String accession, final TaskMonitor monitor) {
-		this.accession = accession;
+	public TableModel getTableModel() { return new GXAExperimentTableModel(scNVManager, this); }
+
+	public void fetchMTX (final TaskMonitor monitor) {
 		// Get the URI
 		String fetchString = String.format(GXA_MTX_URI, accession);
 

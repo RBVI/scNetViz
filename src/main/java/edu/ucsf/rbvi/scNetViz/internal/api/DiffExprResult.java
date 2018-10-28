@@ -1,4 +1,4 @@
 package edu.ucsf.rbvi.scNetViz.internal.api;
 
-public interface DiffExprTable {
+public interface DiffExprResult {
 }

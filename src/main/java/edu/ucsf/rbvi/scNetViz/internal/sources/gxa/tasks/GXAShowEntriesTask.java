@@ -19,11 +19,11 @@ public class GXAShowEntriesTask extends AbstractTask {
 
 	@Override
 	public void run(TaskMonitor taskMonitor) {
-		taskMonitor.setTitle("Show GXA Entries Table");
-		taskMonitor.setStatusMessage("Showing Entries Table");
+		taskMonitor.setTitle("Show Single Cell Expression Atlas Entries Table");
+		taskMonitor.setStatusMessage("Showing Single Cell Expression Atlas Table");
 		gxaSource.showEntriesTable(true);
 	}
 
 	@ProvidesTitle
-	public String getTitle() {return "Show GXA Entries";}
+	public String getTitle() {return "Show Single Cell Expression Atlas Entries";}
 }

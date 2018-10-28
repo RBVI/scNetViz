@@ -39,7 +39,7 @@ public class GXAEntryFrame extends JFrame {
 		this.scNVManager = scNVManager;
 		this.gxaSource = gxaSource;
 		this.setLayout(new BorderLayout());
-		this.setTitle("Single Cell Array Express Browser");
+		this.setTitle("Single Cell Expression Atlas Browser");
 		this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		init();
 	}
@@ -76,7 +76,7 @@ public class GXAEntryFrame extends JFrame {
 
 	@Override
 	public String getTitle() {
-		return "Single Cell Array Express Browser";
+		return "Single Cell Expression Atlas Browser";
 	}
 
 }

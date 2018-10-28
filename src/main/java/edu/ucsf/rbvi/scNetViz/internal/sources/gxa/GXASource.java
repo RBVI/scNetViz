@@ -63,7 +63,7 @@ public class GXASource implements Source {
 		// Register our task factories
 		{
 			Properties props = new Properties();
-			props.put(TITLE, "Browse Single Cell Array Express");
+			props.put(TITLE, "Browse Single Cell Expression Atlas");
 			props.put(PREFERRED_MENU, "Apps.ScNetViz");
 			props.setProperty(IN_TOOL_BAR, "TRUE");
 			props.setProperty(TOOL_BAR_GRAVITY, "100f");
@@ -75,6 +75,7 @@ public class GXASource implements Source {
 	}
 
 	public String getName() { return "EBI GXA"; }
+	public String toString() { return "Single Cell Expression Atlas"; }
 
 	public void loadGXAEntries(TaskMonitor taskMonitor) {
 		if (metadataMap.size() > 0) return;
@@ -99,20 +100,20 @@ public class GXASource implements Source {
 	}
 
 	public Experiment getExperiment(String accession) {
-		return getExperiment(accession, null);
+		return getExperiment(metadataMap.get(accession), null);
 	}
 
 	public Experiment getExperiment(Metadata metadata) {
 		return getExperiment(metadata, null);
 	}
 
-	public Experiment getExperiment(Metadata metadata, TaskMonitor monitor) {
-		return getExperiment((String)metadata.get(Metadata.ACCESSION), monitor);
+	public Experiment getExperiment(String accession, TaskMonitor monitor) {
+		return getExperiment(metadataMap.get(accession), monitor);
 	}
 
-	public Experiment getExperiment(String accession, TaskMonitor monitor) {
-		GXAExperiment exp = new GXAExperiment(scNVManager, this);
-		exp.fetchMTX (accession, monitor);
+	public Experiment getExperiment(Metadata metadata, TaskMonitor monitor) {
+		GXAExperiment exp = new GXAExperiment(scNVManager, this, (GXAMetadata)metadata);
+		exp.fetchMTX (monitor);
 		exp.fetchClusters();
 		exp.fetchDesign();
 		return exp;
