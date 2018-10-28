@@ -14,7 +14,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class ExperimentFrame extends JFrame {
 	final ScNVManager scManager;
-	final String[] titles = {"TPM", "Constraints", "DiffExp"};
+	final String[] titles = {"TPM", "Categories", "DiffExp"};
 	final JFrame jFrame;
 	JTabbedPane tabbedPane;
 
@@ -59,7 +59,7 @@ public class ExperimentFrame extends JFrame {
 
 		// OK, now add our three tabs with empty content
 		tabbedPane.addTab("TPM", new EmptyJPanel());
-		tabbedPane.addTab("Constraints", new EmptyJPanel());
+		tabbedPane.addTab("Categories", new EmptyJPanel());
 		tabbedPane.addTab("DiffExp", new EmptyJPanel());
 
 		tabbedPane.setEnabledAt(0, false);
