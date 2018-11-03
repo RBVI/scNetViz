@@ -91,22 +91,26 @@ public class CSVReader {
 		String row = input.readLine();
 		// System.out.println("Row: "+row);
 		if (row == null) return null;
-		String[] columns;
+		return smartSplit(row);
+	}
+
+	public static String[] smartSplit(String input) {
+		String[] splitString;
 		if (delimiter != null)
-			columns = row.split(delimiter, -1);
+			splitString = input.split(delimiter, -1);
 		else {
 			delimiter = "\t";
-			columns = row.split(delimiter, -1);
-			if (columns.length == 1) {
+			splitString = input.split(delimiter, -1);
+			if (splitString.length == 1) {
 				delimiter = ",";
-				columns = row.split(delimiter, -1);
-				if (columns.length == 1) {
+				splitString = input.split(delimiter, -1);
+				if (splitString.length == 1) {
 					delimiter = null;
-					throw new RuntimeException("Only tabs and commas are supported column delimiters");
+					throw new RuntimeException("Only tabs and commas are supported delimiters");
 				}
 			}
 		}
-		return columns;
+		return splitString;
 	}
 
 }
