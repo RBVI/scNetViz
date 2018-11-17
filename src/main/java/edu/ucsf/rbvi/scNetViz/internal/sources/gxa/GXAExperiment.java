@@ -50,7 +50,7 @@ public class GXAExperiment implements Experiment {
 	List<String[]> colTable = null;
 	MatrixMarket mtx = null;
 	GXAMetadata gxaMetadata = null;
-	Category[] categories;
+	List<Category> categories;
 	// GXACluster gxaCluster = null;
 	// GXAIDF gxaIDF = null;
 	// GXADesign gxaDesign = null;
@@ -63,7 +63,9 @@ public class GXAExperiment implements Experiment {
 		this.scNVManager = manager;
 		logger = Logger.getLogger(CyUserLog.NAME);
 		this.gxaExperiment = this;
-		categories = new Category[2];
+		categories = new ArrayList<Category>();
+		categories.add(new GXACluster(manager, this));
+		categories.add(new GXADesign(manager, this));
 		this.source = source;
 		this.gxaMetadata = entry;
 		this.accession = (String)gxaMetadata.get(Metadata.ACCESSION);
@@ -78,7 +80,9 @@ public class GXAExperiment implements Experiment {
 	// public GXACluster getClusters() { return gxaCluster; }
 	// public GXADesign getDesign() { return gxaDesign; }
 
-	public List<Category> getCategories() { return Arrays.asList(categories); }
+	public List<Category> getCategories() { return categories; }
+
+	public void addCategory(Category c) { categories.add(c); }
 
 	public Metadata getMetadata() { return gxaMetadata; }
 
@@ -133,7 +137,7 @@ public class GXAExperiment implements Experiment {
 	}
 
 	public void fetchClusters (final TaskMonitor monitor) {
-		categories[0] = GXACluster.fetchCluster(scNVManager, accession, this, monitor);
+		categories.set(0,GXACluster.fetchCluster(scNVManager, accession, this, monitor));
 
 		// Sanity check
 	}
@@ -143,7 +147,7 @@ public class GXAExperiment implements Experiment {
 	}
 
 	public void fetchDesign (final TaskMonitor monitor) {
-		categories[1] = GXADesign.fetchDesign(scNVManager, accession, this, monitor);
+		categories.set(1, GXADesign.fetchDesign(scNVManager, accession, this, monitor));
 
 		// Sanity check
 	}
@@ -152,6 +156,7 @@ public class GXAExperiment implements Experiment {
 		new Thread(new FetchDesignThread()).start();
 	}
 
+	// FIXME
 	public void fetchIDF (final TaskMonitor monitor) {
 	}
 
@@ -179,14 +184,14 @@ public class GXAExperiment implements Experiment {
 	class FetchClusterThread implements Runnable {
 		@Override
 		public void run() {
-			categories[0] = GXACluster.fetchCluster(scNVManager, accession, gxaExperiment, null);
+			categories.set(0, GXACluster.fetchCluster(scNVManager, accession, gxaExperiment, null));
 		}
 	}
 
 	class FetchDesignThread implements Runnable {
 		@Override
 		public void run() {
-			categories[1] = GXADesign.fetchDesign(scNVManager, accession, gxaExperiment, null);
+			categories.set(1, GXADesign.fetchDesign(scNVManager, accession, gxaExperiment, null));
 		}
 	}
 }

@@ -17,5 +17,11 @@ public class ShowExperimentTableTaskFactory extends AbstractTaskFactory {
 		return new TaskIterator(new ShowExperimentTableTask(manager));
 	}
 
+	public boolean isReady() {
+		if (manager.getExperiments() == null || manager.getExperiments().size() == 0)
+			return false;
+		return true;
+	}
+
 }
 

@@ -22,6 +22,7 @@ import org.cytoscape.application.CyUserLog;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
+import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
@@ -68,6 +69,9 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 
 	@Override
 	public String getCategoryType() { return "Cluster";}
+
+	@Override
+	public Experiment getExperiment() { return experiment;}
 
 	@Override
 	public Matrix getMatrix() { return this; }
@@ -130,6 +134,46 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 		}
 		return clusterMap;
 	}
+
+	@Override
+	public double[][] getMeans() {
+		// Where [][] = [nGenes][nCategories]
+		return null;
+	}
+
+	@Override
+	public int[] getSizes() {
+		// Where [] = [nCategories] and the contents are the number of cells in each category
+		return null;
+	}
+
+	// dDRthreshold is the cutoff for the minimum difference between clusters
+	@Override
+	public void filter(double dDRthreshold) {
+		return;
+	}
+
+	// Calculate the logGER between each category and all other categories
+	// This will trigger the calculation of means and sizes
+	@Override
+	public Map<String, double[]> getLogGER() {
+		return null;
+	}
+
+	// Calculate the logGER between the category and all other categories
+	// This will trigger the calculation of means and sizes
+	@Override
+	public double[] getLogGER(String category1) {
+		return null;
+	};
+
+	// Calculate the logGER between the two categories
+	// This will trigger the calculation of means and sizes
+	@Override
+	public double[] getLogGER(String category1, String category2) {
+		return null;
+	}
+
 
 	public static GXACluster fetchCluster(ScNVManager scManager, String accession, 
 	                                      GXAExperiment experiment, TaskMonitor monitor) {

@@ -1,5 +1,6 @@
-package edu.ucsf.rbvi.scNetViz.internal.sources.gxa;
+package edu.ucsf.rbvi.scNetViz.internal.sources.file;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,12 +11,6 @@ import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
 import org.cytoscape.application.CyUserLog;
@@ -31,10 +26,11 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
-public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
-	public static String GXA_DESIGN_URI = "https://www.ebi.ac.uk/gxa/sc/experiment/%s/download?fileType=experiment-design";
+public class FileCategory extends SimpleMatrix implements Category, StringMatrix {
 	final Logger logger;
-	final GXAExperiment experiment;
+	final Experiment experiment;
+	final String name;
+	int hdrCols = 1;
 
 	String[][] categories;
 
@@ -42,17 +38,18 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 
 	SortableTableModel tableModel = null;
 
-	public GXADesign(final ScNVManager scManager, final GXAExperiment experiment) {
+	public FileCategory(final ScNVManager scManager, final Experiment experiment, final String name) {
 		super(scManager);
 		this.experiment = experiment;
+		this.name = name;
 		logger = Logger.getLogger(CyUserLog.NAME);
 	}
 
 	@Override
-	public String toString() { return "Design/Factors";}
+	public String toString() { return name;}
 
 	@Override
-	public String getCategoryType() { return "Design/Factors";}
+	public String getCategoryType() { return name;}
 
 	@Override
 	public Experiment getExperiment() { return experiment;}
@@ -118,39 +115,70 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 		return null;
 	}
 
-	public static GXADesign fetchDesign(ScNVManager scManager, String accession, 
-	                                    GXAExperiment experiment, TaskMonitor monitor) {
-		// Get the URI
-		List<String[]> input = CSVReader.readCSVFromHTTP(monitor, GXA_DESIGN_URI, accession);
-		if (input == null || input.size() < 2) return null;
+	public static FileCategory fetchCategory(ScNVManager scManager, Experiment experiment,
+	                                         File file, boolean transpose, int hdrCols,
+	                                         TaskMonitor monitor) throws Exception {
 
-		GXADesign gxaDesign = new GXADesign(scManager, experiment);
-		gxaDesign.nCols = input.size();
-		gxaDesign.nRows = input.get(0).length-1;
+		System.out.println("fetchCategory: file = "+file.toString()+", transpose = "+transpose);
 
-		gxaDesign.setRowLabels(Arrays.asList(input.get(0)));
-		gxaDesign.categories = new String[gxaDesign.nRows][gxaDesign.nCols];
-		List<String> colLabels = new ArrayList<String>(gxaDesign.nCols);
-		colLabels.add("Category");
+		List<String[]> input = CSVReader.readCSV(monitor, file);
+		if (input == null || input.size() < 2) {
+			System.out.println("No input!");
+			return null;
+		}
+
+		FileCategory fileCategory = new FileCategory(scManager, experiment, file.getName());
+		fileCategory.hdrCols = hdrCols;
+
+		List<String> labels;
+
+		if (!transpose) {
+			fileCategory.nRows = input.size();
+			fileCategory.nCols = input.get(0).length-1;
+			fileCategory.setColLabels(Arrays.asList(input.get(0)));
+			labels = new ArrayList<String>(fileCategory.nCols);
+		} else {
+			fileCategory.nCols = input.size();
+			fileCategory.nRows = input.get(0).length-1;
+			fileCategory.setRowLabels(Arrays.asList(input.get(0)));
+			labels = new ArrayList<String>(fileCategory.nRows);
+		}
+
+		fileCategory.categories = new String[fileCategory.nCols][fileCategory.nRows];
+
+		labels.add("Category");
 
 		boolean first = true;
-		int col = 0;
+		int lineNumber = 0;
 		for (String[] line: input) {
 			if (first) {
 				first = false;
 			} else {
-				colLabels.add(line[0]);
-				for (int row = 1; row < gxaDesign.nRows; row++) {
-					gxaDesign.categories[row-1][col] = line[row];
+				labels.add(line[0]);
+				if (!transpose) {
+					for (int col = 1; col < fileCategory.nCols; col++) {
+						fileCategory.categories[col][lineNumber] = line[col];
+					}
+				} else {
+					for (int row = 1; row < fileCategory.nRows; row++) {
+						fileCategory.categories[lineNumber][row] = line[row];
+					}
 				}
 			}
-			col++;
+			lineNumber++;
 		}
-		gxaDesign.setColLabels(colLabels);
 
-		LogUtils.log(monitor, TaskMonitor.Level.INFO, "Read "+gxaDesign.nRows+
-			                    " rows with "+gxaDesign.nCols+" columns");
-		return gxaDesign;
+		if (!transpose) {
+			fileCategory.setRowLabels(labels);
+		} else {
+			fileCategory.setColLabels(labels);
+		}
+
+		LogUtils.log(monitor, TaskMonitor.Level.INFO, "Read "+fileCategory.nRows+
+			                    " rows with "+fileCategory.nCols+" columns");
+
+		System.out.println("Read "+fileCategory.nRows+" rows with "+fileCategory.nCols+" columns");
+		return fileCategory;
 	}
 
 	public Map<String,List<String>> getClusterList(String factor) {
@@ -172,15 +200,15 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 
 	public SortableTableModel getTableModel() {
 		if (tableModel == null)
-			tableModel = new GXADesignTableModel(this);
+			tableModel = new FileCategoryTableModel(this);
 		return tableModel;
 	}
 
-	public class GXADesignTableModel extends SortableTableModel {
-		final GXADesign design;
-		final GXAExperiment experiment;
+	public class FileCategoryTableModel extends SortableTableModel {
+		final FileCategory design;
+		final Experiment experiment;
 
-		GXADesignTableModel(final GXADesign design) {
+		FileCategoryTableModel(final FileCategory design) {
 			super(design.getHeaderCols());
 			this.design = design;
 			this.experiment = design.experiment;
