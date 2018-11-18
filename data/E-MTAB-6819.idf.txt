@@ -1,0 +1,46 @@
+Comment[ArrayExpressAccession]	E-MTAB-6819						
+MAGE-TAB Version	1.1						
+Comment[Submitted Name]	Single-cell RNA-seq of naive and primed human embryonic stem cells						
+Investigation Title	Single-cell RNA-seq of naive and primed human embryonic stem cells						
+Experiment Description	This study aims to profile the transcriptomes of single naive and primed human embryonic stem cells. Cells from the H9 line were cultured to select for naive or primed phenotypes, and a sequencing library was generated from each single cell using the Smart-seq2 method. This was repeated for multiple experimental batches, i.e., independent cultures. Batch 1 consists of sequencing runs 2383 and 2384; batch 2 consists of runs 2678, 2679, 2739 and 2740; and batch 3 consists of runs 2780 and 2781. Transcriptional profiles for all cells were obtained from the sequencing data and used to explore substructure and heterogeneity in the population for each phenotype.						
+Experimental Design	cell type comparison design						
+Experimental Design Term Source REF	EFO						
+Experimental Design Term Accession Number	EFO_0001745						
+Experimental Factor Name	phenotype	single cell identifier					
+Experimental Factor Type	phenotype	single cell identifier					
+Experimental Factor Term Source REF	EFO						
+Experimental Factor Term Accession Number	EFO_0000651						
+Person Last Name	Lun						
+Person First Name	Aaron						
+Person Mid Initials	TL						
+Person Email	aaron.lun@cruk.cam.ac.uk						
+Person Phone							
+Person Fax							
+Person Address	University of Cambridge Li Ka Shing Centre Robinson Way Cambridge CB2 0RE United Kingdom						
+Person Affiliation	Cancer Research UK Cambridge Institute						
+Person Roles	submitter						
+Protocol Name	P-MTAB-74582	P-MTAB-74583	P-MTAB-74584	P-MTAB-74585	P-MTAB-74586	P-MTAB-74587	P-MTAB-74588
+Protocol Type	sample collection protocol	growth protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	nucleic acid sequencing protocol	high throughput sequence alignment protocol	conversion protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0005518	EFO_0003789	EFO_0002944	EFO_0004184	EFO_0004170	EFO_0004917	EFO_0005520
+Protocol Description	Human H9-NK2 ESCs were kindly provided by Austin Smith. These cells contain NANOG and KLF2 transgenes under the control of doxycycline-dependent promoters.	Naive hESCs were grown in 6-well dishes on mouse embryonic fibroblasts in N2B27 supplemented with human LIF, 1 uM Chiron, 1 uM PD03 and 2 uM Go6983. One passage before sorting, cells were plated on 6-well plates coated with Matrigel (growth-factor reduced). Primed hESCs were grown in 6-well dishes coated with Vitronectin in E8 media.	hESCs were dissociated with Accutase and sorted with a BD Aria Cell sorter, gating for cell size and granularity. Single-cells were sorted in 2uL of Lysis Buffer (0.2% v/v Triton X-100 (Sigma-Aldrich, cat. no. T9284) with 2U/ul RNase Inhibitor (Clontech, cat. no. 2313A)) in 96 well plates, spun down and immediately frozen at -80 degrees Celsius.	The cDNA libraries for sequencing were prepared using Nextera XT DNA Sample Preparation Kit (Illumina, cat. no. FC-131-1096), according to the protocol supplied by Fluidigm (PN 100-5950 B1). Libraries from 96 single cells were pooled and purified using AMPure XP beads (Beckman Coulter).	Pooled samples were sequenced on an Illumina HiSeq 2500 instrument, using paired-end 100-bp reads.	Reads were aligned to the hg38 build of the human genome (with additional ERCC sequences) using subread v1.6.1. in paired-end RNA-seq mode with unique mapping. The number of read pairs mapped to the exonic regions of each gene was then counted for each library, using the featureCounts function in Rsubread v1.28.1 with Ensembl GRCh38 version 91. Only alignments with mapping quality scores above 10 were considered during counting.	A cDNA library was prepared from each sorted single cell following the SmartSeq2 protocol. Briefly, oligo-dT primer, dNTPs (ThermoFisher, cat. no. 10319879) and ERCC RNA Spike-In Mix (1:25,000,000 final dilution, Ambion, cat. no. 4456740) were added to the single-cell lysates, and reverse transcription and PCR were performed.
+Protocol Hardware			BD FACSAria cell sorter		Illumina HiSeq 2500		
+Protocol Software						(R)subread	
+Term Source Name	EFO						
+Term Source File	http://www.ebi.ac.uk/efo/						
+Term Source Version							
+Public Release Date	2018-07-26						
+Comment[AEExperimentType]	RNA-seq of coding RNA from single cells						
+Comment[AdditionalFile:fa]	spike.fa						
+Comment[AdditionalFile:txt]	spikes.txt						
+Comment[SecondaryAccession]	ERP108653						
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR2567409-ERR2570095						
+SDRF File	E-MTAB-6819.sdrf.txt						
+Comment[EACurator]	Anja Fullgrabe						
+Comment[EAExperimentType]	differential						
+Comment[EAExpectedClusters]							
+Comment[EAAdditionalAttributes]							
+Publication Title	CpG island composition differences are a source of gene expression noise indicative of promoter responsiveness						
+Publication Author List	Michael D. Morgan and John C. Marioni						
+Publication DOI	10.1186/s13059-018-1461-x						
+PubMed ID	29945659						
