@@ -7,10 +7,12 @@ import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileExperiment;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileMetadata;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTask;
 
 public class FileExperimentTask extends AbstractTask {
 	final ScNVManager scManager;
@@ -30,9 +32,10 @@ public class FileExperimentTask extends AbstractTask {
 		taskMonitor.setTitle(getTitle());
 		taskMonitor.setStatusMessage("Reading mtx file");
 		FileMetadata metadata = new FileMetadata(file);
-		fileSource.getExperiment(metadata, taskMonitor);
+		Experiment experiment = fileSource.getExperiment(metadata, taskMonitor);
 
 		// Show the experiment
+		insertTasksAfterCurrentTask(new ShowExperimentTableTask(scManager, experiment));
 	}
 
 	@ProvidesTitle

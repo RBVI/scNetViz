@@ -20,21 +20,31 @@ import javax.swing.JTable;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.table.TableModel;
 
+import org.cytoscape.work.FinishStatus;
+import org.cytoscape.work.ObservableTask;
+import org.cytoscape.work.TaskFactory;
+import org.cytoscape.work.TaskObserver;
+
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
+import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
+import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
 
-public class CategoriesTab extends JPanel {
+public class CategoriesTab extends JPanel implements TaskObserver {
 	final ScNVManager manager;
 	final Experiment experiment;
+	final ExperimentFrame expFrame;
 	final CategoriesTab thisComponent;
 	final List<Category> categoriesList;
 	final List<String> categoriesNameList;
 	final Map<Category, JTable> categoryTables;
 	JScrollPane categoryPane;
 
-	public CategoriesTab(final ScNVManager manager, final Experiment experiment) {
+	public CategoriesTab(final ScNVManager manager, final Experiment experiment, final ExperimentFrame expFrame) {
 		this.manager = manager;
 		this.experiment = experiment;
 		this.categoriesList = experiment.getCategories();
@@ -46,15 +56,41 @@ public class CategoriesTab extends JPanel {
 
 		this.setLayout(new BorderLayout());
 		thisComponent = this;	// Access to inner classes
+		this.expFrame = expFrame;
 		init();
 	}
 
+	@Override
+	public void allFinished(FinishStatus status) {
+	}
+
+	@Override
+	public void taskFinished(ObservableTask obsTask) {
+		if (obsTask instanceof FileCategoryTask) {
+			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
+		}
+	}
+	
+
 	private void init() {
 
-		JPanel buttonsPanelRight = new JPanel(new GridLayout(3, 2));
+		JPanel buttonsPanelRight = new JPanel(new GridLayout(3, 3));
 		
 		{
-			JLabel lbl = new JLabel("");
+			JButton importCategory = new JButton("Add Category");
+			importCategory.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      importCategory.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					// We need to use the File importer for this
+					TaskFactory importCategory = 
+									new FileCategoryTaskFactory(manager, (FileSource)manager.getSource("file"), experiment);
+					manager.executeTasks(importCategory, thisComponent);
+				}
+			});
+			// buttonsPanelRight.add(importCategory);
+
+			// JLabel lbl = new JLabel("");
 			JButton export = new JButton("Export CSV");
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
       export.addActionListener(new ActionListener() {
@@ -68,7 +104,8 @@ public class CategoriesTab extends JPanel {
 				}
 			});
 
-			buttonsPanelRight.add(lbl);
+			// buttonsPanelRight.add(lbl);
+			buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
 			buttonsPanelRight.add(diffExp);
 		}

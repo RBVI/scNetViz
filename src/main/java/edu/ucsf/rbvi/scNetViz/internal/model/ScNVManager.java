@@ -18,6 +18,7 @@ import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskManager;
 import org.cytoscape.work.TaskMonitor;
+import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
@@ -89,8 +90,16 @@ public class ScNVManager {
 		taskManager.execute(tasks);
 	}
 
-	public void executeTask(TaskFactory factory) {
+	public void executeTasks(TaskIterator tasks, TaskObserver observer) {
+		taskManager.execute(tasks, observer);
+	}
+
+	public void executeTasks(TaskFactory factory) {
 		taskManager.execute(factory.createTaskIterator());
+	}
+
+	public void executeTasks(TaskFactory factory, TaskObserver observer) {
+		taskManager.execute(factory.createTaskIterator(), observer);
 	}
 
 	public <S> S getService(Class<S> serviceClass) {
