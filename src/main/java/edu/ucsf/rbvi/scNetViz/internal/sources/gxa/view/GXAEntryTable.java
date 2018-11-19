@@ -112,8 +112,8 @@ public class GXAEntryTable extends JTable {
 			if (experiment != null)
 				scNVManager.addExperiment(accession,experiment);
 			gxaSource.showEntriesTable(false);
-			experiment.fetchClusters();
-			experiment.fetchDesign();
+			experiment.fetchClusters(taskMonitor);
+			experiment.fetchDesign(taskMonitor);
 
 			// Now, depending on the setting of our checkbox, either show
 			// the experiments table or process the data

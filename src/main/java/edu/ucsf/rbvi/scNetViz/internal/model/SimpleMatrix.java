@@ -87,7 +87,8 @@ public abstract class SimpleMatrix implements Matrix {
 
 	@Override
 	public String getColumnLabel(int col) {
-		return transposed ? rowLabels.get(col) : colLabels.get(col);
+		String label = transposed ? rowLabels.get(col) : colLabels.get(col);
+		return label;
 	}
 
 	public static List<String> getLabels(List<String[]> labelTable) {

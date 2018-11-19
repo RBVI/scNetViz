@@ -22,11 +22,13 @@ import org.cytoscape.application.CyUserLog;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
+import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.SimpleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
+import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
 public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix {
 	public static String GXA_CLUSTER_URI = "https://www.ebi.ac.uk/gxa/sc/experiment/%s/download?fileType=cluster";
@@ -52,7 +54,7 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 	int sortedK = -1;
 
 	// The Table model
-	// GXAClusterTableModel tableModel = null;
+	GXAClusterTableModel tableModel = null;
 
 	public GXACluster(final ScNVManager scManager, final GXAExperiment experiment) {
 		super(scManager, null, null);
@@ -63,7 +65,13 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 	}
 
 	@Override
+	public String toString() { return "Cluster";}
+
+	@Override
 	public String getCategoryType() { return "Cluster";}
+
+	@Override
+	public Experiment getExperiment() { return experiment;}
 
 	@Override
 	public Matrix getMatrix() { return this; }
@@ -87,6 +95,13 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 	@Override
 	public int[][] getIntegerMatrix(int missing) { return clusters; }
 
+	@Override
+	public int getHeaderCols() { return 2; }
+
+	public int getNRows() {
+		return clusters[0].length-1;
+	}
+
 	public int[] getCluster() {
 		if (k == 0)
 			return getCluster(minK); // No default K was selected
@@ -96,7 +111,6 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 
 	public int[] getCluster(int kClust) {
 		int ncolumns = clusters.length;
-		System.out.println("ncolumns = "+ncolumns);
 		int[] clustRow = new int[ncolumns];
 		for (int col = 0; col < ncolumns; col++) {
 			clustRow[col] = clusters[col][kClust-minK];
@@ -120,6 +134,46 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 		}
 		return clusterMap;
 	}
+
+	@Override
+	public double[][] getMeans() {
+		// Where [][] = [nGenes][nCategories]
+		return null;
+	}
+
+	@Override
+	public int[] getSizes() {
+		// Where [] = [nCategories] and the contents are the number of cells in each category
+		return null;
+	}
+
+	// dDRthreshold is the cutoff for the minimum difference between clusters
+	@Override
+	public void filter(double dDRthreshold) {
+		return;
+	}
+
+	// Calculate the logGER between each category and all other categories
+	// This will trigger the calculation of means and sizes
+	@Override
+	public Map<String, double[]> getLogGER() {
+		return null;
+	}
+
+	// Calculate the logGER between the category and all other categories
+	// This will trigger the calculation of means and sizes
+	@Override
+	public double[] getLogGER(String category1) {
+		return null;
+	};
+
+	// Calculate the logGER between the two categories
+	// This will trigger the calculation of means and sizes
+	@Override
+	public double[] getLogGER(String category1, String category2) {
+		return null;
+	}
+
 
 	public static GXACluster fetchCluster(ScNVManager scManager, String accession, 
 	                                      GXAExperiment experiment, TaskMonitor monitor) {
@@ -161,45 +215,45 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 			gxaCluster.logger.info("   minimum K = "+gxaCluster.minK);
 		}
 
+		gxaCluster.nCols = ncolumns;
+		gxaCluster.nRows = nclusters;
+		
 		return gxaCluster;
 	}
 
-	/*
-	public GXAClusterTableModel getTableModel() {
+	public TableModel getTableModel() {
 		if (tableModel == null)
 			tableModel = new GXAClusterTableModel(this);
 		return tableModel;
 	}
 
-	public class GXAClusterTableModel extends GXASubTableModel {
+	public class GXAClusterTableModel extends SortableTableModel {
 		final GXACluster cluster;
 		final GXAExperiment experiment;
 
 		GXAClusterTableModel(final GXACluster cluster) {
-			super();
+			super(cluster.getHeaderCols());
 			this.cluster = cluster;
 			this.experiment = cluster.experiment;
-			nrows = cluster.clusters[0].length-1;
-			ncols = headers.length;
 			// System.out.println("ncols = "+ncols+", nrows = "+nrows);
 			// System.out.println("clusters.length = "+cluster.clusters.length);
 			hdrCols = 2;
 		}
 
 		@Override
-		public int getColumnCount() { return ncols; }
+		public int getColumnCount() { return cluster.getNCols(); }
 
 		@Override
 		public String getColumnName(int column) {
 			if (columnIndex != null)
-				return headers[columnIndex[column]];
+				return cluster.getColumnLabel(columnIndex[column]);
 			else
-				return headers[column];
+				return cluster.getColumnLabel(column);
 		}
 
 		@Override
 		public int getRowCount() { 
-			return nrows;
+			return cluster.getNRows();
 		}
 
 		@Override
@@ -236,5 +290,4 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 			}
 		}
 	}
-	*/
 }
