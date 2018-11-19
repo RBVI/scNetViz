@@ -27,6 +27,9 @@ public class FileCategoryTask extends AbstractTask {
 	@Tunable (description="CSV file with category data",params="input=true")
 	public File file;
 
+	@Tunable (description="Data type of categories")
+	public ListSingleSelection<String> dataType;
+
 	@Tunable (description="Number of header columns (or rows if pivoted)")
 	public int hdrCols=1;
 
@@ -38,6 +41,7 @@ public class FileCategoryTask extends AbstractTask {
 		this.scManager = scManager;
 		this.fileSource = fileSource;
 		experiment = new ListSingleSelection<Experiment>(scManager.getExperiments());
+		dataType = new ListSingleSelection<String>("text","integer","float");
 	}
 
 	@Override
@@ -48,8 +52,9 @@ public class FileCategoryTask extends AbstractTask {
 		taskMonitor.setStatusMessage("Reading category file");
 
 		try {
-			FileCategory cat = FileCategory.fetchCategory(scManager, exp,
-			                                              file, pivot, hdrCols, taskMonitor);
+			FileCategory cat = FileCategory.fetchCategory(scManager, exp, file,
+			                                              dataType.getSelectedValue(), 
+																										pivot, hdrCols, taskMonitor);
 			exp.addCategory(cat);
 		} catch (Exception e) {
 			e.printStackTrace();

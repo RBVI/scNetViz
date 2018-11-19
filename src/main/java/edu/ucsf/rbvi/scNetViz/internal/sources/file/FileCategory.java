@@ -26,23 +26,37 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
-public class FileCategory extends SimpleMatrix implements Category, StringMatrix {
+public class FileCategory extends SimpleMatrix implements Category {
 	final Logger logger;
 	final Experiment experiment;
 	final String name;
 	int hdrCols = 1;
 
-	String[][] categories;
+	String[][] stringCategories = null;
+	int[][] intCategories = null;
+	double[][] doubleCategories = null;
+
+	final String dataType;
 
 	String sortedRow = null;
 
 	SortableTableModel tableModel = null;
 
-	public FileCategory(final ScNVManager scManager, final Experiment experiment, final String name) {
+	public FileCategory(final ScNVManager scManager, final Experiment experiment, final String name,
+	                    final String type, int nRows, int nCols) {
 		super(scManager);
+		super.nRows = nRows;
+		super.nCols = nCols;
 		this.experiment = experiment;
 		this.name = name;
 		logger = Logger.getLogger(CyUserLog.NAME);
+		this.dataType = type;
+		if (dataType.equals("text"))
+			stringCategories = new String[nCols][nRows];
+		else if (dataType.equals("integer"))
+			intCategories = new int[nCols][nRows];
+		else if (dataType.equals("float"))
+			doubleCategories = new double[nCols][nRows];
 	}
 
 	@Override
@@ -55,26 +69,34 @@ public class FileCategory extends SimpleMatrix implements Category, StringMatrix
 	public Experiment getExperiment() { return experiment;}
 
 	@Override
-	public String getMatrixType() { return "Simple String Matrix";}
+	public String getMatrixType() { 
+		return "Simple "+dataType+" matrix";
+	}
 
 	@Override
 	public Matrix getMatrix() { return this;}
 
 	@Override
-	public String[][] getStringMatrix() { return categories;}
+	public int getHeaderCols() { return 1; }
 
-	@Override
-	public String getValue(int row, int col) { return categories[row][col];}
-
-	@Override
-	public String getValue(String rowLabel, String colLabel) { 
-		int row = rowLabels.indexOf(rowLabel);
-		int col = colLabels.indexOf(colLabel);
-		return categories[row][col];
+	public void setValue(int row, int col, String value) {
+		if (dataType.equals("text"))
+			stringCategories[col][row] = value;
+		else if (dataType.equals("integer"))
+			intCategories[col][row] = Integer.parseInt(value);
+		else if (dataType.equals("float"))
+			doubleCategories[col][row] = Double.parseDouble(value);
 	}
 
-	@Override
-	public int getHeaderCols() { return 1; }
+	public Object getValue(int row, int col) {
+		if (dataType.equals("text"))
+			return stringCategories[col][row];
+		else if (dataType.equals("integer"))
+			return new Integer(intCategories[col][row]);
+		else if (dataType.equals("float"))
+			return new Double(doubleCategories[col][row]);
+		return null;
+	}
 
 	@Override
 	public double[][] getMeans() {
@@ -116,37 +138,39 @@ public class FileCategory extends SimpleMatrix implements Category, StringMatrix
 	}
 
 	public static FileCategory fetchCategory(ScNVManager scManager, Experiment experiment,
-	                                         File file, boolean transpose, int hdrCols,
+	                                         File file, String dataCategory, boolean transpose, int hdrCols,
 	                                         TaskMonitor monitor) throws Exception {
-
-		System.out.println("fetchCategory: file = "+file.toString()+", transpose = "+transpose);
 
 		List<String[]> input = CSVReader.readCSV(monitor, file);
 		if (input == null || input.size() < 2) {
-			System.out.println("No input!");
+			// System.out.println("No input!");
 			return null;
 		}
 
-		FileCategory fileCategory = new FileCategory(scManager, experiment, file.getName());
+		int nRows = input.size()-1; // Rows don't include the header
+		int nCols = input.get(0).length-hdrCols;
+		if (transpose) {
+			int x = nCols;
+			nCols = nRows;
+			nRows = x;
+		}
+
+		FileCategory fileCategory = new FileCategory(scManager, experiment, file.getName(), dataCategory, nRows, nCols);
 		fileCategory.hdrCols = hdrCols;
 
 		List<String> labels;
 
 		if (!transpose) {
-			fileCategory.nRows = input.size();
-			fileCategory.nCols = input.get(0).length-1;
 			fileCategory.setColLabels(Arrays.asList(input.get(0)));
-			labels = new ArrayList<String>(fileCategory.nCols);
-		} else {
-			fileCategory.nCols = input.size();
-			fileCategory.nRows = input.get(0).length-1;
-			fileCategory.setRowLabels(Arrays.asList(input.get(0)));
 			labels = new ArrayList<String>(fileCategory.nRows);
+		} else {
+			String[] colLabels = input.get(0);
+			String[] newLabels = Arrays.copyOfRange(colLabels, 1, colLabels.length);
+			fileCategory.setRowLabels(Arrays.asList(newLabels));
+			labels = new ArrayList<String>(fileCategory.nCols);
+			labels.add("Category");
 		}
 
-		fileCategory.categories = new String[fileCategory.nCols][fileCategory.nRows];
-
-		labels.add("Category");
 
 		boolean first = true;
 		int lineNumber = 0;
@@ -155,13 +179,14 @@ public class FileCategory extends SimpleMatrix implements Category, StringMatrix
 				first = false;
 			} else {
 				labels.add(line[0]);
+				// System.out.println("Label["+(lineNumber-1)+"]: "+line[0]);
 				if (!transpose) {
-					for (int col = 1; col < fileCategory.nCols; col++) {
-						fileCategory.categories[col][lineNumber] = line[col];
+					for (int col = 0; col < fileCategory.nCols; col++) {
+						fileCategory.setValue(lineNumber-1, col, line[col+1]);
 					}
 				} else {
-					for (int row = 1; row < fileCategory.nRows; row++) {
-						fileCategory.categories[lineNumber][row] = line[row];
+					for (int row = 0; row < fileCategory.nRows; row++) {
+						fileCategory.setValue(row, lineNumber-1, line[row+1]);
 					}
 				}
 			}
@@ -169,31 +194,18 @@ public class FileCategory extends SimpleMatrix implements Category, StringMatrix
 		}
 
 		if (!transpose) {
+			// System.out.println("Found "+labels.size()+" row labels");
 			fileCategory.setRowLabels(labels);
 		} else {
+			// System.out.println("Found "+labels.size()+" column labels");
 			fileCategory.setColLabels(labels);
 		}
 
 		LogUtils.log(monitor, TaskMonitor.Level.INFO, "Read "+fileCategory.nRows+
 			                    " rows with "+fileCategory.nCols+" columns");
+		// System.out.println("Read "+fileCategory.nRows+" rows with "+fileCategory.nCols+" columns");
 
-		System.out.println("Read "+fileCategory.nRows+" rows with "+fileCategory.nCols+" columns");
 		return fileCategory;
-	}
-
-	public Map<String,List<String>> getClusterList(String factor) {
-		Map<String, List<String>> clusterMap = new HashMap<>();
-
-		int factorColumn = colLabels.indexOf(factor);
-
-		for (int row = 0; row < nRows; row++) {
-			String id = rowLabels.get(row);
-			String rowFactor = categories[row][factorColumn];
-			if (!clusterMap.containsKey(rowFactor))
-				clusterMap.put(rowFactor, new ArrayList<>());
-			clusterMap.get(rowFactor).add(id);
-		}
-		return clusterMap;
 	}
 
 	public String getSortedRow() { return sortedRow; }
@@ -205,58 +217,66 @@ public class FileCategory extends SimpleMatrix implements Category, StringMatrix
 	}
 
 	public class FileCategoryTableModel extends SortableTableModel {
-		final FileCategory design;
+		final FileCategory category;
 		final Experiment experiment;
 
-		FileCategoryTableModel(final FileCategory design) {
-			super(design.getHeaderCols());
-			this.design = design;
-			this.experiment = design.experiment;
-			// NOTE: we're pivoting the table!
-			// ncols = design.rows.size();
-			// nrows = design.columns.length-1;
+		FileCategoryTableModel(final FileCategory category) {
+			super(category.getHeaderCols());
+			this.category = category;
+			this.experiment = category.experiment;
 			hdrCols = 1;
 		}
 
 		@Override
-		public int getColumnCount() { return design.getNCols(); }
+		public int getColumnCount() { return category.getNCols(); }
 
 		@Override
 		public String getColumnName(int column) {
 			if (columnIndex == null) 
-				return strip(design.getColumnLabel(column));
+				return strip(category.getColumnLabel(column));
 			else
-				return strip(design.getColumnLabel(columnIndex[column]));
+				return strip(category.getColumnLabel(columnIndex[column]));
 		}
 
 		@Override
 		public int getRowCount() { 
-			return design.getNRows();
+			return category.getNRows();
 		}
 
 		@Override
 		public Class<?> getColumnClass(int column) {
+			if (column < hdrCols)
+				return String.class;
+			if (category.dataType.equals("text"))
+				return String.class;
+			else if (category.dataType.equals("integer"))
+				return Integer.class;
+			else if (category.dataType.equals("double"))
+				return Double.class;
 			return String.class;
 		}
 
 		@Override
 		public Object getValueAt(int row, int column) {
 			if (column == 0) {
-				return strip(design.getRowLabel(row+1));
+				return strip(category.getRowLabel(row));
 			}
 
 			if (columnIndex != null)
 				column = columnIndex[column];
 
-			if (design.categories[row][column] == null)
+			if (category.getValue(row, column) == null)
 				return "";
 
-			return strip(design.categories[row][column]);
+			if (category.dataType.equals("text"))
+				return strip(category.getValue(row, column).toString());
+			else 
+				return category.getValue(row, column);
 		}
 
 		@Override
 		public void sortColumns(int row) {
-			sortedRow = strip(design.getRowLabel(row));
+			sortedRow = strip(category.getRowLabel(row));
 			super.sortColumns(row);
 		}
 

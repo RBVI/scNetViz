@@ -63,7 +63,7 @@ public class FileSource implements Source {
 		// Register our task factories
 		{
 			Properties props = new Properties();
-			props.put(TITLE, "Create Experiment from File");
+			props.put(TITLE, "Import Experiment from File");
 			props.put(PREFERRED_MENU, "Apps.ScNetViz");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
@@ -72,7 +72,7 @@ public class FileSource implements Source {
 
 		{
 			Properties props = new Properties();
-			props.put(TITLE, "Add categories to an experiment");
+			props.put(TITLE, "Add category to an experiment");
 			props.put(PREFERRED_MENU, "Apps.ScNetViz");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
