@@ -41,6 +41,7 @@ public class ExperimentFrame extends JFrame {
 		panel.removeAll();
 		panel.add(content, BorderLayout.CENTER);
 		tabbedPane.setEnabledAt(1, true);
+		tabbedPane.setSelectedIndex(1);
 	}
 
 	public void addDiffExpContent(String title, JPanel content) {
@@ -49,6 +50,7 @@ public class ExperimentFrame extends JFrame {
 		panel.removeAll();
 		panel.add(content, BorderLayout.CENTER);
 		tabbedPane.setEnabledAt(2, true);
+		tabbedPane.setSelectedIndex(2);
 	}
 
 	private void init() {

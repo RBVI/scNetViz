@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.AbstractCategory;
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
@@ -33,29 +34,18 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
-public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
+public class GXADesign extends AbstractCategory implements StringMatrix {
 	public static String GXA_DESIGN_URI = "https://www.ebi.ac.uk/gxa/sc/experiment/%s/download?fileType=experiment-design";
 	final Logger logger;
-	final GXAExperiment experiment;
-
-	int hdrCols = 1;
 
 	String[][] categories;
 
 	String sortedRow = null;
 
-	int selectedRow = -1;
-
 	SortableTableModel tableModel = null;
 
-	// Maps for means and sizes
-	Map<Object, Integer> sizes = null;
-	Map<Object, double[]> means = null;
-	Map<Object, List<Integer>> catMap = null;
-
 	public GXADesign(final ScNVManager scManager, final GXAExperiment experiment) {
-		super(scManager);
-		this.experiment = experiment;
+		super(scManager, experiment, "Design/Factors", 0, 0);
 		logger = Logger.getLogger(CyUserLog.NAME);
 	}
 
@@ -92,55 +82,6 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 
 	@Override
 	public int getHeaderCols() { return 1; }
-
-	@Override
-	public Map<Object, double[]> getMeans(int category) {
-		if (means != null && category == selectedRow)
-			return means;
-
-		if (sizes == null || category != selectedRow) {
-			getSizes(category);
-		}
-
-		means = new HashMap<>();
-
-		Matrix mtx = experiment.getMatrix();
-		DoubleMatrix dMat = null;
-		IntegerMatrix iMat = null;
-		if (mtx instanceof DoubleMatrix) {
-			dMat = (DoubleMatrix)mtx;
-		} else if (mtx instanceof IntegerMatrix) {
-			iMat = (IntegerMatrix)mtx;
-		}
-
-		for (Object key: catMap.keySet()) {
-			List<Integer> arrays = catMap.get(key);
-			double[] catMean = new double[mtx.getNRows()];
-			for (int row = 0; row < mtx.getNRows(); row++) {
-				double mean = 0.0;
-				for (Integer col: arrays) {
-					if (dMat != null) {
-						mean += dMat.getDoubleValue(row, col)/(double)arrays.size();
-					} else if (iMat != null) {
-						mean += 
-							(double)iMat.getIntegerValue(row, col)/(double)arrays.size();
-					}
-				}
-				catMean[row] = mean;
-			}
-			means.put(key, catMean);
-		}
-		return means;
-	}
-
-	@Override
-	public Map<Object, Integer> getSizes(int category) {
-		if (sizes == null || category != selectedRow) {
-			// This creates the sizes map as a by-product
-			getUniqValues(category);
-		}
-		return sizes;
-	}
 
 	// dDRthreshold is the cutoff for the minimum difference between clusters
 	@Override
@@ -236,24 +177,9 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 		return tableModel;
 	}
 
-	private int getUniqValues(int row) {
-		catMap = new HashMap<>();
-		sizes = new HashMap<>();
-		for (int col = hdrCols; col < nCols; col++) {
-			String v = categories[row][col];
-			if (!catMap.containsKey(v)) {
-				catMap.put(v, new ArrayList<>());
-				sizes.put(v, -1);
-			}
-			catMap.get(v).add(col);
-			sizes.put(v, sizes.get(v)+1);
-		}
-		return catMap.keySet().size();
-	}
-
 	public class GXADesignTableModel extends SortableTableModel {
 		final GXADesign design;
-		final GXAExperiment experiment;
+		final Experiment experiment;
 
 		GXADesignTableModel(final GXADesign design) {
 			super(design.getHeaderCols());

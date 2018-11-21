@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.AbstractCategory;
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
@@ -28,38 +29,23 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
-public class FileCategory extends SimpleMatrix implements Category {
+public class FileCategory extends AbstractCategory implements Category {
 	final Logger logger;
-	final Experiment experiment;
-	final String name;
-	int hdrCols = 1;
 
 	String[][] stringCategories = null;
 	int[][] intCategories = null;
 	double[][] doubleCategories = null;
 
-	Map<Object, Integer> sizes = null;
-	Map<Object, double[]> means = null;
-	// double[][] means = null;
-
 	final String dataType;
 
 	String sortedRow = null;
-
-	int selectedRow = -1;
-
-	Map<Object, List<Integer>> catMap = null;
 
 	SortableTableModel tableModel = null;
 
 	public FileCategory(final ScNVManager scManager, 
 	                    final Experiment experiment, final String name,
 	                    final String type, int nRows, int nCols) {
-		super(scManager);
-		super.nRows = nRows;
-		super.nCols = nCols;
-		this.experiment = experiment;
-		this.name = name;
+		super(scManager, experiment, name, nRows, nCols);
 		logger = Logger.getLogger(CyUserLog.NAME);
 		this.dataType = type;
 		if (dataType.equals("text"))
@@ -107,55 +93,6 @@ public class FileCategory extends SimpleMatrix implements Category {
 		else if (dataType.equals("float"))
 			return new Double(doubleCategories[col][row]);
 		return null;
-	}
-
-	@Override
-	public Map<Object, double[]> getMeans(int category) {
-		if (means != null && category == selectedRow)
-			return means;
-
-		if (sizes == null || category != selectedRow) {
-			getSizes(category);
-		}
-
-		means = new HashMap<>();
-
-		Matrix mtx = experiment.getMatrix();
-		DoubleMatrix dMat = null;
-		IntegerMatrix iMat = null;
-		if (mtx instanceof DoubleMatrix) {
-			dMat = (DoubleMatrix)mtx;
-		} else if (mtx instanceof IntegerMatrix) {
-			iMat = (IntegerMatrix)mtx;
-		}
-
-		for (Object key: catMap.keySet()) {
-			List<Integer> arrays = catMap.get(key);
-			double[] catMean = new double[mtx.getNRows()];
-			for (int row = 0; row < mtx.getNRows(); row++) {
-				double mean = 0.0;
-				for (Integer col: arrays) {
-					if (dMat != null) {
-						mean += dMat.getDoubleValue(row, col)/(double)arrays.size();
-					} else if (iMat != null) {
-						mean += 
-							(double)iMat.getIntegerValue(row, col)/(double)arrays.size();
-					}
-				}
-				catMean[row] = mean;
-			}
-			means.put(key, catMean);
-		}
-		return means;
-	}
-
-	@Override
-	public Map<Object, Integer> getSizes(int category) {
-		if (sizes == null || category != selectedRow) {
-			// This creates the sizes map as a by-product
-			getUniqValues(category);
-		}
-		return sizes;
 	}
 
 	// dDRthreshold is the cutoff for the minimum difference between clusters
@@ -265,21 +202,6 @@ public class FileCategory extends SimpleMatrix implements Category {
 		if (tableModel == null)
 			tableModel = new FileCategoryTableModel(this);
 		return tableModel;
-	}
-
-	private int getUniqValues(int row) {
-		catMap = new HashMap<>();
-		sizes = new HashMap<>();
-		for (int col = hdrCols; col < nCols; col++) {
-			Object v = getValue(row, col);
-			if (!catMap.containsKey(v)) {
-				catMap.put(v, new ArrayList<>());
-				sizes.put(v, -1);
-			}
-			catMap.get(v).add(col);
-			sizes.put(v, sizes.get(v)+1);
-		}
-		return catMap.keySet().size();
 	}
 
 	public class FileCategoryTableModel extends SortableTableModel {

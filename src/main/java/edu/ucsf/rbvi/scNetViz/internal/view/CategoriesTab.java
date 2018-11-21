@@ -35,6 +35,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
+import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
@@ -110,7 +111,9 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			diffExp.setFont(new Font("SansSerif", Font.PLAIN, 10));
       diffExp.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory);
+					DifferentialExpression diffExp = 
+								new DifferentialExpression(manager, currentCategory, currentCategory.getSelectedRow());
+					DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
 					expFrame.addDiffExpContent("Diff Exp", diffETab);
 				}
 			});

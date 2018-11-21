@@ -72,6 +72,18 @@ public interface Category {
 	public Map<Object, double[]> getMeans(int category);
 
 	/**
+	 * Return the dr values for every gene and each unique value
+	 * for a category.
+	 *
+	 * @param category this is the category row we're using to get the means
+	 * @return a Map with the category value as the key and a double array of
+	 * the proportion of this gene in the category
+	 */
+	public Map<Object, double[]> getDr(int category);
+
+	public Map<Object, double[]> getMTDC(int category);
+
+	/**
 	 * Return the sizes (number of assays) for each unique value
 	 * for a category.
 	 *

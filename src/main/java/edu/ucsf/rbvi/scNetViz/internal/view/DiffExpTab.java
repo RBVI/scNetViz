@@ -30,6 +30,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
+import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class DiffExpTab extends JPanel {
@@ -38,11 +39,13 @@ public class DiffExpTab extends JPanel {
 	final ExperimentFrame expFrame;
 	final List<Category> categories;
 	final Category currentCategory;
+	final DifferentialExpression diffExp;
 	final DiffExpTab thisComponent;
 	final Map<Category, List<String>> categoryLabelMap;
 
 	public DiffExpTab(final ScNVManager manager, final Experiment experiment, 
-	                  final ExperimentFrame expFrame, final Category currentCategory) {
+	                  final ExperimentFrame expFrame, final Category currentCategory,
+										final DifferentialExpression diffExp) {
 		this.manager = manager;
 		this.experiment = experiment;
 		this.setLayout(new BorderLayout());
@@ -50,6 +53,7 @@ public class DiffExpTab extends JPanel {
 		this.expFrame = expFrame;
 		this.categories = experiment.getCategories();
 		this.currentCategory = currentCategory;
+		this.diffExp = diffExp;
 		categoryLabelMap = new HashMap<>();
 		for (Category cat: categories) {
 			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
@@ -220,13 +224,14 @@ public class DiffExpTab extends JPanel {
 		topPanel.add(buttonsPanelRight, BorderLayout.EAST);
 		this.add(topPanel, BorderLayout.NORTH);
 
-		/*
-		JTable categoryTable = getCategoryTable(categoriesList.get(0));
+		SortableTableModel tableModel = diffExp.getTableModel();
 
-		categoryPane = new JScrollPane(categoryTable);
-		categoryPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-		this.add(categoryPane, BorderLayout.CENTER);
-		*/
+		JTable diffExpTable = new SimpleTable(manager, tableModel);
+
+		JScrollPane diffExpPane = new JScrollPane(diffExpTable);
+		diffExpPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+		this.add(diffExpPane, BorderLayout.CENTER);
+
 		this.revalidate();
 		this.repaint();
 	}
