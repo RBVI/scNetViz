@@ -24,6 +24,8 @@ import org.cytoscape.work.TaskMonitor;
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.SimpleMatrix;
@@ -37,6 +39,7 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 	final GXAExperiment experiment;
 
 	final Logger logger;
+	int hdrCols = 2;
 
 	// The suggested k value
 	int k = 0;
@@ -53,8 +56,15 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 	// K-sort
 	int sortedK = -1;
 
+	int selectedRow = -1;
+
 	// The Table model
 	GXAClusterTableModel tableModel = null;
+
+	// Maps for means and sizes
+	Map<Object, Integer> sizes = null;
+	Map<Object, double[]> means = null;
+	Map<Object, List<Integer>> catMap = null;
 
 	public GXACluster(final ScNVManager scManager, final GXAExperiment experiment) {
 		super(scManager, null, null);
@@ -136,41 +146,79 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 	}
 
 	@Override
-	public double[][] getMeans() {
-		// Where [][] = [nGenes][nCategories]
-		return null;
+	public Map<Object, double[]> getMeans(int category) {
+		if (means != null && category == selectedRow)
+			return means;
+
+		if (sizes == null || category != selectedRow) {
+			getSizes(category);
+		}
+
+		means = new HashMap<>();
+
+		Matrix mtx = experiment.getMatrix();
+		DoubleMatrix dMat = null;
+		IntegerMatrix iMat = null;
+		if (mtx instanceof DoubleMatrix) {
+			dMat = (DoubleMatrix)mtx;
+		} else if (mtx instanceof IntegerMatrix) {
+			iMat = (IntegerMatrix)mtx;
+		}
+
+		for (Object key: catMap.keySet()) {
+			List<Integer> arrays = catMap.get(key);
+			double[] catMean = new double[mtx.getNRows()];
+			for (int row = 0; row < mtx.getNRows(); row++) {
+				double mean = 0.0;
+				for (Integer col: arrays) {
+					if (dMat != null) {
+						mean += dMat.getDoubleValue(row, col)/(double)arrays.size();
+					} else if (iMat != null) {
+						mean += 
+							(double)iMat.getIntegerValue(row, col)/(double)arrays.size();
+					}
+				}
+				catMean[row] = mean;
+			}
+			means.put(key, catMean);
+		}
+		return means;
 	}
 
 	@Override
-	public int[] getSizes() {
-		// Where [] = [nCategories] and the contents are the number of cells in each category
-		return null;
+	public Map<Object, Integer> getSizes(int category) {
+		if (sizes == null || category != selectedRow) {
+			// This creates the sizes map as a by-product
+			getUniqValues(category);
+		}
+		return sizes;
 	}
+
 
 	// dDRthreshold is the cutoff for the minimum difference between clusters
 	@Override
-	public void filter(double dDRthreshold) {
+	public void filter(int category, double dDRthreshold) {
 		return;
 	}
 
 	// Calculate the logGER between each category and all other categories
 	// This will trigger the calculation of means and sizes
 	@Override
-	public Map<String, double[]> getLogGER() {
+	public Map<String, double[]> getLogGER(int category) {
 		return null;
 	}
 
 	// Calculate the logGER between the category and all other categories
 	// This will trigger the calculation of means and sizes
 	@Override
-	public double[] getLogGER(String category1) {
+	public double[] getLogGER(int category, String category1) {
 		return null;
 	};
 
 	// Calculate the logGER between the two categories
 	// This will trigger the calculation of means and sizes
 	@Override
-	public double[] getLogGER(String category1, String category2) {
+	public double[] getLogGER(int category, String category1, String category2) {
 		return null;
 	}
 
@@ -188,6 +236,8 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 
 		gxaCluster.clusters = new int[ncolumns][nclusters];
 		boolean first = true;
+		List<String> lbl = new ArrayList<>();
+
 		for (String[] line: input) {
 			if (first) {
 				first = false;
@@ -196,8 +246,10 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 				continue;
 			}
 			int thisK = Integer.parseInt(line[1]);
-			if (line[0].equals("TRUE"))
+			lbl.add("k = "+thisK);
+			if (line[0].equals("TRUE")) {
 				gxaCluster.k = thisK;
+			}
 			if (gxaCluster.minK == 0)
 				gxaCluster.minK = thisK;
 
@@ -206,6 +258,10 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 			}
 
 		}
+
+		gxaCluster.setRowLabels(lbl);
+
+		gxaCluster.selectedRow = gxaCluster.k - gxaCluster.minK;
 
 		if (monitor != null) {
 			monitor.showMessage(TaskMonitor.Level.INFO, "Read "+(nclusters-1)+" clusters.  Suggested K = "+gxaCluster.k);
@@ -225,6 +281,21 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 		if (tableModel == null)
 			tableModel = new GXAClusterTableModel(this);
 		return tableModel;
+	}
+
+	private int getUniqValues(int row) {
+		catMap = new HashMap<>();
+		sizes = new HashMap<>();
+		for (int col = hdrCols; col < nCols; col++) {
+			int v = clusters[row][col];
+			if (!catMap.containsKey(v)) {
+				catMap.put(v, new ArrayList<>());
+				sizes.put(v, -1);
+			}
+			catMap.get(v).add(col);
+			sizes.put(v, sizes.get(v)+1);
+		}
+		return catMap.keySet().size();
 	}
 
 	public class GXAClusterTableModel extends SortableTableModel {

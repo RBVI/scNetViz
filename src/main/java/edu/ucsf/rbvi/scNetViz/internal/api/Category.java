@@ -9,29 +9,77 @@ import javax.swing.table.TableModel;
  * categorical values in each subsequent column.
  */
 public interface Category {
+	
+	/**
+	 * Return the category "type", which is actually just
+	 * a string description of the category.
+	 *
+	 * @return category type
+	 */
 	public String getCategoryType();
+
+	/**
+	 * Get the Matrix for this category.
+	 *
+	 * @return category matrix
+	 */
 	public Matrix getMatrix();
+
+	/**
+	 * Return the Experiment that this category refers to
+	 *
+	 * @return the Experiment for this category
+	 */
 	public Experiment getExperiment();
+
+	/**
+	 * Return a table model suitable for visualizing this category
+	 * in a JTable
+	 *
+	 * @return the table model for this category
+	 */
 	public TableModel getTableModel();
+
+	/**
+	 * Return the number of header columns.
+	 *
+	 * @return the number of header columns
+	 */
 	public int getHeaderCols();
 
-	public double[][] getMeans(); // Where [][] = [nGenes][nCategories]
-	public int[] getSizes(); 			// Where [] = [nCategories] and the contents are the number of cells in each category
+	/**
+	 * Return the mean values for every gene and each unique value
+	 * for a category.
+	 *
+	 * @param category this is the category row we're using to get the means
+	 * @return a Map with the category value as the key and a double array of
+	 * means for each gene across that category
+	 */
+	public Map<Object, double[]> getMeans(int category);
+
+	/**
+	 * Return the sizes (number of assays) for each unique value
+	 * for a category.
+	 *
+	 * @param category this is the category row we're using to get the sizes
+	 * @return a Map with the category value as the key and the size as the value
+	 */
+	public Map<Object, Integer> getSizes(int category);
 
 	// dDRthreshold is the cutoff for the minimum difference between clusters
-	public void filter(double dDRthreshold);
+	public void filter(int category, double dDRthreshold);
 
 	// Calculate the logGER between each category and all other categories
 	// This will trigger the calculation of means and sizes
-	public Map<String, double[]> getLogGER();
+	public Map<String, double[]> getLogGER(int category);
 
 	// Calculate the logGER between the category and all other categories
 	// This will trigger the calculation of means and sizes
-	public double[] getLogGER(String category1);
+	public double[] getLogGER(int category, String category1);
 
 	// Calculate the logGER between the two categories
 	// This will trigger the calculation of means and sizes
-	public double[] getLogGER(String category1, String category2);
+	public double[] getLogGER(int category, String category1, String category2);
 
 	public String toString();
 }

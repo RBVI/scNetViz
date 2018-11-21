@@ -1,6 +1,216 @@
 package edu.ucsf.rbvi.scNetViz.internal.view;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.table.TableModel;
+
+import edu.ucsf.rbvi.scNetViz.internal.api.Category;
+import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
+import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class DiffExpTab extends JPanel {
+	final ScNVManager manager;
+	final Experiment experiment;
+	final ExperimentFrame expFrame;
+	final List<Category> categories;
+	final DiffExpTab thisComponent;
+
+	public DiffExpTab(final ScNVManager manager, final Experiment experiment, 
+	                  final ExperimentFrame expFrame) {
+		this.manager = manager;
+		this.experiment = experiment;
+		this.setLayout(new BorderLayout());
+		thisComponent = this;	// Access to inner classes
+		this.expFrame = expFrame;
+		this.categories = experiment.getCategories();
+		init();
+	}
+
+	private void init() {
+
+		JPanel buttonsPanelRight = new JPanel(new GridLayout(4, 1));
+		
+		{
+			JButton viewHeatMap = new JButton("View Heatmap");
+			viewHeatMap.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      viewHeatMap.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+				}
+			});
+
+			JButton export = new JButton("Export CSV");
+			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      export.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+				}
+			});
+
+			JButton viewViolin = new JButton("View Violin Plot");
+			viewViolin.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      viewViolin.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+				}
+			});
+
+			buttonsPanelRight.add(new JLabel(""));
+			buttonsPanelRight.add(viewHeatMap);
+			buttonsPanelRight.add(viewViolin);
+			buttonsPanelRight.add(export);
+		}
+		
+		JPanel buttonsPanelLeft = new JPanel();
+		buttonsPanelLeft.setLayout(new BoxLayout(buttonsPanelLeft, BoxLayout.PAGE_AXIS));
+		{
+			{
+				JLabel experimentLabel = new ExperimentLabel(experiment);
+				experimentLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+				buttonsPanelLeft.add(experimentLabel);
+				buttonsPanelLeft.add(Box.createRigidArea(new Dimension(0, 10)));
+			}
+
+			{
+				JLabel lbl = new JLabel("Comparison:");
+				lbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+				lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+				buttonsPanelLeft.add(lbl);
+			}
+
+			{
+				List<String> labels = new ArrayList<>();
+				for (Category cat: categories)
+					labels.addAll(cat.getMatrix().getRowLabels());
+				JComboBox<String> categoryBox = 
+					new JComboBox<String>(labels.toArray(new String[1]));
+
+ 	     	categoryBox.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+					}
+				});
+			 	Dimension size = new Dimension(250,25);
+				categoryBox.setPreferredSize(size);
+				categoryBox.setMaximumSize(size);
+				categoryBox.setSize(size);
+				categoryBox.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				categoryBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+				buttonsPanelLeft.add(categoryBox);
+			}
+
+			{
+				JComboBox comparison = new JComboBox();
+ 	     comparison.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+					}
+				});
+			 	Dimension size = new Dimension(250,25);
+				comparison.setPreferredSize(size);
+				comparison.setMaximumSize(size);
+				comparison.setSize(size);
+				comparison.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				comparison.setAlignmentX(Component.LEFT_ALIGNMENT);
+				buttonsPanelLeft.add(comparison);
+			}
+		}
+
+		JPanel centerPanel = new JPanel();
+		centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.PAGE_AXIS));
+		{
+			centerPanel.add(Box.createVerticalGlue());
+			{
+				JLabel lbl = new JLabel("Network analysis:");
+				lbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+				lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+				centerPanel.add(lbl);
+			}
+
+			JPanel settingsPanel = new JPanel();
+			settingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+			settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.LINE_AXIS));
+			{
+				settingsPanel.add(Box.createRigidArea(new Dimension(5,0)));
+				JLabel pValueLbl = new JLabel("P-value");
+				pValueLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+				pValueLbl.setMaximumSize(new Dimension(50,35));
+				settingsPanel.add(pValueLbl);
+			}
+
+			{
+				JTextField pValue = new JTextField("0.05");
+				pValue.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				pValue.setMaximumSize(new Dimension(50,35));
+				settingsPanel.add(pValue);
+				settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			}
+
+			{
+				JLabel log2FCLbl = new JLabel("Log2FC");
+				log2FCLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+				log2FCLbl.setMaximumSize(new Dimension(50,35));
+				settingsPanel.add(log2FCLbl);
+			}
+
+			{
+				JTextField log2FC = new JTextField("1.0");
+				log2FC.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				log2FC.setMaximumSize(new Dimension(50,35));
+				settingsPanel.add(log2FC);
+				settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			}
+
+			{
+				JLabel topGenesLbl = new JLabel("Top n genes");
+				topGenesLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+				topGenesLbl.setMaximumSize(new Dimension(70,35));
+				settingsPanel.add(topGenesLbl);
+			}
+
+			{
+				JTextField topGenes = new JTextField("25");
+				topGenes.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				topGenes.setMaximumSize(new Dimension(50,35));
+				settingsPanel.add(topGenes);
+			}
+
+			centerPanel.add(settingsPanel);
+
+		}
+
+
+		JPanel topPanel = new JPanel(new BorderLayout());
+		topPanel.add(buttonsPanelLeft, BorderLayout.WEST);
+		topPanel.add(centerPanel, BorderLayout.CENTER);
+		topPanel.add(buttonsPanelRight, BorderLayout.EAST);
+		this.add(topPanel, BorderLayout.NORTH);
+
+		/*
+		JTable categoryTable = getCategoryTable(categoriesList.get(0));
+
+		categoryPane = new JScrollPane(categoryTable);
+		categoryPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+		this.add(categoryPane, BorderLayout.CENTER);
+		*/
+		this.revalidate();
+		this.repaint();
+	}
 }
