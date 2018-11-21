@@ -110,7 +110,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			diffExp.setFont(new Font("SansSerif", Font.PLAIN, 10));
       diffExp.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame);
+					DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory);
 					expFrame.addDiffExpContent("Diff Exp", diffETab);
 				}
 			});

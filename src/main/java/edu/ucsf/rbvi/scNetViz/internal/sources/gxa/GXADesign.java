@@ -80,6 +80,9 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 	@Override
 	public String getValue(int row, int col) { return categories[row][col];}
 
+	public int getSelectedRow() { return selectedRow; }
+	public void setSelectedRow(int selectedRow) { this.selectedRow = selectedRow; }
+
 	@Override
 	public String getValue(String rowLabel, String colLabel) { 
 		int row = rowLabels.indexOf(rowLabel);
@@ -264,6 +267,12 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 
 		@Override
 		public int getColumnCount() { return design.getNCols(); }
+
+		@Override
+		public int getSelectedRow() { return design.getSelectedRow(); }
+
+		@Override
+		public void setSelectedRow(int selectedRow) { design.setSelectedRow(selectedRow); }
 
 		@Override
 		public String getColumnName(int column) {

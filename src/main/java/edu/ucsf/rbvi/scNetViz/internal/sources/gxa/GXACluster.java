@@ -132,6 +132,9 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 	public int getK() { return k; }
 	public int getSortedK() { return sortedK; }
 
+	public int getSelectedRow() { return selectedRow; }
+	public void setSelectedRow(int selectedRow) { this.selectedRow = selectedRow; }
+
 	public Map<Integer,List<String>> getClusterList(int kClust) {
 		Map<Integer, List<String>> clusterMap = new HashMap<>();
 		int[] clusterArray = getCluster(kClust);
@@ -313,6 +316,12 @@ public class GXACluster extends SimpleMatrix implements Category, IntegerMatrix 
 
 		@Override
 		public int getColumnCount() { return cluster.getNCols(); }
+
+		@Override
+		public int getSelectedRow() { return cluster.getSelectedRow(); }
+
+		@Override
+		public void setSelectedRow(int selectedRow) { cluster.setSelectedRow(selectedRow); }
 
 		@Override
 		public String getColumnName(int column) {

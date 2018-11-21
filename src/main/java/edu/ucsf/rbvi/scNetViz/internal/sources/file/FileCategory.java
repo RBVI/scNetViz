@@ -258,6 +258,9 @@ public class FileCategory extends SimpleMatrix implements Category {
 
 	public String getSortedRow() { return sortedRow; }
 
+	public int getSelectedRow() { return selectedRow; }
+	public void setSelectedRow(int selectedRow) { this.selectedRow = selectedRow; }
+
 	public SortableTableModel getTableModel() {
 		if (tableModel == null)
 			tableModel = new FileCategoryTableModel(this);
@@ -342,6 +345,12 @@ public class FileCategory extends SimpleMatrix implements Category {
 			sortedRow = strip(category.getRowLabel(row));
 			super.sortColumns(row);
 		}
+
+		@Override
+		public int getSelectedRow() { return category.getSelectedRow(); }
+
+		@Override
+		public void setSelectedRow(int selectedRow) { category.setSelectedRow(selectedRow); }
 
 		public String strip(String str) {
 			return str.replaceAll("^\"|\"$", "");

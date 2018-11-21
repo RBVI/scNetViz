@@ -48,6 +48,20 @@ public interface Category {
 	public int getHeaderCols();
 
 	/**
+	 * Get the currently selected row (if any)
+	 *
+	 * @return the row number of the selected row
+	 */
+	public int getSelectedRow();
+
+	/**
+	 * Set the currently selected row
+	 *
+	 * @param selectedRow
+	 */
+	public void setSelectedRow(int selectedRow);
+
+	/**
 	 * Return the mean values for every gene and each unique value
 	 * for a category.
 	 *

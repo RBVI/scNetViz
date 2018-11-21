@@ -10,7 +10,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -35,16 +37,23 @@ public class DiffExpTab extends JPanel {
 	final Experiment experiment;
 	final ExperimentFrame expFrame;
 	final List<Category> categories;
+	final Category currentCategory;
 	final DiffExpTab thisComponent;
+	final Map<Category, List<String>> categoryLabelMap;
 
 	public DiffExpTab(final ScNVManager manager, final Experiment experiment, 
-	                  final ExperimentFrame expFrame) {
+	                  final ExperimentFrame expFrame, final Category currentCategory) {
 		this.manager = manager;
 		this.experiment = experiment;
 		this.setLayout(new BorderLayout());
 		thisComponent = this;	// Access to inner classes
 		this.expFrame = expFrame;
 		this.categories = experiment.getCategories();
+		this.currentCategory = currentCategory;
+		categoryLabelMap = new HashMap<>();
+		for (Category cat: categories) {
+			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
+		}
 		init();
 	}
 
@@ -99,10 +108,18 @@ public class DiffExpTab extends JPanel {
 
 			{
 				List<String> labels = new ArrayList<>();
-				for (Category cat: categories)
-					labels.addAll(cat.getMatrix().getRowLabels());
+				for (List<String> lbl: categoryLabelMap.values())
+					labels.addAll(lbl);
+
+				int selectedRow = currentCategory.getSelectedRow();
+				String selectedLabel = categoryLabelMap.get(currentCategory).get(selectedRow);
+
 				JComboBox<String> categoryBox = 
 					new JComboBox<String>(labels.toArray(new String[1]));
+
+				categoryBox.setSelectedItem(selectedLabel);
+
+				// TODO: set our default value using currentCategory and the selectedRow
 
  	     	categoryBox.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
