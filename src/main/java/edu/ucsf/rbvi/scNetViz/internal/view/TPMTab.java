@@ -63,7 +63,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 
 		JLabel experimentLabel = new ExperimentLabel(experiment);
 
-		JPanel buttonsPanelRight = new JPanel(new GridLayout(1, 3));
+		JPanel buttonsPanelRight = new JPanel();
 		{
 			JButton tsne = new JButton("View tSNE");
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));

@@ -21,8 +21,11 @@ import org.apache.log4j.Logger;
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.AbstractCategory;
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.StringMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
@@ -31,10 +34,9 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
-public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
+public class GXADesign extends AbstractCategory implements StringMatrix {
 	public static String GXA_DESIGN_URI = "https://www.ebi.ac.uk/gxa/sc/experiment/%s/download?fileType=experiment-design";
 	final Logger logger;
-	final GXAExperiment experiment;
 
 	String[][] categories;
 
@@ -43,8 +45,7 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 	SortableTableModel tableModel = null;
 
 	public GXADesign(final ScNVManager scManager, final GXAExperiment experiment) {
-		super(scManager);
-		this.experiment = experiment;
+		super(scManager, experiment, "Design/Factors", 0, 0);
 		logger = Logger.getLogger(CyUserLog.NAME);
 	}
 
@@ -69,6 +70,9 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 	@Override
 	public String getValue(int row, int col) { return categories[row][col];}
 
+	public int getSelectedRow() { return selectedRow; }
+	public void setSelectedRow(int selectedRow) { this.selectedRow = selectedRow; }
+
 	@Override
 	public String getValue(String rowLabel, String colLabel) { 
 		int row = rowLabels.indexOf(rowLabel);
@@ -79,42 +83,30 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 	@Override
 	public int getHeaderCols() { return 1; }
 
-	@Override
-	public double[][] getMeans() {
-		// Where [][] = [nGenes][nCategories]
-		return null;
-	}
-
-	@Override
-	public int[] getSizes() {
-		// Where [] = [nCategories] and the contents are the number of cells in each category
-		return null;
-	}
-
 	// dDRthreshold is the cutoff for the minimum difference between clusters
 	@Override
-	public void filter(double dDRthreshold) {
+	public void filter(int category, double dDRthreshold) {
 		return;
 	}
 
 	// Calculate the logGER between each category and all other categories
 	// This will trigger the calculation of means and sizes
 	@Override
-	public Map<String, double[]> getLogGER() {
+	public Map<String, double[]> getLogGER(int category) {
 		return null;
 	}
 
 	// Calculate the logGER between the category and all other categories
 	// This will trigger the calculation of means and sizes
 	@Override
-	public double[] getLogGER(String category1) {
+	public double[] getLogGER(int category, String category1) {
 		return null;
 	};
 
 	// Calculate the logGER between the two categories
 	// This will trigger the calculation of means and sizes
 	@Override
-	public double[] getLogGER(String category1, String category2) {
+	public double[] getLogGER(int category, String category1, String category2) {
 		return null;
 	}
 
@@ -128,7 +120,7 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 		gxaDesign.nCols = input.size();
 		gxaDesign.nRows = input.get(0).length-1;
 
-		gxaDesign.setRowLabels(Arrays.asList(input.get(0)));
+		gxaDesign.setRowLabels(stripArray(input.get(0), 1));
 		gxaDesign.categories = new String[gxaDesign.nRows][gxaDesign.nCols];
 		List<String> colLabels = new ArrayList<String>(gxaDesign.nCols);
 		colLabels.add("Category");
@@ -151,6 +143,15 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 		LogUtils.log(monitor, TaskMonitor.Level.INFO, "Read "+gxaDesign.nRows+
 			                    " rows with "+gxaDesign.nCols+" columns");
 		return gxaDesign;
+	}
+
+	static private List<String> stripArray(String[] array, int offset) {
+		List<String> result = new ArrayList<>();
+		for (int i = offset; i < array.length; i++) {
+			String str = array[i];
+			result.add(str.replaceAll("^\"|\"$", ""));
+		}
+		return result;
 	}
 
 	public Map<String,List<String>> getClusterList(String factor) {
@@ -178,7 +179,7 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 
 	public class GXADesignTableModel extends SortableTableModel {
 		final GXADesign design;
-		final GXAExperiment experiment;
+		final Experiment experiment;
 
 		GXADesignTableModel(final GXADesign design) {
 			super(design.getHeaderCols());
@@ -192,6 +193,12 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 
 		@Override
 		public int getColumnCount() { return design.getNCols(); }
+
+		@Override
+		public int getSelectedRow() { return design.getSelectedRow(); }
+
+		@Override
+		public void setSelectedRow(int selectedRow) { design.setSelectedRow(selectedRow); }
 
 		@Override
 		public String getColumnName(int column) {
@@ -214,7 +221,7 @@ public class GXADesign extends SimpleMatrix implements Category, StringMatrix {
 		@Override
 		public Object getValueAt(int row, int column) {
 			if (column == 0) {
-				return strip(design.getRowLabel(row+1));
+				return strip(design.getRowLabel(row));
 			}
 
 			if (columnIndex != null)

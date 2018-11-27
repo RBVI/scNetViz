@@ -10,6 +10,9 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
@@ -21,6 +24,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 public class SimpleTable extends JTable {
 	final ScNVManager manager;
 	final SortableTableModel tableModel;
+	final SimpleTable thisComponent;
 
 	static Color alternateColor = new Color(234,255,234);
 
@@ -28,6 +32,7 @@ public class SimpleTable extends JTable {
 		super(tableModel);
 		this.manager = manager;
 		this.tableModel = tableModel;
+		this.thisComponent = this;
 
 		this.setAutoCreateRowSorter(true);
 		this.setAutoCreateColumnsFromModel(true);
@@ -54,6 +59,16 @@ public class SimpleTable extends JTable {
 				if (mouseEvent.getClickCount() == 2 && table.getSelectedRow() != -1) {
 					tableModel.sortColumns(row);
 				}
+			}
+		});
+
+		this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		ListSelectionModel selectionModel = getSelectionModel();
+
+		selectionModel.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e) {
+				int row = thisComponent.getSelectedRow();
+				tableModel.setSelectedRow(thisComponent.convertRowIndexToModel(row));
 			}
 		});
 

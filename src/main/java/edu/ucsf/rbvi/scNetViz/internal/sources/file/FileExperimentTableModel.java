@@ -25,6 +25,12 @@ public class FileExperimentTableModel extends SortableTableModel {
 	public int getColumnCount() { return matrixMarket.getNCols(); }
 
 	@Override
+	public int getSelectedRow() { return 0; }
+
+	@Override
+	public void setSelectedRow(int selectedRow) {  }
+
+	@Override
 	public String getColumnName(int column) {
 		if (column == 0) {
 			return matrixMarket.isTransposed() ? "Barcodes" : "Genes";

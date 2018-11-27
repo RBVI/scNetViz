@@ -16,8 +16,11 @@ import org.apache.log4j.Logger;
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.AbstractCategory;
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.StringMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
@@ -26,11 +29,8 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
-public class FileCategory extends SimpleMatrix implements Category {
+public class FileCategory extends AbstractCategory implements Category {
 	final Logger logger;
-	final Experiment experiment;
-	final String name;
-	int hdrCols = 1;
 
 	String[][] stringCategories = null;
 	int[][] intCategories = null;
@@ -42,13 +42,10 @@ public class FileCategory extends SimpleMatrix implements Category {
 
 	SortableTableModel tableModel = null;
 
-	public FileCategory(final ScNVManager scManager, final Experiment experiment, final String name,
+	public FileCategory(final ScNVManager scManager, 
+	                    final Experiment experiment, final String name,
 	                    final String type, int nRows, int nCols) {
-		super(scManager);
-		super.nRows = nRows;
-		super.nCols = nCols;
-		this.experiment = experiment;
-		this.name = name;
+		super(scManager, experiment, name, nRows, nCols);
 		logger = Logger.getLogger(CyUserLog.NAME);
 		this.dataType = type;
 		if (dataType.equals("text"))
@@ -98,42 +95,30 @@ public class FileCategory extends SimpleMatrix implements Category {
 		return null;
 	}
 
-	@Override
-	public double[][] getMeans() {
-		// Where [][] = [nGenes][nCategories]
-		return null;
-	}
-
-	@Override
-	public int[] getSizes() {
-		// Where [] = [nCategories] and the contents are the number of cells in each category
-		return null;
-	}
-
 	// dDRthreshold is the cutoff for the minimum difference between clusters
 	@Override
-	public void filter(double dDRthreshold) {
+	public void filter(int category, double dDRthreshold) {
 		return;
 	}
 
 	// Calculate the logGER between each category and all other categories
 	// This will trigger the calculation of means and sizes
 	@Override
-	public Map<String, double[]> getLogGER() {
+	public Map<String, double[]> getLogGER(int category) {
 		return null;
 	}
 
 	// Calculate the logGER between the category and all other categories
 	// This will trigger the calculation of means and sizes
 	@Override
-	public double[] getLogGER(String category1) {
+	public double[] getLogGER(int category, String category1) {
 		return null;
 	};
 
 	// Calculate the logGER between the two categories
 	// This will trigger the calculation of means and sizes
 	@Override
-	public double[] getLogGER(String category1, String category2) {
+	public double[] getLogGER(int category, String category1, String category2) {
 		return null;
 	}
 
@@ -210,6 +195,9 @@ public class FileCategory extends SimpleMatrix implements Category {
 
 	public String getSortedRow() { return sortedRow; }
 
+	public int getSelectedRow() { return selectedRow; }
+	public void setSelectedRow(int selectedRow) { this.selectedRow = selectedRow; }
+
 	public SortableTableModel getTableModel() {
 		if (tableModel == null)
 			tableModel = new FileCategoryTableModel(this);
@@ -279,6 +267,12 @@ public class FileCategory extends SimpleMatrix implements Category {
 			sortedRow = strip(category.getRowLabel(row));
 			super.sortColumns(row);
 		}
+
+		@Override
+		public int getSelectedRow() { return category.getSelectedRow(); }
+
+		@Override
+		public void setSelectedRow(int selectedRow) { category.setSelectedRow(selectedRow); }
 
 		public String strip(String str) {
 			return str.replaceAll("^\"|\"$", "");

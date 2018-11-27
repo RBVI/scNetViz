@@ -17,6 +17,8 @@ public abstract class SortableTableModel extends AbstractTableModel {
 		this.hdrCols = hdrCols;
 	}
 
+	abstract public int getSelectedRow();
+	abstract public void setSelectedRow(int selectedRow);
 
 	public void sortColumns(int row) {
 		Integer tmpIndex[] = new Integer[getColumnCount()];

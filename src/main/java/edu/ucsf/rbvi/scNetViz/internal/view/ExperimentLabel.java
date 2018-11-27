@@ -13,8 +13,9 @@ public class ExperimentLabel extends JLabel {
 	}
 
 	private static String createLabelText(Source source, Metadata meta) {
-		String title = "<html><span style=\"font-size:10pt\">"+source.toString()+" <b>"+meta.get(Metadata.ACCESSION)+"</b></span><br/>";
-		title += "<span style=\"font-size:10pt\"><i>"+meta.get(Metadata.DESCRIPTION)+"</i></span></html>";
+		String title = "<html><span style=\"font-size:10pt\">"+
+						source.toString()+" <b>"+meta.get(Metadata.ACCESSION)+"</b></span>";
+		title += "<div style=\"font-size:10pt;width:250px\"><i>"+meta.get(Metadata.DESCRIPTION)+"</i></div></html>";
 		return title;
 	}
 }

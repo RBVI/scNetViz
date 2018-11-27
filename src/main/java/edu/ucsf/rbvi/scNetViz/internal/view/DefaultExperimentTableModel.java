@@ -26,6 +26,12 @@ public class DefaultExperimentTableModel extends SortableTableModel {
 	public int getColumnCount() { return matrix.getNCols(); }
 
 	@Override
+	public int getSelectedRow() { return 0; }
+
+	@Override
+	public void setSelectedRow(int selectedRow) {  }
+
+	@Override
 	public String getColumnName(int column) {
 		if (column == 0) {
 			return matrix.isTransposed() ? "Barcodes" : "Genes";
