@@ -64,7 +64,7 @@ public class GXASource implements Source {
 		{
 			Properties props = new Properties();
 			props.put(TITLE, "Browse Single Cell Expression Atlas");
-			props.put(PREFERRED_MENU, "Apps.ScNetViz");
+			props.put(PREFERRED_MENU, "Apps.scNetViz");
 			props.setProperty(IN_TOOL_BAR, "TRUE");
 			props.setProperty(TOOL_BAR_GRAVITY, "100f");
 			props.setProperty(TOOLTIP, "Show Experiments Table");

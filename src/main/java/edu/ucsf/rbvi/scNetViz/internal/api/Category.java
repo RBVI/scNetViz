@@ -76,9 +76,11 @@ public interface Category {
 	 * for a category.
 	 *
 	 * @param category this is the category row we're using to get the means
-	 * @return a Map with the category value as the key and a double array of
-	 * the proportion of this gene in the category
+	 * @return a Map with the category value as the key and an int array of
+	 * the number of cells that have non-zero values for each gene in this category
 	 */
+	public Map<Object, int[]> getCounts(int category);
+
 	public Map<Object, double[]> getDr(int category);
 
 	public Map<Object, double[]> getMTDC(int category);
@@ -97,15 +99,15 @@ public interface Category {
 
 	// Calculate the logGER between each category and all other categories
 	// This will trigger the calculation of means and sizes
-	public Map<String, double[]> getLogGER(int category);
+	public Map<Object, Map<String, double[]>> getLogGER(int category, double dDRthreshold);
 
 	// Calculate the logGER between the category and all other categories
 	// This will trigger the calculation of means and sizes
-	public double[] getLogGER(int category, String category1);
+	public Map<String, double[]> getLogGER(int category, Object category1, double dDRthreshold);
 
 	// Calculate the logGER between the two categories
 	// This will trigger the calculation of means and sizes
-	public double[] getLogGER(int category, String category1, String category2);
+	public double[] getLogGER(int category, Object category1, Object category2, double dDRthreshold);
 
 	public String toString();
 }

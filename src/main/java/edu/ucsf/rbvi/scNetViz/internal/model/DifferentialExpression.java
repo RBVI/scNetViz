@@ -3,7 +3,7 @@ package edu.ucsf.rbvi.scNetViz.internal.model;
 /**
  * Approach to calculating differential expression
  *
- * 1) Filter all genes to remove all genes that don't have at least a 15% dDR (difference in detection rate)
+ * 1) Filter all genes to remove all genes that don't have at least a 10% dDR (difference in detection rate)
  * 
  * 2) Calculate the differential expression between each gene in each cluster and every other cluster.  
  *    This is done by testing for differential gene expression for all genes above the dDR threshold in 
@@ -44,6 +44,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		Map<Object, double[]> means = category.getMeans(categoryRow);
 		Map<Object, double[]> drMap = category.getDr(categoryRow);
 		Map<Object, double[]> mtdcMap = category.getMTDC(categoryRow);
+		Map<Object, Map<String, double[]>> logGERMap = category.getLogGER(categoryRow, 0.099);
 		super.nCols = means.keySet().size()*6; // 6 columns for each category/cluster
 
 		setRowLabels(experiment.getMatrix().getRowLabels());
@@ -69,14 +70,19 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			double[] mean = means.get(cat);
 			double[] drs = drMap.get(cat);
 			double[] mtdc = mtdcMap.get(cat);
+			double[] logGER = logGERMap.get(cat).get("logFC");
+			double[] pValue = logGERMap.get(cat).get("pValue");
+
 			for (int row = 0; row < nRows; row++) {
 				// System.out.println("row: "+row+" = "+mean[row]);
 				matrix[col][row] = mean[row];
 				matrix[col+1][row] = drs[row];
 				matrix[col+2][row] = mtdc[row];
+				matrix[col+3][row] = logGER[row];
+				matrix[col+4][row] = pValue[row];
 			}
-			Arrays.fill(matrix[col+3], Double.NaN);
-			Arrays.fill(matrix[col+4], Double.NaN);
+			// Arrays.fill(matrix[col+3], Double.NaN);
+			// Arrays.fill(matrix[col+4], Double.NaN);
 			Arrays.fill(matrix[col+5], Double.NaN);
 			col += 6;
 		}
