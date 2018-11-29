@@ -69,6 +69,9 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	public String toString() { return "Cluster";}
 
 	@Override
+	public String mkLabel(Object cat) { return "Cluster "+cat.toString();}
+
+	@Override
 	public String getCategoryType() { return "Cluster";}
 
 	@Override

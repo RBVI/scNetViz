@@ -162,13 +162,13 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	}
 
 	@Override
-	public Map<Object, Map<String,double[]>> getLogGER(int category, double dDRthreshold) {
+	public Map<Object, Map<String,double[]>> getLogGER(int category, double dDRthreshold, double log2FCCutoff) {
 		if (means == null || category == selectedRow)
 			getMeans(category);
 
 		Map<Object, Map<String,double[]>> logGER = new HashMap<>();
 		for (Object cat: means.keySet()) {
-			logGER.put(cat, getLogGER(category, cat, dDRthreshold));
+			logGER.put(cat, getLogGER(category, cat, dDRthreshold, log2FCCutoff));
 		}
 
 		return logGER;
@@ -176,7 +176,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	}
 
 	@Override
-	public Map<String, double[]> getLogGER(int category, Object category1, double dDRthreshold) {
+	public Map<String, double[]> getLogGER(int category, Object category1, double dDRthreshold, double log2FCCutoff) {
 		if (means == null || category == selectedRow)
 			getMeans(category);
 
@@ -230,7 +230,10 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			logFC[row] = Math.log(catMean[row]/(otherMean[row]/otherSize))/log2;
 
 			// Calculate the MannWhitneyUTest
-			pValue[row] = mannWhitney(mwTest, row, cat1Columns, otherCatColumns);
+			if (Math.abs(logFC[row]) > log2FCCutoff)
+				pValue[row] = mannWhitney(mwTest, row, cat1Columns, otherCatColumns);
+			else
+				pValue[row] = Double.NaN;
 		}
 		Map<String, double[]> returnMap = new HashMap<>();
 		returnMap.put("logFC", logFC);
@@ -239,7 +242,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	}
 
 	@Override
-	public double[] getLogGER(int category, Object category1, Object category2, double dDRthreshold) {
+	public double[] getLogGER(int category, Object category1, Object category2, double dDRthreshold, double log2FCCutoff) {
 		if (means == null || category == selectedRow)
 			getMeans(category);
 
@@ -257,6 +260,9 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			if (thisDr[row] < dDRthreshold)
 				continue;
 			logFC[row] = Math.log(catMean[row]/(otherMean[row]))/log2;
+
+			if (Math.abs(logFC[row]) <= log2FCCutoff)
+				logFC[row] = Double.NaN;
 		}
 		return logFC;
 	}

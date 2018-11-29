@@ -15,6 +15,7 @@ package edu.ucsf.rbvi.scNetViz.internal.model;
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +29,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	final Category category;
 	final Experiment experiment;
 	int categoryRow;
+	double dDRCutoff;
+	double log2FCCutoff;
 	final double[][] matrix;
 
 	SortableTableModel tableModel = null;
@@ -35,16 +38,19 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	int nGenes;
 	int nCategories;
 
-	public DifferentialExpression(final ScNVManager manager, final Category category, int categoryRow) {
+	public DifferentialExpression(final ScNVManager manager, final Category category, int categoryRow,
+	                              double dDRCutoff, double log2FCCutoff) {
 		super(manager);
 		this.category = category;
 		this.categoryRow = categoryRow;
+		this.dDRCutoff = dDRCutoff;
+		this.log2FCCutoff = log2FCCutoff;
 		this.experiment = category.getExperiment();
 		super.nRows = experiment.getMatrix().getNRows();
 		Map<Object, double[]> means = category.getMeans(categoryRow);
 		Map<Object, double[]> drMap = category.getDr(categoryRow);
 		Map<Object, double[]> mtdcMap = category.getMTDC(categoryRow);
-		Map<Object, Map<String, double[]>> logGERMap = category.getLogGER(categoryRow, 0.099);
+		Map<Object, Map<String, double[]>> logGERMap = category.getLogGER(categoryRow, dDRCutoff-.001, log2FCCutoff);
 		super.nCols = means.keySet().size()*6; // 6 columns for each category/cluster
 
 		setRowLabels(experiment.getMatrix().getRowLabels());
@@ -53,12 +59,12 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		List<String> colHeaders = new ArrayList<>();
 		colHeaders.add("Gene");
 		for (Object cat: means.keySet()) {
-			colHeaders.add(cat.toString()+" MTC");
-			colHeaders.add(cat.toString()+" DR");
-			colHeaders.add(cat.toString()+" MDTC");
-			colHeaders.add(cat.toString()+" logGER");
-			colHeaders.add(cat.toString()+" pValue");
-			colHeaders.add(cat.toString()+" qValue");
+			colHeaders.add(category.mkLabel(cat)+" MTC");
+			colHeaders.add(category.mkLabel(cat)+" DR");
+			colHeaders.add(category.mkLabel(cat)+" MDTC");
+			colHeaders.add(category.mkLabel(cat)+" logGER");
+			colHeaders.add(category.mkLabel(cat)+" pValue");
+			colHeaders.add(category.mkLabel(cat)+" FDR");
 		}
 		setColLabels(colHeaders);
 
@@ -72,6 +78,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			double[] mtdc = mtdcMap.get(cat);
 			double[] logGER = logGERMap.get(cat).get("logFC");
 			double[] pValue = logGERMap.get(cat).get("pValue");
+			double[] FDR = adjustPValues(pValue);
 
 			for (int row = 0; row < nRows; row++) {
 				// System.out.println("row: "+row+" = "+mean[row]);
@@ -80,10 +87,9 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 				matrix[col+2][row] = mtdc[row];
 				matrix[col+3][row] = logGER[row];
 				matrix[col+4][row] = pValue[row];
+				matrix[col+5][row] = FDR[row];
 			}
-			// Arrays.fill(matrix[col+3], Double.NaN);
-			// Arrays.fill(matrix[col+4], Double.NaN);
-			Arrays.fill(matrix[col+5], Double.NaN);
+			// Arrays.fill(matrix[col+5], Double.NaN);
 			col += 6;
 		}
 	}
@@ -105,6 +111,57 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 
 	public void calculateDiffExp() {
 	}
+
+	private int countValues(double[] array) {
+		int count = 0;
+		for (int index = 0; index < array.length; index++) {
+			if (!Double.isNaN(array[index]))
+				count++;
+		}
+		return count;
+	}
+
+	// Simple Bonferroni adjustment
+	private double adjustPValue(double pValue, int testCount) {
+		return Math.min(1.0, pValue*(double)testCount);
+	}
+
+	// Calculate the FDR using Benjamini Hochberg
+	private double[] adjustPValues(double[] pValues) {
+		double[] adjustedPvalues = new double[pValues.length];
+		Arrays.fill(adjustedPvalues, Double.NaN);
+		int testCount = countValues(pValues);
+		Integer[] sortIndex = indexSort(pValues, pValues.length);
+		/*
+		for (int index = (pValues.length-testCount); index < pValues.length; index++) {
+			System.out.println("pValues["+sortIndex[index]+"] = "+pValues[sortIndex[index]]);
+		}
+		*/
+
+		for (int i = pValues.length-1; i >=(pValues.length-testCount); i--) {
+			int index = sortIndex[i];
+			if (i == pValues.length-1) {
+				adjustedPvalues[index] = pValues[index];
+			} else {
+				double unadjustedPvalue = pValues[index];
+				int divideByM = i+1-pValues.length+testCount;
+				double left = adjustedPvalues[sortIndex[i+1]];
+				double right = (testCount / (double) divideByM) * unadjustedPvalue;
+				adjustedPvalues[index] = Math.min(left, right);
+			}
+		}
+
+		return adjustedPvalues;
+	}
+
+	public Integer[] indexSort(double[] tData, int nVals) {
+    Integer[] index = new Integer[nVals];
+    for (int i = 0; i < nVals; i++) index[i] = i;
+    IndexComparator iCompare = new IndexComparator(tData);
+    Arrays.sort(index, iCompare);
+    return index;
+  }
+
 
 	@Override
 	public String getMatrixType() { return "Simple String Matrix";}
@@ -149,7 +206,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		}
 
 		@Override
-		public int getColumnCount() { return diffExp.getNCols(); }
+		public int getColumnCount() { return diffExp.getNCols()+1; }
 
 		@Override
 		public String getColumnName(int column) {
@@ -201,4 +258,40 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			return str.replaceAll("^\"|\"$", "");
 		}
 	}
+
+	  private static class IndexComparator implements Comparator<Integer> {
+    double[] data = null;
+    int[] intData = null;
+    String[] stringData = null;
+
+    public IndexComparator(String[] data) { this.stringData = data; }
+
+    public IndexComparator(double[] data) { this.data = data; }
+
+    public IndexComparator(int[] data) { this.intData = data; }
+
+    public int compare(Integer o1, Integer o2) {
+      if (data != null) {
+				// NaN handling
+				if (Double.isNaN(data[o1]) && Double.isNaN(data[o2]))
+					return 0;
+				if (Double.isNaN(data[o1]))
+					return -1;
+				if (Double.isNaN(data[o2]))
+					return 1;
+
+        if (data[o1] < data[o2]) return -1;
+        if (data[o1] > data[o2]) return 1;
+        return 0;
+      } else if (intData != null) {
+        if (intData[o1] < intData[o2]) return -1;
+        if (intData[o1] > intData[o2]) return 1;
+        return 0;
+      } else if (stringData != null) {
+        return stringData[o1].compareTo(stringData[o2]);
+      }
+      return 0;
+    }
+  }
+
 }

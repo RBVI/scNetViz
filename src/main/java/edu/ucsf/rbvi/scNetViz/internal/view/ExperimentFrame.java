@@ -55,7 +55,7 @@ public class ExperimentFrame extends JFrame {
 
 	private void init() {
 		tabbedPane = new JTabbedPane();
-		tabbedPane.setPreferredSize(new Dimension(900, 500));
+		tabbedPane.setPreferredSize(new Dimension(1100, 500));
 		tabbedPane.setFont(new Font("SansSerif", Font.BOLD, 10));
 		this.add(tabbedPane, BorderLayout.CENTER);
 
