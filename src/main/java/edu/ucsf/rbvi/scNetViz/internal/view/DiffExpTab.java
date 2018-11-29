@@ -124,9 +124,11 @@ public class DiffExpTab extends JPanel {
 				categoryBox.setSelectedItem(selectedLabel);
 
 				// TODO: set our default value using currentCategory and the selectedRow
-
  	     	categoryBox.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+						// Reset the selected row
+						// Recalculate
+						// Refresh
 					}
 				});
 			 	Dimension size = new Dimension(250,25);
@@ -139,8 +141,8 @@ public class DiffExpTab extends JPanel {
 			}
 
 			{
-				JComboBox comparison = new JComboBox();
- 	     comparison.addActionListener(new ActionListener() {
+				JComboBox comparison = new JComboBox(getComparisons());
+				comparison.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 					}
 				});
@@ -211,6 +213,17 @@ public class DiffExpTab extends JPanel {
 				topGenes.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				topGenes.setMaximumSize(new Dimension(50,35));
 				settingsPanel.add(topGenes);
+				settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			}
+
+			{
+				JButton createNetwork = new JButton("Create Network");
+				createNetwork.setFont(new Font("SansSerif", Font.BOLD, 10));
+				createNetwork.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+					}
+				});
+				settingsPanel.add(createNetwork);
 			}
 
 			centerPanel.add(settingsPanel);
@@ -234,5 +247,11 @@ public class DiffExpTab extends JPanel {
 
 		this.revalidate();
 		this.repaint();
+	}
+
+	// TODO: This should be more dynamic
+	String[] getComparisons() {
+		String[] comparisonTypes = {"Each vs. Others"};
+		return comparisonTypes;
 	}
 }

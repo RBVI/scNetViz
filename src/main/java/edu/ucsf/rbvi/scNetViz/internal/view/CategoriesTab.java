@@ -23,6 +23,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.table.TableModel;
 
@@ -49,6 +50,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 	final List<Category> categoriesList;
 	final List<String> categoriesNameList;
 	final Map<Category, JTable> categoryTables;
+	JTextField logFC;
+	JTextField dDRThreshold;
 
 	Category currentCategory = null;
 	JScrollPane categoryPane;
@@ -83,6 +86,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 	
 
 	private void init() {
+		// TODO: Add parameters for dDRThreshold, Log2FC cutoff, and mutiple testing adjustment
 
 		JPanel buttonsPanelRight = new JPanel(new GridLayout(4,1));
 		// buttonsPanelRight.setLayout(new BoxLayout(buttonsPanelRight, BoxLayout.PAGE_AXIS));
@@ -107,6 +111,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 				public void actionPerformed(ActionEvent e) {
 				}
 			});
+
+			/*
 			JButton diffExp = new JButton("Calculate Diff Exp");
 			diffExp.setFont(new Font("SansSerif", Font.PLAIN, 10));
       diffExp.addActionListener(new ActionListener() {
@@ -117,15 +123,82 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 					expFrame.addDiffExpContent("Diff Exp", diffETab);
 				}
 			});
+			*/
 
 			// buttonsPanelRight.add(lbl);
 			// buttonsPanelRight.add(Box.createVerticalGlue());
 			buttonsPanelRight.add(new JLabel(""));
+			buttonsPanelRight.add(new JLabel(""));
 			buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
-			buttonsPanelRight.add(diffExp);
+			// buttonsPanelRight.add(diffExp);
 		}
-		
+
+		JPanel centerPanel = new JPanel();
+		centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.PAGE_AXIS));
+		{
+			centerPanel.add(Box.createVerticalGlue());
+			{
+				JLabel lbl = new JLabel("Cutoffs:");
+				lbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+				lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+				centerPanel.add(lbl);
+			}
+
+			JPanel settingsPanel = new JPanel();
+			settingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+			settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.LINE_AXIS));
+			{
+				settingsPanel.add(Box.createRigidArea(new Dimension(5,0)));
+				JLabel log2FCLabel = new JLabel("Log2FC");
+				log2FCLabel.setFont(new Font("SansSerif", Font.BOLD, 10));
+				log2FCLabel.setMaximumSize(new Dimension(50,35));
+				settingsPanel.add(log2FCLabel);
+			}
+
+			{
+				logFC = new JTextField("0.5");
+				logFC.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				logFC.setMaximumSize(new Dimension(50,35));
+				settingsPanel.add(logFC);
+				settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			}
+
+			{
+				JLabel dDRThreshLabel = new JLabel("dDR:");
+				dDRThreshLabel.setFont(new Font("SansSerif", Font.BOLD, 10));
+				dDRThreshLabel.setMaximumSize(new Dimension(80,35));
+				settingsPanel.add(dDRThreshLabel);
+			}
+
+			{
+				dDRThreshold = new JTextField("0.1");
+				dDRThreshold.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				dDRThreshold.setMaximumSize(new Dimension(50,35));
+				settingsPanel.add(dDRThreshold);
+				settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			}
+
+			{
+				JButton diffExp = new JButton("Calculate Diff Exp");
+				diffExp.setFont(new Font("SansSerif", Font.BOLD, 10));
+				diffExp.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						double log2FCCutoff = Double.parseDouble(logFC.getText());
+						double dDRCutoff = Double.parseDouble(dDRThreshold.getText());
+						DifferentialExpression diffExp = 
+									new DifferentialExpression(manager, currentCategory, currentCategory.getSelectedRow(), dDRCutoff, log2FCCutoff);
+						DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
+						expFrame.addDiffExpContent("Diff Exp", diffETab);
+					}
+				});
+				settingsPanel.add(diffExp);
+			}
+
+			centerPanel.add(settingsPanel);
+
+		}
+
 		JPanel buttonsPanelLeft = new JPanel();
 		buttonsPanelLeft.setLayout(new BoxLayout(buttonsPanelLeft, BoxLayout.PAGE_AXIS));
 		buttonsPanelLeft.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -167,6 +240,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 
 		JPanel topPanel = new JPanel(new BorderLayout());
 		topPanel.add(buttonsPanelLeft, BorderLayout.WEST);
+		topPanel.add(centerPanel, BorderLayout.CENTER);
 		topPanel.add(buttonsPanelRight, BorderLayout.EAST);
 		this.add(topPanel, BorderLayout.NORTH);
 
