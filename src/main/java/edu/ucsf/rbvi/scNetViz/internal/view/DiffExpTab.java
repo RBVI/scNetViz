@@ -139,6 +139,8 @@ public class DiffExpTab extends JPanel {
 					}
 
 					void changeCategory(Category cat, int selectedRow) {
+						CategoriesTab catTab = expFrame.getCategoriesTab();
+						catTab.changeCategory(cat, selectedRow);
 						// Reset the selected row
 						// Recalculate
 						// Refresh

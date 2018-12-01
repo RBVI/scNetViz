@@ -127,7 +127,9 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	public int getSortedK() { return sortedK; }
 
 	public int getSelectedRow() { return selectedRow; }
-	public void setSelectedRow(int selectedRow) { this.selectedRow = selectedRow; }
+	public void setSelectedRow(int selectedRow) { 
+		this.selectedRow = selectedRow; 
+	}
 
 	public Map<Integer,List<String>> getClusterList(int kClust) {
 		Map<Integer, List<String>> clusterMap = new HashMap<>();
