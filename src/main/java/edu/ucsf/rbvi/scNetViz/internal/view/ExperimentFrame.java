@@ -18,6 +18,10 @@ public class ExperimentFrame extends JFrame {
 	final JFrame jFrame;
 	JTabbedPane tabbedPane;
 
+	TPMTab tpmTab;
+	CategoriesTab categoriesTab;
+	DiffExpTab diffExpTab;
+
 	public ExperimentFrame(final ScNVManager scManager) {
 		this.scManager = scManager;
 		this.setLayout(new BorderLayout());
@@ -33,6 +37,7 @@ public class ExperimentFrame extends JFrame {
 		panel.removeAll();
 		panel.add(content, BorderLayout.CENTER);
 		tabbedPane.setEnabledAt(0, true);
+		tpmTab = (TPMTab)content;
 	}
 
 	public void addCategoriesContent(String title, JPanel content) {
@@ -42,6 +47,7 @@ public class ExperimentFrame extends JFrame {
 		panel.add(content, BorderLayout.CENTER);
 		tabbedPane.setEnabledAt(1, true);
 		tabbedPane.setSelectedIndex(1);
+		categoriesTab = (CategoriesTab)content;
 	}
 
 	public void addDiffExpContent(String title, JPanel content) {
@@ -51,7 +57,12 @@ public class ExperimentFrame extends JFrame {
 		panel.add(content, BorderLayout.CENTER);
 		tabbedPane.setEnabledAt(2, true);
 		tabbedPane.setSelectedIndex(2);
+		diffExpTab = (DiffExpTab)content;
 	}
+
+	public TPMTab getTPMTab() { return tpmTab; }
+	public CategoriesTab getCategoriesTab() { return categoriesTab; }
+	public DiffExpTab getDiffExpTab() { return diffExpTab; }
 
 	private void init() {
 		tabbedPane = new JTabbedPane();

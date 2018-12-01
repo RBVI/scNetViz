@@ -126,6 +126,19 @@ public class DiffExpTab extends JPanel {
 				// TODO: set our default value using currentCategory and the selectedRow
  	     	categoryBox.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+						String newLabel = (String)categoryBox.getSelectedItem();
+
+						for (Category cat: categoryLabelMap.keySet()) {
+							for (int i = 0; i < categoryLabelMap.get(cat).size(); i++) {
+								if (newLabel.equals(categoryLabelMap.get(cat).get(i))) {
+									changeCategory(cat, i);
+									return;
+								}
+							}
+						}
+					}
+
+					void changeCategory(Category cat, int selectedRow) {
 						// Reset the selected row
 						// Recalculate
 						// Refresh
@@ -221,6 +234,7 @@ public class DiffExpTab extends JPanel {
 				createNetwork.setFont(new Font("SansSerif", Font.BOLD, 10));
 				createNetwork.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+
 					}
 				});
 				settingsPanel.add(createNetwork);

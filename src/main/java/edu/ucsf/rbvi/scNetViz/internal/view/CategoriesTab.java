@@ -83,7 +83,12 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
 		}
 	}
-	
+
+	public void changeCategory(Category newCategory) {
+	}
+
+	public void changeSelectedRow(int newRow) {
+	}
 
 	private void init() {
 		// TODO: Add parameters for dDRThreshold, Log2FC cutoff, and mutiple testing adjustment
@@ -111,19 +116,6 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 				public void actionPerformed(ActionEvent e) {
 				}
 			});
-
-			/*
-			JButton diffExp = new JButton("Calculate Diff Exp");
-			diffExp.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      diffExp.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					DifferentialExpression diffExp = 
-								new DifferentialExpression(manager, currentCategory, currentCategory.getSelectedRow());
-					DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
-					expFrame.addDiffExpContent("Diff Exp", diffETab);
-				}
-			});
-			*/
 
 			// buttonsPanelRight.add(lbl);
 			// buttonsPanelRight.add(Box.createVerticalGlue());
@@ -165,7 +157,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			}
 
 			{
-				JLabel dDRThreshLabel = new JLabel("dDR:");
+				JLabel dDRThreshLabel = new JLabel("Min.pct:");
 				dDRThreshLabel.setFont(new Font("SansSerif", Font.BOLD, 10));
 				dDRThreshLabel.setMaximumSize(new Dimension(80,35));
 				settingsPanel.add(dDRThreshLabel);

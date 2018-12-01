@@ -23,6 +23,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
+import edu.ucsf.rbvi.scNetViz.internal.utils.MatrixUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
 public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix {
@@ -60,7 +61,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		colHeaders.add("Gene");
 		for (Object cat: means.keySet()) {
 			colHeaders.add(category.mkLabel(cat)+" MTC");
-			colHeaders.add(category.mkLabel(cat)+" DR");
+			colHeaders.add(category.mkLabel(cat)+" Min.pct");
 			colHeaders.add(category.mkLabel(cat)+" MDTC");
 			colHeaders.add(category.mkLabel(cat)+" logGER");
 			colHeaders.add(category.mkLabel(cat)+" pValue");
@@ -72,7 +73,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		matrix = new double[nCols][nRows];
 		int col = 0;
 		for (Object cat: means.keySet()) {
-			// System.out.println("Means for "+cat+" col="+col);
+			System.out.println("Category "+cat);
 			double[] mean = means.get(cat);
 			double[] drs = drMap.get(cat);
 			double[] mtdc = mtdcMap.get(cat);
@@ -131,7 +132,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		double[] adjustedPvalues = new double[pValues.length];
 		Arrays.fill(adjustedPvalues, Double.NaN);
 		int testCount = countValues(pValues);
-		Integer[] sortIndex = indexSort(pValues, pValues.length);
+		System.out.println("  testCount = "+testCount);
+		Integer[] sortIndex = MatrixUtils.indexSort(pValues, pValues.length);
 		/*
 		for (int index = (pValues.length-testCount); index < pValues.length; index++) {
 			System.out.println("pValues["+sortIndex[index]+"] = "+pValues[sortIndex[index]]);
@@ -153,15 +155,6 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 
 		return adjustedPvalues;
 	}
-
-	public Integer[] indexSort(double[] tData, int nVals) {
-    Integer[] index = new Integer[nVals];
-    for (int i = 0; i < nVals; i++) index[i] = i;
-    IndexComparator iCompare = new IndexComparator(tData);
-    Arrays.sort(index, iCompare);
-    return index;
-  }
-
 
 	@Override
 	public String getMatrixType() { return "Simple String Matrix";}
@@ -258,40 +251,5 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			return str.replaceAll("^\"|\"$", "");
 		}
 	}
-
-	  private static class IndexComparator implements Comparator<Integer> {
-    double[] data = null;
-    int[] intData = null;
-    String[] stringData = null;
-
-    public IndexComparator(String[] data) { this.stringData = data; }
-
-    public IndexComparator(double[] data) { this.data = data; }
-
-    public IndexComparator(int[] data) { this.intData = data; }
-
-    public int compare(Integer o1, Integer o2) {
-      if (data != null) {
-				// NaN handling
-				if (Double.isNaN(data[o1]) && Double.isNaN(data[o2]))
-					return 0;
-				if (Double.isNaN(data[o1]))
-					return -1;
-				if (Double.isNaN(data[o2]))
-					return 1;
-
-        if (data[o1] < data[o2]) return -1;
-        if (data[o1] > data[o2]) return 1;
-        return 0;
-      } else if (intData != null) {
-        if (intData[o1] < intData[o2]) return -1;
-        if (intData[o1] > intData[o2]) return 1;
-        return 0;
-      } else if (stringData != null) {
-        return stringData[o1].compareTo(stringData[o2]);
-      }
-      return 0;
-    }
-  }
 
 }
