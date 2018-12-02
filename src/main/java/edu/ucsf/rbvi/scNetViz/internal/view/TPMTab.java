@@ -20,6 +20,7 @@ import java.util.Map;
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskFactory;
+import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
@@ -30,6 +31,7 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAExperiment;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 
 public class TPMTab extends JPanel implements TaskObserver {
 	final ScNVManager manager;
@@ -89,6 +91,8 @@ public class TPMTab extends JPanel implements TaskObserver {
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
       export.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
+					ExportCSVTask task = new ExportCSVTask(manager, experiment.getMatrix());
+					manager.executeTasks(new TaskIterator(task));
 				}
 			});
 			buttonsPanelRight.add(export);

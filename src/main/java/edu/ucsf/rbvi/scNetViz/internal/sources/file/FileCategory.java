@@ -71,6 +71,17 @@ public class FileCategory extends AbstractCategory implements Category {
 	}
 
 	@Override
+	public Class<?> getMatrixClass() { 
+		if (dataType.equals("float"))
+			return Double.class;
+
+		if (dataType.equals("integer"))
+			return Integer.class;
+
+		return String.class;
+	}
+
+	@Override
 	public Matrix getMatrix() { return this;}
 
 	@Override

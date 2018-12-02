@@ -40,6 +40,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDETask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
@@ -55,6 +56,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 	JTextField logFC;
 	JTextField dDRThreshold;
 	JComboBox<String> categories;
+	JButton diffExpButton;
 
 	Category currentCategory = null;
 	JScrollPane categoryPane;
@@ -88,6 +90,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			DifferentialExpression diffExp = obsTask.getResults(DifferentialExpression.class);
 			DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
 			expFrame.addDiffExpContent("Diff Exp", diffETab);
+			diffExpButton.setEnabled(true);
 		}
 	}
 
@@ -96,6 +99,10 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		JTable categoryTable = getCategoryTable(newCategory);
 		categories.setSelectedItem(newCategory.toString());
 		categoryTable.setRowSelectionInterval(newRow, newRow);
+	}
+
+	public void recalculateDE() {
+		diffExpButton.doClick();
 	}
 
 	private void init() {
@@ -122,6 +129,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
       export.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
+					ExportCSVTask task = new ExportCSVTask(manager, currentCategory.getMatrix());
+					manager.executeTasks(new TaskIterator(task));
 				}
 			});
 
@@ -131,7 +140,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			buttonsPanelRight.add(new JLabel(""));
 			buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
-			// buttonsPanelRight.add(diffExp);
+			// buttonsPanelRight.add(diffExpButton);
 		}
 
 		JPanel centerPanel = new JPanel();
@@ -180,17 +189,18 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			}
 
 			{
-				JButton diffExp = new JButton("Calculate Diff Exp");
-				diffExp.setFont(new Font("SansSerif", Font.BOLD, 10));
-				diffExp.addActionListener(new ActionListener() {
+				diffExpButton = new JButton("Calculate Diff Exp");
+				diffExpButton.setFont(new Font("SansSerif", Font.BOLD, 10));
+				diffExpButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						double log2FCCutoff = Double.parseDouble(logFC.getText());
 						double dDRCutoff = Double.parseDouble(dDRThreshold.getText());
+						diffExpButton.setEnabled(false);
 						TaskIterator ti = new TaskIterator(new CalculateDETask(manager, currentCategory, dDRCutoff, log2FCCutoff));
 						manager.executeTasks(ti, thisComponent);
 					}
 				});
-				settingsPanel.add(diffExp);
+				settingsPanel.add(diffExpButton);
 			}
 
 			centerPanel.add(settingsPanel);
@@ -218,7 +228,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 					JTable table = getCategoryTable(currentCategory);
 					SortableTableModel model = (SortableTableModel)table.getModel();
 					categoryPane.setViewportView(table);
-					model.fireTableDataChanged();
+					// model.fireTableDataChanged();
 					categoryPane.revalidate();
 					categoryPane.repaint();
 				}

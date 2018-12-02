@@ -30,24 +30,22 @@ public class CSVWriter {
 
 			// Get the matrix
 			if (matrix instanceof DoubleMatrix) {
-				double[][] mat = ((DoubleMatrix)matrix).getDoubleMatrix(Double.NaN);
 				for (int row = 0; row < rowLabels.size(); row++) {
-					writeRow(output, rowLabels.get(row), mat[row], delimiter);
+					writeDoubleRow(output, rowLabels.get(row), (DoubleMatrix)matrix, row, delimiter);
 				}
 			} else if (matrix instanceof IntegerMatrix) {
-				int[][] mat = ((IntegerMatrix)matrix).getIntegerMatrix(Integer.MIN_VALUE);
 				for (int row = 0; row < rowLabels.size(); row++) {
-					writeRow(output, rowLabels.get(row), mat[row], delimiter);
+					writeIntegerRow(output, rowLabels.get(row), (IntegerMatrix)matrix, row, delimiter);
 				}
 			} else if (matrix instanceof StringMatrix) {
-				String[][] mat = ((StringMatrix)matrix).getStringMatrix();
 				for (int row = 0; row < rowLabels.size(); row++) {
-					writeRow(output, rowLabels.get(row), mat[row], delimiter);
+					writeStringRow(output, rowLabels.get(row), (StringMatrix)matrix, row, delimiter);
 				}
 			}
 		
 			// Write it all out
 		} catch (Exception fnf) {
+			fnf.printStackTrace();
 		}
 	}
 
@@ -57,33 +55,41 @@ public class CSVWriter {
 		return "\""+str+"\"";
 	}
 
-	private static void writeRow(BufferedWriter output, String rowLabel, String[] row, String delimiter) throws IOException {
+	private static void writeStringRow(BufferedWriter output, String rowLabel, 
+	                                   StringMatrix mat, int row, String delimiter) throws IOException {
+		int nCols = mat.getNCols();
 		output.write(quote(rowLabel, delimiter)+delimiter);
-		for (int i = 0; i < row.length-1; i++) {
-			output.write(quote(row[i], delimiter)+delimiter);
+		for (int col = 0; col < nCols-1; col++) {
+			output.write(quote(mat.getValue(row, col), delimiter)+delimiter);
 		}
-		output.write(quote(row[row.length-1], delimiter)+"\n");
+		output.write(quote(mat.getValue(row,nCols-1), delimiter)+"\n");
 	}
 
-	private static void writeRow(BufferedWriter output, String rowLabel, int[] row, String delimiter) throws IOException {
+	private static void writeIntegerRow(BufferedWriter output, String rowLabel, 
+	                                    IntegerMatrix mat, int row, String delimiter) throws IOException {
+		int nCols = mat.getNCols();
 		output.write(quote(rowLabel, delimiter)+delimiter);
-		for (int i = 0; i < row.length-1; i++) {
-			if (row[i] == Integer.MIN_VALUE)
+		for (int col = 0; col < nCols-1; col++) {
+			int value = mat.getIntegerValue(row, col);
+			if (value == Integer.MIN_VALUE)
 				output.write(delimiter);
 			else
-				output.write(row[i]+delimiter);
+				output.write(value+delimiter);
 		}
-		output.write(row[row.length-1]+"\n");
+		output.write(mat.getIntegerValue(row,nCols-1)+"\n");
 	}
 
-	private static void writeRow(BufferedWriter output, String rowLabel, double[] row, String delimiter) throws IOException {
+	private static void writeDoubleRow(BufferedWriter output, String rowLabel, 
+	                                   DoubleMatrix mat, int row, String delimiter) throws IOException {
+		int nCols = mat.getNCols();
 		output.write(quote(rowLabel, delimiter)+delimiter);
-		for (int i = 0; i < row.length-1; i++) {
-			if (Double.isNaN(row[i]))
+		for (int col = 0; col < nCols-1; col++) {
+			double value = mat.getDoubleValue(row, col);
+			if (Double.isNaN(value))
 				output.write(delimiter);
 			else
-				output.write(row[i]+delimiter);
+				output.write(value+delimiter);
 		}
-		output.write(row[row.length-1]+"\n");
+		output.write(mat.getDoubleValue(row,nCols-1)+"\n");
 	}
 }

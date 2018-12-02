@@ -26,12 +26,15 @@ import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.table.TableModel;
 
+import org.cytoscape.work.TaskIterator;
+
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 
 public class DiffExpTab extends JPanel {
 	final ScNVManager manager;
@@ -77,6 +80,8 @@ public class DiffExpTab extends JPanel {
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
       export.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
+					ExportCSVTask task = new ExportCSVTask(manager, diffExp);
+					manager.executeTasks(new TaskIterator(task));
 				}
 			});
 
@@ -141,8 +146,8 @@ public class DiffExpTab extends JPanel {
 					void changeCategory(Category cat, int selectedRow) {
 						CategoriesTab catTab = expFrame.getCategoriesTab();
 						catTab.changeCategory(cat, selectedRow);
-						// Reset the selected row
 						// Recalculate
+						catTab.recalculateDE();
 						// Refresh
 					}
 				});
