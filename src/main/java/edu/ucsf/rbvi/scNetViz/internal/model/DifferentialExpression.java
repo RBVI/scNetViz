@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
@@ -110,7 +111,12 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	public void findMarkers(double fdrThreshold) {
 	}
 
-	public void calculateDiffExp() {
+	public Category getCurrentCategory() {
+		return category;
+	}
+
+	public Set<Object> getCategoryValues() {
+		return category.getMeans(categoryRow).keySet();
 	}
 
 	private int countValues(double[] array) {
