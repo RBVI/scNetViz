@@ -9,6 +9,7 @@ public interface Experiment {
 	public List<Category> getCategories();
 	public Metadata getMetadata();
 	public void addCategory(Category category);
+	public String getSpecies();
 
 	// For efficiency purposes, sometimes implementations
 	// of Experiment might want to provide their own

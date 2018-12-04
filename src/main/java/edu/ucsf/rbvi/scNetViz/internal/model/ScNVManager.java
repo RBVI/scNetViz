@@ -86,6 +86,10 @@ public class ScNVManager {
 		taskManager.execute(ceTaskFactory.createTaskIterator(namespace, command, args, null));
 	}
 
+	public void executeCommand(String namespace, String command, Map<String, Object> args, TaskObserver observer) {
+		taskManager.execute(ceTaskFactory.createTaskIterator(namespace, command, args, observer));
+	}
+
 	public void executeTasks(TaskIterator tasks) {
 		taskManager.execute(tasks);
 	}

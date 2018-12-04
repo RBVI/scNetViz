@@ -73,6 +73,7 @@ public class GXAExperiment implements Experiment {
 
 	public Matrix getMatrix() { return mtx; }
 	public String getAccession() { return accession; }
+	public String getSpecies() { return (String)gxaMetadata.get(Metadata.SPECIES); }
 
 	public List<String[]> getColumnLabels() { return colTable; }
 	public List<String[]> getRowLabels() { return rowTable; }

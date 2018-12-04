@@ -77,6 +77,8 @@ public class FileExperiment implements Experiment {
 
 	public Source getSource() { return source; }
 
+	public String getSpecies() { return (String)fileMetadata.get(Metadata.SPECIES); }
+
 	public TableModel getTableModel() { return new FileExperimentTableModel(scNVManager, this); }
 
 	public void readMTX (final TaskMonitor monitor) {

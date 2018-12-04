@@ -159,7 +159,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.LINE_AXIS));
 			{
 				settingsPanel.add(Box.createRigidArea(new Dimension(5,0)));
-				JLabel log2FCLabel = new JLabel("Log2FC");
+				JLabel log2FCLabel = new JLabel("Log2FC:");
 				log2FCLabel.setFont(new Font("SansSerif", Font.BOLD, 10));
 				log2FCLabel.setMaximumSize(new Dimension(50,35));
 				settingsPanel.add(log2FCLabel);
@@ -176,7 +176,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			{
 				JLabel dDRThreshLabel = new JLabel("Min.pct:");
 				dDRThreshLabel.setFont(new Font("SansSerif", Font.BOLD, 10));
-				dDRThreshLabel.setMaximumSize(new Dimension(80,35));
+				dDRThreshLabel.setMaximumSize(new Dimension(50,35));
 				settingsPanel.add(dDRThreshLabel);
 			}
 

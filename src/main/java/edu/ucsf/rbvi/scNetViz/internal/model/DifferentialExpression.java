@@ -33,6 +33,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	int categoryRow;
 	double dDRCutoff;
 	double log2FCCutoff;
+	Map<Object, Map<String, double[]>> logGERMap;
+	Map<Object, double[]> fdrMap;
 	final double[][] matrix;
 
 	SortableTableModel tableModel = null;
@@ -52,7 +54,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		Map<Object, double[]> means = category.getMeans(categoryRow);
 		Map<Object, double[]> drMap = category.getDr(categoryRow);
 		Map<Object, double[]> mtdcMap = category.getMTDC(categoryRow);
-		Map<Object, Map<String, double[]>> logGERMap = category.getLogGER(categoryRow, dDRCutoff-.001, log2FCCutoff);
+		logGERMap = category.getLogGER(categoryRow, dDRCutoff-.001, log2FCCutoff);
 		super.nCols = means.keySet().size()*6; // 6 columns for each category/cluster
 
 		setRowLabels(experiment.getMatrix().getRowLabels());
@@ -81,6 +83,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			double[] logGER = logGERMap.get(cat).get("logFC");
 			double[] pValue = logGERMap.get(cat).get("pValue");
 			double[] FDR = adjustPValues(pValue);
+			fdrMap.put(cat, FDR);
 
 			for (int row = 0; row < nRows; row++) {
 				// System.out.println("row: "+row+" = "+mean[row]);
@@ -102,13 +105,26 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return tableModel;
 	}
 
-	// Calculate a list of genes (row numbers) to be ignored for all of the subsequent calculations
-	// We do it as a list to avoid having to create a duplicate matrix
-	public void filter(double dDRThreshold) {
+	public List<String> getGeneList(Object cat, double pValueCutoff, double log2FCCutoff, int nGenes) {
+		double[] logGER = logGERMap.get(cat).get("logFC");
+		double[] pValues = logGERMap.get(cat).get("pValue");
+		double[] fdr = fdrMap.get(cat);
 
-	}
-
-	public void findMarkers(double fdrThreshold) {
+		List<String> geneList = new ArrayList<>();
+		if (nGenes > 0) {
+			// Sort
+			Integer[] sortedPValues = MatrixUtils.indexSort(pValues, pValues.length);
+			for (int topGene = 0; topGene < nGenes; topGene++) {
+				geneList.add(getRowLabel(sortedPValues[topGene]));
+			}
+		} else {
+			// Should this be pValue or fdr?
+			for (int row = 0; row < nRows; row++) {
+				if (logGER[row] > log2FCCutoff && pValues[row] < pValueCutoff)
+					geneList.add(getRowLabel(row));
+			}
+		}
+		return geneList;
 	}
 
 	public Category getCurrentCategory() {
