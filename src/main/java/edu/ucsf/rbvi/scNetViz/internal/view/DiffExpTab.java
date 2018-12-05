@@ -36,6 +36,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 
 public class DiffExpTab extends JPanel {
@@ -47,6 +48,10 @@ public class DiffExpTab extends JPanel {
 	final DifferentialExpression diffExp;
 	final DiffExpTab thisComponent;
 	final Map<Category, List<String>> categoryLabelMap;
+
+	JTextField topGenes;
+	JTextField pValue;
+	JTextField log2FC;
 
 	public DiffExpTab(final ScNVManager manager, final Experiment experiment, 
 	                  final ExperimentFrame expFrame, final Category currentCategory,
@@ -199,14 +204,14 @@ public class DiffExpTab extends JPanel {
 			settingsPanel1.setBorder(BorderFactory.createEtchedBorder());
 			{
 				settingsPanel1.add(Box.createRigidArea(new Dimension(5,0)));
-				JLabel pValueLbl = new JLabel("P-value");
+				JLabel pValueLbl = new JLabel("FDR:");
 				pValueLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
 				pValueLbl.setMaximumSize(new Dimension(50,35));
 				settingsPanel1.add(pValueLbl);
 			}
 
 			{
-				JTextField pValue = new JTextField("0.05");
+				pValue = new JTextField("0.05");
 				pValue.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				pValue.setMaximumSize(new Dimension(50,35));
 				settingsPanel1.add(pValue);
@@ -221,7 +226,7 @@ public class DiffExpTab extends JPanel {
 			}
 
 			{
-				JTextField log2FC = new JTextField("1.0");
+				log2FC = new JTextField("1.0");
 				log2FC.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				log2FC.setMaximumSize(new Dimension(50,35));
 				settingsPanel1.add(log2FC);
@@ -252,7 +257,7 @@ public class DiffExpTab extends JPanel {
 			}
 
 			{
-				JTextField topGenes = new JTextField("-1");
+				topGenes = new JTextField("");
 				topGenes.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				topGenes.setMaximumSize(new Dimension(50,35));
 				settingsPanel2.add(topGenes);
@@ -266,7 +271,21 @@ public class DiffExpTab extends JPanel {
 				createNetwork.setFont(new Font("SansSerif", Font.BOLD, 10));
 				createNetwork.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+						int topNGenes = -1;
+						double log2FCCutoff = 1.0;
+						double fdr = .05;
 
+						if (topGenes.getText().length() > 0)
+							topNGenes = Integer.parseInt(topGenes.getText());
+						if (log2FC.getText().length() > 0)
+							log2FCCutoff = Double.parseDouble(log2FC.getText());
+						if (pValue.getText().length() > 0)
+							fdr = Double.parseDouble(pValue.getText());
+
+						createNetwork.setEnabled(false);
+						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, fdr, log2FCCutoff, topNGenes);
+						manager.executeTasks(new TaskIterator(task));
+						createNetwork.setEnabled(true);
 					}
 				});
 				settingsPanel.add(createNetwork);

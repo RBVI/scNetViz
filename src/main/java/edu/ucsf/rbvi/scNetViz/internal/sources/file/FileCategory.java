@@ -63,6 +63,9 @@ public class FileCategory extends AbstractCategory implements Category {
 	public String getCategoryType() { return name;}
 
 	@Override
+	public int getDefaultRow() { return -1;}
+
+	@Override
 	public Experiment getExperiment() { return experiment;}
 
 	@Override

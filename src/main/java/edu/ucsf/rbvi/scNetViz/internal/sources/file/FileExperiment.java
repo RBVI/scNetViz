@@ -73,6 +73,12 @@ public class FileExperiment implements Experiment {
 
 	public void addCategory(Category c) { categories.add(c); }
 
+	public Category getDefaultCategory() { 
+		if (categories.size() > 0)
+			return categories.get(0); 
+		return null;
+	}
+
 	public Metadata getMetadata() { return fileMetadata; }
 
 	public Source getSource() { return source; }

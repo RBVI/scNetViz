@@ -11,6 +11,8 @@ public interface Experiment {
 	public void addCategory(Category category);
 	public String getSpecies();
 
+	public Category getDefaultCategory();
+
 	// For efficiency purposes, sometimes implementations
 	// of Experiment might want to provide their own
 	// TableModel

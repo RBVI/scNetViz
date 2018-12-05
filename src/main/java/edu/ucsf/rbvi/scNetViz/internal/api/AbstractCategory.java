@@ -228,7 +228,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 				continue;
 			}
 
-			logFC[row] = Math.log(catMean[row]/(otherMean[row]/otherSize))/log2;
+			logFC[row] = calcLogFC(catMean[row], cat1Size, otherMean[row]/otherSize, otherSize)/log2;
 
 			// Calculate the MannWhitneyUTest
 			if (Math.abs(logFC[row]) > log2FCCutoff)
@@ -243,7 +243,8 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	}
 
 	@Override
-	public double[] getLogGER(int category, Object category1, Object category2, double dDRthreshold, double log2FCCutoff) {
+	public double[] getLogGER(int category, Object category1, Object category2, 
+	                          double dDRthreshold, double log2FCCutoff) {
 		if (means == null || category == selectedRow)
 			getMeans(category);
 
@@ -252,7 +253,8 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		double[] catMean = means.get(category1);
 		double[] otherMean = means.get(category2);
 		double[] thisDr = drMap.get(category1);
-		int otherSize = 0;
+		int cat1Size = sizes.get(category1);
+		int cat2Size = sizes.get(category2);
 
 		double log2 = Math.log(2.0);
 
@@ -260,12 +262,23 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		for (int row = 0; row < geneRows; row++) {
 			if (thisDr[row] < dDRthreshold)
 				continue;
-			logFC[row] = Math.log(catMean[row]/(otherMean[row]))/log2;
+
+			logFC[row] = calcLogFC(catMean[row], cat1Size, otherMean[row]/cat2Size, cat2Size)/log2;
 
 			if (Math.abs(logFC[row]) <= log2FCCutoff)
 				logFC[row] = Double.NaN;
 		}
 		return logFC;
+	}
+
+	double calcLogFC(double mean1, int size1, double mean2, int size2) {
+		if (mean1 != 0.0 && mean2 != 0.0)
+			return Math.log(mean1/mean2);
+
+		if (mean2 == 0.0) {
+			return Math.log(mean1/(1.0/size2));
+		}
+		return Math.log((1.0/size1)/mean2);
 	}
 
 	abstract public Object getValue(int row, int col);

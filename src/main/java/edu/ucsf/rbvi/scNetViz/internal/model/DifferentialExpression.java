@@ -16,6 +16,7 @@ package edu.ucsf.rbvi.scNetViz.internal.model;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,6 +55,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		Map<Object, double[]> means = category.getMeans(categoryRow);
 		Map<Object, double[]> drMap = category.getDr(categoryRow);
 		Map<Object, double[]> mtdcMap = category.getMTDC(categoryRow);
+		fdrMap = new HashMap<>();
+
 		logGERMap = category.getLogGER(categoryRow, dDRCutoff-.001, log2FCCutoff);
 		super.nCols = means.keySet().size()*6; // 6 columns for each category/cluster
 
@@ -105,7 +108,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return tableModel;
 	}
 
-	public List<String> getGeneList(Object cat, double pValueCutoff, double log2FCCutoff, int nGenes) {
+	public List<String> getGeneList(Object cat, double fdrCutoff, double log2FCCutoff, int nGenes) {
 		double[] logGER = logGERMap.get(cat).get("logFC");
 		double[] pValues = logGERMap.get(cat).get("pValue");
 		double[] fdr = fdrMap.get(cat);
@@ -120,7 +123,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		} else {
 			// Should this be pValue or fdr?
 			for (int row = 0; row < nRows; row++) {
-				if (logGER[row] > log2FCCutoff && pValues[row] < pValueCutoff)
+				if (Math.abs(logGER[row]) > log2FCCutoff && fdr[row] < fdrCutoff)
 					geneList.add(getRowLabel(row));
 			}
 		}
@@ -190,7 +193,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	public double getDoubleValue(String row, String column) {
 		int col = colLabels.indexOf(column);
 		int intRow = rowLabels.indexOf(row);
-		return getDoubleValue(intRow, col);
+		return getDoubleValue(intRow, col-1);
 	}
 
 	@Override

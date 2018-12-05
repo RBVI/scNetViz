@@ -66,6 +66,9 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	}
 
 	@Override
+	public int getDefaultRow() { return k-minK;} // We don't have a default
+
+	@Override
 	public String toString() { return "Cluster";}
 
 	@Override

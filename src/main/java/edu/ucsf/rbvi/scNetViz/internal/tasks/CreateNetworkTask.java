@@ -1,17 +1,24 @@
 package edu.ucsf.rbvi.scNetViz.internal.tasks;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.cytoscape.model.CyNetwork;
 import org.cytoscape.work.AbstractTask;
+import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
+import org.cytoscape.work.TaskObserver;
+import org.cytoscape.work.json.JSONResult;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 
 // Tunable to choose experiment?
 
@@ -40,42 +47,30 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	}
 
 	public void run(TaskMonitor monitor) {
-		monitor.setTitle("Calculating Differential Expression");
+		monitor.setTitle("Creating Networks");
 
 		Category category = diffExp.getCurrentCategory();
+		Experiment experiment = category.getExperiment();
 		Set<Object> categoryValues = diffExp.getCategoryValues();
 
 		List<String> allGenes = new ArrayList<String>();
 
 		// Iterate over each category value
 		for (Object cat: categoryValues) {
-		//     Get the genes that match our criteria
-		//     List<String> geneList = diffExp.getGeneList(cat, pValue, log2FCCutoff, nGenes);
-		//     if (geneList != null && geneList.size() > 0) {
-		//       allGenes.addAll(geneList);
-		//       Create the network
-		//       CyNetwork network = ModelUtils.createStringNetwork(manager, category.mkLabel(cat)+" Network", geneList);
-		//       Create the columns
-		//       ModelUtils.createDEColumns(manager, network, diffExp, category.mkLabel(cat));
-		//       Add the data
-		//       ModelUtils.updateDEData(manager, network, geneList, diffExp, category.mkLabel(cat));
-		//       Style the network
-		//       ModelUtils.addStyle(manager, network);
-		//    }
+			// Get the genes that match our criteria
+			List<String> geneList = diffExp.getGeneList(cat, pValue, log2FCCutoff, nGenes);
+			if (geneList != null && geneList.size() > 0) {
+				allGenes.addAll(geneList);
+				// Create the network
+				createStringNetwork(cat, category.mkLabel(cat), geneList, monitor);
+			} else {
+				monitor.showMessage(TaskMonitor.Level.WARN, "No genes passed the cutoff for "+category.mkLabel(cat));
+			}
 		}
-		//
+
 		// Create the union network
 		// Create the network
-		// CyNetwork network = ModelUtils.createStringNetwork(manager, category.toString(), allGenes);
-		for (Object cat: categoryValues) {
-		//     Create the columns
-		//     ModelUtils.createDEColumns(manager, network, diffExp, category.mkLabel(cat));
-		//     Add the data
-		//     ModelUtils.updateDEData(manager, network, allGenes, diffExp, category.mkLabel(cat));
-		}
-		// Style the network
-		// ModelUtils.addStyle(manager, network);
-
+		createStringNetwork(null, category.toString(), allGenes, monitor);
 	}
 
 	// TODO: return the networks?
@@ -83,5 +78,81 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		if (clazz.equals(DifferentialExpression.class))
 			return (R)diffExp;
 		return null;
+	}
+
+	private void createStringNetwork(Object cat, String name, List<String> geneList, TaskMonitor monitor) {
+		monitor.setTitle("Retrieving STRING network for: "+name);
+		Map<String, Object> args = new HashMap<>();
+		args.put("query", listToString(geneList));
+		args.put("species", diffExp.getCurrentCategory().getExperiment().getSpecies());
+		args.put("limit", "0");
+		manager.executeCommand("string", "protein query", args, 
+		                       new RenameNetwork(diffExp, cat, name, geneList, monitor), true);
+	}
+
+	private String listToString(List<String> list) {
+		if (list == null || list.size() < 1) return "";
+		String str = list.get(0);
+		for (int i = 1; i < list.size(); i++) {
+			str += ","+list.get(i);
+		}
+		return str;
+	}
+
+	private class RenameNetwork implements TaskObserver {
+		String name;
+		List<String> geneList;
+		final DifferentialExpression diffExp;
+		Object cat = null;
+		final TaskMonitor monitor;
+
+		public RenameNetwork(final DifferentialExpression diffExp, Object cat, String newName, 
+		                     List<String> geneList, final TaskMonitor monitor) {
+			this.name = newName;
+			this.cat = cat;
+			this.geneList = geneList;
+			this.diffExp = diffExp;
+			this.monitor = monitor;
+		}
+
+		public void allFinished(FinishStatus status) {}
+		
+		public void taskFinished(ObservableTask task) {
+			JSONResult res = task.getResults(JSONResult.class);
+			if (res == null) return;
+			CyNetwork network = ModelUtils.getNetworkFromJSON(manager, res);
+			ModelUtils.rename(network, network, name+" Network");
+			// Create the columns
+			monitor.setTitle("Retrieving enrichment for : "+name);
+			Map<String, Object> args = new HashMap<>();
+			manager.executeCommand("string", "hide images", args, null, true);
+			manager.executeCommand("string", "hide glass", args, null, true);
+
+			// Sleep 5 seconds to let everything settle
+			try { Thread.sleep(5000); } catch (Exception e) {}
+
+			manager.executeCommand("string", "retrieve enrichment", args, null, true);
+			manager.executeCommand("string", "show enrichment", args, null, true);
+			manager.executeCommand("string", "show charts", args, null, true);
+
+			monitor.setTitle("Adding data to network for: "+name);
+			if (cat != null) {
+				ModelUtils.createDEColumns(manager, network, diffExp, name);
+				// Add the data
+				ModelUtils.updateDEData(manager, network, geneList, diffExp, name);
+
+				// Style the network
+				ModelUtils.addStyle(manager, network, name);
+			} else {
+				Category category = diffExp.getCurrentCategory();
+				Experiment experiment = category.getExperiment();
+				Set<Object> categoryValues = diffExp.getCategoryValues();
+				for (Object cat1: categoryValues) {
+					ModelUtils.createDEColumns(manager, network, diffExp, category.mkLabel(cat1));
+					// Add the data
+					ModelUtils.updateDEData(manager, network, geneList, diffExp, category.mkLabel(cat1));
+				}
+			}
+		}
 	}
 }

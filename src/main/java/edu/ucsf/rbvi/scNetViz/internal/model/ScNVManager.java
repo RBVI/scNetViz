@@ -14,6 +14,7 @@ import org.json.simple.JSONObject;
 import org.cytoscape.command.AvailableCommands;
 import org.cytoscape.command.CommandExecutorTaskFactory;
 import org.cytoscape.service.util.CyServiceRegistrar;
+import org.cytoscape.work.SynchronousTaskManager;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskManager;
@@ -22,12 +23,14 @@ import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
+import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 
 public class ScNVManager {
 
 	final AvailableCommands availableCommands;
 	final CommandExecutorTaskFactory ceTaskFactory;
 	final TaskManager taskManager;
+	final SynchronousTaskManager syncTaskManager;
 
 	final Map<String, Experiment> experimentMap;
 	final Map<String, Source> sourceMap;
@@ -40,6 +43,7 @@ public class ScNVManager {
 		this.availableCommands = registrar.getService(AvailableCommands.class);
 		this.ceTaskFactory = registrar.getService(CommandExecutorTaskFactory.class);
 		this.taskManager = registrar.getService(TaskManager.class);
+		this.syncTaskManager = registrar.getService(SynchronousTaskManager.class);
 	}
 
 	public void addSource(Source source) {
@@ -82,12 +86,26 @@ public class ScNVManager {
 		return experimentMap.keySet();
 	}
 
-	public void executeCommand(String namespace, String command, Map<String, Object> args) {
-		taskManager.execute(ceTaskFactory.createTaskIterator(namespace, command, args, null));
+	public void executeCommand(String namespace, String command, Map<String, Object> args, boolean synchronous) {
+		executeCommand(namespace, command, args, null, synchronous);
 	}
 
-	public void executeCommand(String namespace, String command, Map<String, Object> args, TaskObserver observer) {
-		taskManager.execute(ceTaskFactory.createTaskIterator(namespace, command, args, observer));
+	public void executeCommand(String namespace, String command, Map<String, Object> args) {
+		executeCommand(namespace, command, args, null, false);
+	}
+
+	public void executeCommand(String namespace, String command, Map<String, Object> args, 
+	                           TaskObserver observer, boolean synchronous) {
+		List<String> commands = availableCommands.getCommands(namespace);
+		if (!commands.contains(command)) {
+			LogUtils.warn("Command "+namespace+" "+command+" isn't available");
+			return;
+		}
+
+		if (synchronous)
+			syncTaskManager.execute(ceTaskFactory.createTaskIterator(namespace, command, args, observer));
+		else
+			taskManager.execute(ceTaskFactory.createTaskIterator(namespace, command, args, observer));
 	}
 
 	public void executeTasks(TaskIterator tasks) {

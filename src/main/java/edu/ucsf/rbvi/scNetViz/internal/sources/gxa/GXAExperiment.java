@@ -87,6 +87,8 @@ public class GXAExperiment implements Experiment {
 
 	public Metadata getMetadata() { return gxaMetadata; }
 
+	public Category getDefaultCategory() { return categories.get(0); }
+
 	public Source getSource() { return source; }
 
 	public TableModel getTableModel() { return new GXAExperimentTableModel(scNVManager, this); }
