@@ -133,8 +133,8 @@ public class ModelUtils {
 		double max = Double.MIN_VALUE;
 		System.out.println("Looking at: "+col);
 		for (CyNode node: network.getNodeList()) {
-			double v = network.getRow(node).get("scNetViz", col, Double.class);
-			if (!Double.isNaN(v)) {
+			Double v = network.getRow(node).get("scNetViz", col, Double.class);
+			if (v != null && !Double.isNaN(v)) {
 				if (v < min) min = v;
 				if (v > max) max = v;
 			}

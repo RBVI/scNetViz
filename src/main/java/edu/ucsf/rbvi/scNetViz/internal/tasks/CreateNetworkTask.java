@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.cytoscape.event.CyEventHelper;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.FinishStatus;
@@ -24,6 +25,7 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 
 public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	final ScNVManager manager;
+	final CyEventHelper cyEventHelper;
 
 	// FIXME: these should be Tunables at some point
 	double pValue;
@@ -34,6 +36,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	public CreateNetworkTask(final ScNVManager manager) {
 		super();
 		this.manager = manager;
+		cyEventHelper = manager.getService(CyEventHelper.class);
 	}
 
 	public CreateNetworkTask(final ScNVManager manager, DifferentialExpression diffExp, 
@@ -44,6 +47,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		this.pValue = pValue;
 		this.log2FCCutoff = log2FCCutoff;
 		this.nGenes = nGenes;
+		cyEventHelper = manager.getService(CyEventHelper.class);
 	}
 
 	public void run(TaskMonitor monitor) {
@@ -88,6 +92,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("limit", "0");
 		manager.executeCommand("string", "protein query", args, 
 		                       new RenameNetwork(diffExp, cat, name, geneList, monitor), true);
+		cyEventHelper.flushPayloadEvents();
 	}
 
 	private String listToString(List<String> list) {
@@ -122,19 +127,22 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			if (res == null) return;
 			CyNetwork network = ModelUtils.getNetworkFromJSON(manager, res);
 			ModelUtils.rename(network, network, name+" Network");
-			// Create the columns
-			monitor.setTitle("Retrieving enrichment for : "+name);
+			cyEventHelper.flushPayloadEvents();
 			Map<String, Object> args = new HashMap<>();
+			args.put("network", network.getRow(network).get(CyNetwork.NAME, String.class));
+			manager.executeCommand("view", "set current", args, null, true);
+			cyEventHelper.flushPayloadEvents();
 			manager.executeCommand("string", "hide images", args, null, true);
 			manager.executeCommand("string", "hide glass", args, null, true);
 
-			// Sleep 5 seconds to let everything settle
-			try { Thread.sleep(5000); } catch (Exception e) {}
+			monitor.setTitle("Retrieving enrichment for : "+name);
+			args.clear();
 
 			manager.executeCommand("string", "retrieve enrichment", args, null, true);
 			manager.executeCommand("string", "show enrichment", args, null, true);
 			manager.executeCommand("string", "show charts", args, null, true);
 
+			// Create the columns
 			monitor.setTitle("Adding data to network for: "+name);
 			if (cat != null) {
 				ModelUtils.createDEColumns(manager, network, diffExp, name);

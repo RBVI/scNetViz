@@ -37,6 +37,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 
@@ -58,6 +59,8 @@ public class GXAExperiment implements Experiment {
 	final ScNVManager scNVManager;
 	final GXAExperiment gxaExperiment;
 	final GXASource source;
+
+	DifferentialExpression diffExp;
 
 	public GXAExperiment (ScNVManager manager, GXASource source, GXAMetadata entry) {
 		this.scNVManager = manager;
@@ -90,6 +93,9 @@ public class GXAExperiment implements Experiment {
 	public Category getDefaultCategory() { return categories.get(0); }
 
 	public Source getSource() { return source; }
+
+	public DifferentialExpression getDiffExp() { return diffExp; }
+	public void setDiffExp(DifferentialExpression de) { diffExp = de; }
 
 	public TableModel getTableModel() { return new GXAExperimentTableModel(scNVManager, this); }
 
