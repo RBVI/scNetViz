@@ -39,7 +39,13 @@ public class ModelUtils {
 	public static CyNetwork getNetworkFromJSON(ScNVManager manager, JSONResult res) {
 		try {
 			JSONObject json = (JSONObject) new JSONParser().parse(res.getJSON());
-			long networkSUID = ((Number)json.get("SUID")).longValue();
+			long networkSUID = 0;
+			if (json.containsKey("SUID")) {
+				networkSUID = ((Number)json.get("SUID")).longValue();
+			} else if (json.containsKey("network")) {
+				networkSUID = ((Number)json.get("network")).longValue();
+			}
+
 			CyNetwork network = manager.getService(CyNetworkManager.class).getNetwork(networkSUID);
 			return network;
 		} catch (Exception e) { return null; }
