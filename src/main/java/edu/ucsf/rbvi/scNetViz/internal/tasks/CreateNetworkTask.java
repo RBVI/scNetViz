@@ -9,6 +9,7 @@ import java.util.Set;
 import org.cytoscape.event.CyEventHelper;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.view.model.CyNetworkView;
+import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
@@ -28,6 +29,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	final ScNVManager manager;
 	final CyEventHelper cyEventHelper;
 	CyNetwork unionNetwork = null;
+	VisualStyle baseStyle = null;
 
 	// FIXME: these should be Tunables at some point
 	double pValue;
@@ -58,6 +60,8 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		Category category = diffExp.getCurrentCategory();
 		Experiment experiment = category.getExperiment();
 		Set<Object> categoryValues = diffExp.getCategoryValues();
+		List<String> rowLabels = category.getMatrix().getRowLabels();
+		String categoryRow = category.toString()+" ("+rowLabels.get(category.getSelectedRow())+")";
 
 		Map<Object, List<String>> geneMap = new HashMap<>();
 		List<String> allGenes = new ArrayList<String>();
@@ -78,7 +82,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 
 		// Create the union network
 		// Create the network
-		createStringNetwork(null, category.toString(), allGenes, monitor);
+		createStringNetwork(null, categoryRow, allGenes, monitor);
 
 		for (Object cat: categoryValues) {
 			List<String> geneList = geneMap.get(cat);
@@ -147,10 +151,12 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			if (res == null) return;
 
 			CyNetwork network = null;
+			CyNetworkView networkView = null;
 			if (res instanceof JSONResult) {
 				network = ModelUtils.getNetworkFromJSON(manager, (JSONResult)res);
 				// System.out.println("Got network "+network+" from "+((JSONResult)res).getJSON());
 			} else if (res instanceof CyNetworkView) {
+				networkView = (CyNetworkView)res;
 				network = ((CyNetworkView)res).getModel();
 			}
 			if (cat == null) {
@@ -179,7 +185,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			monitor.setTitle("Adding data to network for: "+name);
 			if (cat != null) {
 				// Style the network
-				ModelUtils.addStyle(manager, network, name);
+				ModelUtils.addStyle(manager, network,  name, baseStyle);
 			} else {
 				unionNetwork = network;
 				Category category = diffExp.getCurrentCategory();
@@ -190,6 +196,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 					// Add the data
 					ModelUtils.updateDEData(manager, network, geneList, diffExp, category.mkLabel(cat1));
 				}
+				baseStyle = ModelUtils.getVisualStyle(manager, "STRING style");
 			}
 		}
 	}
