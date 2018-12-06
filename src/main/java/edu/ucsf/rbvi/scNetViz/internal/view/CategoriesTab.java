@@ -30,6 +30,7 @@ import javax.swing.table.TableModel;
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskFactory;
+import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
@@ -38,6 +39,8 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDETask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
@@ -52,6 +55,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 	final Map<Category, JTable> categoryTables;
 	JTextField logFC;
 	JTextField dDRThreshold;
+	JComboBox<String> categories;
+	JButton diffExpButton;
 
 	Category currentCategory = null;
 	JScrollPane categoryPane;
@@ -81,9 +86,24 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		if (obsTask instanceof FileCategoryTask) {
 			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
+		} else if (obsTask instanceof CalculateDETask) {
+			DifferentialExpression diffExp = obsTask.getResults(DifferentialExpression.class);
+			DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
+			expFrame.addDiffExpContent("Diff Exp", diffETab);
+			diffExpButton.setEnabled(true);
 		}
 	}
-	
+
+	public void changeCategory(Category newCategory, int newRow) {
+		// newCategory.setSelectedRow(newRow);
+		JTable categoryTable = getCategoryTable(newCategory);
+		categories.setSelectedItem(newCategory.toString());
+		categoryTable.setRowSelectionInterval(newRow, newRow);
+	}
+
+	public void recalculateDE() {
+		diffExpButton.doClick();
+	}
 
 	private void init() {
 		// TODO: Add parameters for dDRThreshold, Log2FC cutoff, and mutiple testing adjustment
@@ -109,21 +129,10 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
       export.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
+					ExportCSVTask task = new ExportCSVTask(manager, currentCategory.getMatrix());
+					manager.executeTasks(new TaskIterator(task));
 				}
 			});
-
-			/*
-			JButton diffExp = new JButton("Calculate Diff Exp");
-			diffExp.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      diffExp.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					DifferentialExpression diffExp = 
-								new DifferentialExpression(manager, currentCategory, currentCategory.getSelectedRow());
-					DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
-					expFrame.addDiffExpContent("Diff Exp", diffETab);
-				}
-			});
-			*/
 
 			// buttonsPanelRight.add(lbl);
 			// buttonsPanelRight.add(Box.createVerticalGlue());
@@ -131,7 +140,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			buttonsPanelRight.add(new JLabel(""));
 			buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
-			// buttonsPanelRight.add(diffExp);
+			// buttonsPanelRight.add(diffExpButton);
 		}
 
 		JPanel centerPanel = new JPanel();
@@ -150,7 +159,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.LINE_AXIS));
 			{
 				settingsPanel.add(Box.createRigidArea(new Dimension(5,0)));
-				JLabel log2FCLabel = new JLabel("Log2FC");
+				JLabel log2FCLabel = new JLabel("Log2FC:");
 				log2FCLabel.setFont(new Font("SansSerif", Font.BOLD, 10));
 				log2FCLabel.setMaximumSize(new Dimension(50,35));
 				settingsPanel.add(log2FCLabel);
@@ -165,9 +174,9 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			}
 
 			{
-				JLabel dDRThreshLabel = new JLabel("dDR:");
+				JLabel dDRThreshLabel = new JLabel("Min.pct:");
 				dDRThreshLabel.setFont(new Font("SansSerif", Font.BOLD, 10));
-				dDRThreshLabel.setMaximumSize(new Dimension(80,35));
+				dDRThreshLabel.setMaximumSize(new Dimension(50,35));
 				settingsPanel.add(dDRThreshLabel);
 			}
 
@@ -180,19 +189,18 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			}
 
 			{
-				JButton diffExp = new JButton("Calculate Diff Exp");
-				diffExp.setFont(new Font("SansSerif", Font.BOLD, 10));
-				diffExp.addActionListener(new ActionListener() {
+				diffExpButton = new JButton("Calculate Diff Exp");
+				diffExpButton.setFont(new Font("SansSerif", Font.BOLD, 10));
+				diffExpButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						double log2FCCutoff = Double.parseDouble(logFC.getText());
 						double dDRCutoff = Double.parseDouble(dDRThreshold.getText());
-						DifferentialExpression diffExp = 
-									new DifferentialExpression(manager, currentCategory, currentCategory.getSelectedRow(), dDRCutoff, log2FCCutoff);
-						DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
-						expFrame.addDiffExpContent("Diff Exp", diffETab);
+						diffExpButton.setEnabled(false);
+						TaskIterator ti = new TaskIterator(new CalculateDETask(manager, currentCategory, dDRCutoff, log2FCCutoff));
+						manager.executeTasks(ti, thisComponent);
 					}
 				});
-				settingsPanel.add(diffExp);
+				settingsPanel.add(diffExpButton);
 			}
 
 			centerPanel.add(settingsPanel);
@@ -213,14 +221,14 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 			buttonsPanelLeft.add(lbl);
 
-			JComboBox categories = new JComboBox(categoriesNameList.toArray());
+			categories = new JComboBox<String>(categoriesNameList.toArray(new String[1]));
       categories.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					currentCategory = categoriesList.get(categories.getSelectedIndex());
 					JTable table = getCategoryTable(currentCategory);
 					SortableTableModel model = (SortableTableModel)table.getModel();
 					categoryPane.setViewportView(table);
-					model.fireTableDataChanged();
+					// model.fireTableDataChanged();
 					categoryPane.revalidate();
 					categoryPane.repaint();
 				}
@@ -255,8 +263,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 	}
 
 	private JTable getCategoryTable(Category category) {
-		// if (categoryTables.containsKey(category))
-		// 	return categoryTables.get(category);
+		if (categoryTables.containsKey(category))
+		 	return categoryTables.get(category);
 
 		SortableTableModel tableModel = (SortableTableModel)category.getTableModel();
 		// if (tableModel == null)

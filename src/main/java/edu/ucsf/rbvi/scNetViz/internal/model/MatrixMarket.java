@@ -166,6 +166,13 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	@Override
 	public String getMatrixType() { return "MatrixMarket"; }
 
+	@Override
+	public Class<?> getMatrixClass() {
+		if (type == MTXTYPE.INTEGER)
+			return Integer.class;
+		return Double.class;
+	}
+
 	public void setRowTable(List<String[]> rowTable) {
 		this.rowTable = rowTable;
 		if (rowTable != null)

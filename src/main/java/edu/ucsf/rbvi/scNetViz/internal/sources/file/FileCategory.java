@@ -63,11 +63,25 @@ public class FileCategory extends AbstractCategory implements Category {
 	public String getCategoryType() { return name;}
 
 	@Override
+	public int getDefaultRow() { return -1;}
+
+	@Override
 	public Experiment getExperiment() { return experiment;}
 
 	@Override
 	public String getMatrixType() { 
 		return "Simple "+dataType+" matrix";
+	}
+
+	@Override
+	public Class<?> getMatrixClass() { 
+		if (dataType.equals("float"))
+			return Double.class;
+
+		if (dataType.equals("integer"))
+			return Integer.class;
+
+		return String.class;
 	}
 
 	@Override

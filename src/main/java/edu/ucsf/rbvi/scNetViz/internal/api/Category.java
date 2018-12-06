@@ -55,6 +55,13 @@ public interface Category {
 	public int getSelectedRow();
 
 	/**
+	 * Get the default row
+	 *
+	 * @return the row number of the default row
+	 */
+	public int getDefaultRow();
+
+	/**
 	 * Set the currently selected row
 	 *
 	 * @param selectedRow

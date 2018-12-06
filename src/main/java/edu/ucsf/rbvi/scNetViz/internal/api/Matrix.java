@@ -4,6 +4,7 @@ import java.util.List;
 
 public interface Matrix {
 	public String getMatrixType();
+	public Class<?> getMatrixClass();
 	public String toString();
 
 	public int getNCols();

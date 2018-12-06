@@ -10,9 +10,11 @@ import org.cytoscape.work.util.ListSingleSelection;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.view.ExperimentFrame;
-import edu.ucsf.rbvi.scNetViz.internal.view.TPMTab;
 import edu.ucsf.rbvi.scNetViz.internal.view.CategoriesTab;
+import edu.ucsf.rbvi.scNetViz.internal.view.DiffExpTab;
+import edu.ucsf.rbvi.scNetViz.internal.view.TPMTab;
 
 public class ShowExperimentTableTask extends AbstractTask {
 	final ScNVManager manager;
@@ -48,6 +50,12 @@ public class ShowExperimentTableTask extends AbstractTask {
 				frame.addTPMContent(accession+": TPM Tab", new TPMTab(manager, experiment, frame));
 				// Add our Categories tab
 				frame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, frame));
+				// Add our Differential Expression tab (if we have one)
+				DifferentialExpression diffExp = experiment.getDiffExp();
+				if (diffExp != null) {
+					DiffExpTab dTab = new DiffExpTab(manager, experiment, frame, diffExp.getCurrentCategory(), diffExp);
+					frame.addDiffExpContent(accession+": DiffExp Tab", dTab);
+				}
 			}
 		});
 	}

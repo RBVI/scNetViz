@@ -31,6 +31,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 
@@ -50,6 +51,7 @@ public class FileExperiment implements Experiment {
 	final FileExperiment fileExperiment;
 	final FileSource source;
 	final FileMetadata fileMetadata;
+	DifferentialExpression diffExp;
 
 	public FileExperiment (ScNVManager manager, FileSource source, FileMetadata metadata) {
 		this.scNVManager = manager;
@@ -73,11 +75,22 @@ public class FileExperiment implements Experiment {
 
 	public void addCategory(Category c) { categories.add(c); }
 
+	public Category getDefaultCategory() { 
+		if (categories.size() > 0)
+			return categories.get(0); 
+		return null;
+	}
+
 	public Metadata getMetadata() { return fileMetadata; }
 
 	public Source getSource() { return source; }
 
+	public String getSpecies() { return (String)fileMetadata.get(Metadata.SPECIES); }
+
 	public TableModel getTableModel() { return new FileExperimentTableModel(scNVManager, this); }
+
+	public DifferentialExpression getDiffExp() { return diffExp; }
+	public void setDiffExp(DifferentialExpression de) { diffExp = de; }
 
 	public void readMTX (final TaskMonitor monitor) {
 		// Get the URI

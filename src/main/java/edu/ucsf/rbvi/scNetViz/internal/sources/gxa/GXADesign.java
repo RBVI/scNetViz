@@ -50,6 +50,9 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 	}
 
 	@Override
+	public int getDefaultRow() { return -1;} // We don't have a default
+
+	@Override
 	public String toString() { return "Design/Factors";}
 
 	@Override

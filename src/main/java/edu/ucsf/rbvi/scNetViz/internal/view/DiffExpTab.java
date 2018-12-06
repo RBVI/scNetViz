@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -24,7 +25,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.border.BevelBorder;
 import javax.swing.table.TableModel;
+
+import org.cytoscape.work.TaskIterator;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
@@ -32,6 +36,8 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 
 public class DiffExpTab extends JPanel {
 	final ScNVManager manager;
@@ -42,6 +48,10 @@ public class DiffExpTab extends JPanel {
 	final DifferentialExpression diffExp;
 	final DiffExpTab thisComponent;
 	final Map<Category, List<String>> categoryLabelMap;
+
+	JTextField topGenes;
+	JTextField pValue;
+	JTextField log2FC;
 
 	public DiffExpTab(final ScNVManager manager, final Experiment experiment, 
 	                  final ExperimentFrame expFrame, final Category currentCategory,
@@ -77,6 +87,8 @@ public class DiffExpTab extends JPanel {
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
       export.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
+					ExportCSVTask task = new ExportCSVTask(manager, diffExp);
+					manager.executeTasks(new TaskIterator(task));
 				}
 			});
 
@@ -126,8 +138,23 @@ public class DiffExpTab extends JPanel {
 				// TODO: set our default value using currentCategory and the selectedRow
  	     	categoryBox.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						// Reset the selected row
+						String newLabel = (String)categoryBox.getSelectedItem();
+
+						for (Category cat: categoryLabelMap.keySet()) {
+							for (int i = 0; i < categoryLabelMap.get(cat).size(); i++) {
+								if (newLabel.equals(categoryLabelMap.get(cat).get(i))) {
+									changeCategory(cat, i);
+									return;
+								}
+							}
+						}
+					}
+
+					void changeCategory(Category cat, int selectedRow) {
+						CategoriesTab catTab = expFrame.getCategoriesTab();
+						catTab.changeCategory(cat, selectedRow);
 						// Recalculate
+						catTab.recalculateDE();
 						// Refresh
 					}
 				});
@@ -170,57 +197,95 @@ public class DiffExpTab extends JPanel {
 			JPanel settingsPanel = new JPanel();
 			settingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 			settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.LINE_AXIS));
+
+			JPanel settingsPanel1 = new JPanel();
+			settingsPanel1.setAlignmentX(Component.LEFT_ALIGNMENT);
+			settingsPanel1.setLayout(new BoxLayout(settingsPanel1, BoxLayout.LINE_AXIS));
+			settingsPanel1.setBorder(BorderFactory.createEtchedBorder());
 			{
-				settingsPanel.add(Box.createRigidArea(new Dimension(5,0)));
-				JLabel pValueLbl = new JLabel("P-value");
+				settingsPanel1.add(Box.createRigidArea(new Dimension(5,0)));
+				JLabel pValueLbl = new JLabel("FDR:");
 				pValueLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
 				pValueLbl.setMaximumSize(new Dimension(50,35));
-				settingsPanel.add(pValueLbl);
+				settingsPanel1.add(pValueLbl);
 			}
 
 			{
-				JTextField pValue = new JTextField("0.05");
+				pValue = new JTextField("0.05");
 				pValue.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				pValue.setMaximumSize(new Dimension(50,35));
-				settingsPanel.add(pValue);
-				settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+				settingsPanel1.add(pValue);
+				settingsPanel1.add(Box.createRigidArea(new Dimension(15,0)));
 			}
 
 			{
-				JLabel log2FCLbl = new JLabel("Log2FC");
+				JLabel log2FCLbl = new JLabel("Log2FC:");
 				log2FCLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
 				log2FCLbl.setMaximumSize(new Dimension(50,35));
-				settingsPanel.add(log2FCLbl);
+				settingsPanel1.add(log2FCLbl);
 			}
 
 			{
-				JTextField log2FC = new JTextField("1.0");
+				log2FC = new JTextField("1.0");
 				log2FC.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				log2FC.setMaximumSize(new Dimension(50,35));
-				settingsPanel.add(log2FC);
-				settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+				settingsPanel1.add(log2FC);
+				settingsPanel1.add(Box.createRigidArea(new Dimension(5,0)));
 			}
 
+			settingsPanel.add(settingsPanel1);
+			settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+
+			{
+				JLabel orLbl = new JLabel(" OR ");
+				orLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+				orLbl.setMaximumSize(new Dimension(35,35));
+				settingsPanel.add(orLbl);
+				settingsPanel.add(Box.createRigidArea(new Dimension(5,0)));
+			}
+
+			JPanel settingsPanel2 = new JPanel();
+			settingsPanel2.setAlignmentX(Component.LEFT_ALIGNMENT);
+			settingsPanel2.setLayout(new BoxLayout(settingsPanel2, BoxLayout.LINE_AXIS));
+			settingsPanel2.setBorder(BorderFactory.createEtchedBorder());
+			settingsPanel2.add(Box.createRigidArea(new Dimension(5,0)));
 			{
 				JLabel topGenesLbl = new JLabel("Top n genes");
 				topGenesLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
 				topGenesLbl.setMaximumSize(new Dimension(70,35));
-				settingsPanel.add(topGenesLbl);
+				settingsPanel2.add(topGenesLbl);
 			}
 
 			{
-				JTextField topGenes = new JTextField("25");
+				topGenes = new JTextField("");
 				topGenes.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				topGenes.setMaximumSize(new Dimension(50,35));
-				settingsPanel.add(topGenes);
-				settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+				settingsPanel2.add(topGenes);
 			}
+
+			settingsPanel.add(settingsPanel2);
+			settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
 
 			{
 				JButton createNetwork = new JButton("Create Network");
 				createNetwork.setFont(new Font("SansSerif", Font.BOLD, 10));
 				createNetwork.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+						int topNGenes = -1;
+						double log2FCCutoff = 1.0;
+						double fdr = .05;
+
+						if (topGenes.getText().length() > 0)
+							topNGenes = Integer.parseInt(topGenes.getText());
+						if (log2FC.getText().length() > 0)
+							log2FCCutoff = Double.parseDouble(log2FC.getText());
+						if (pValue.getText().length() > 0)
+							fdr = Double.parseDouble(pValue.getText());
+
+						createNetwork.setEnabled(false);
+						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, fdr, log2FCCutoff, topNGenes);
+						manager.executeTasks(new TaskIterator(task));
+						createNetwork.setEnabled(true);
 					}
 				});
 				settingsPanel.add(createNetwork);
