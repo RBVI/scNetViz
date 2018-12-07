@@ -3,6 +3,7 @@ package edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks;
 import java.io.File;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.cytoscape.work.AbstractTask;
@@ -28,7 +29,7 @@ public class FileCategoryTask extends AbstractTask implements ObservableTask {
 	Experiment exp;
 
 	@Tunable (description="Experiment to add category data to")
-	public ListSingleSelection<Experiment> experiment;
+	public ListSingleSelection<Experiment> experiment = null;
 
 	@Tunable (description="CSV file with category data",params="input=true")
 	public File file;
@@ -49,9 +50,10 @@ public class FileCategoryTask extends AbstractTask implements ObservableTask {
 		this.exp = exp;
 
 		if (exp != null)
-			experiment = null;
-		else
+			experiment = new ListSingleSelection<Experiment>(Collections.singletonList(exp));
+		else {
 			experiment = new ListSingleSelection<Experiment>(scManager.getExperiments());
+		}
 		dataType = new ListSingleSelection<String>("text","integer","float");
 	}
 
