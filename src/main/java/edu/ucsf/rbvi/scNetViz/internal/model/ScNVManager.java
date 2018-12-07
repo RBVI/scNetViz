@@ -24,6 +24,7 @@ import org.cytoscape.work.TaskObserver;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
+import edu.ucsf.rbvi.scNetViz.internal.view.ExperimentFrame;
 
 public class ScNVManager {
 
@@ -34,11 +35,13 @@ public class ScNVManager {
 
 	final Map<String, Experiment> experimentMap;
 	final Map<String, Source> sourceMap;
+	final Map<Experiment, ExperimentFrame> frameMap;
 	final CyServiceRegistrar registrar; 
 
 	public ScNVManager(final CyServiceRegistrar registrar) {
 		experimentMap = new HashMap<>();
 		sourceMap = new HashMap<>();
+		frameMap = new HashMap<>();
 		this.registrar = registrar;
 		this.availableCommands = registrar.getService(AvailableCommands.class);
 		this.ceTaskFactory = registrar.getService(CommandExecutorTaskFactory.class);
@@ -70,6 +73,7 @@ public class ScNVManager {
 		if (experimentMap.containsKey(accession)) {
 			Experiment exp = experimentMap.get(accession);
 			experimentMap.remove(accession);
+			frameMap.remove(exp);
 		}
 	}
 
@@ -84,6 +88,14 @@ public class ScNVManager {
 
 	public Set<String> getExperimentAccessions() {
 		return experimentMap.keySet();
+	}
+
+	public void addExperimentFrame(Experiment experiment, ExperimentFrame expFrame) {
+		frameMap.put(experiment, expFrame);
+	}
+
+	public ExperimentFrame getExperimentFrame(Experiment experiment) {
+		return frameMap.get(experiment);
 	}
 
 	public void executeCommand(String namespace, String command, Map<String, Object> args, boolean synchronous) {

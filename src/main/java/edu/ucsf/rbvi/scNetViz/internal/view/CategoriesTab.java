@@ -111,7 +111,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		// newCategory.setSelectedRow(newRow);
 		JTable categoryTable = getCategoryTable(newCategory);
 		categories.setSelectedItem(newCategory.toString());
-		categoryTable.setRowSelectionInterval(newRow, newRow);
+		if (newRow >= 0)
+			categoryTable.setRowSelectionInterval(newRow, newRow);
 	}
 
 	public void recalculateDE() {
