@@ -195,7 +195,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			}
 
 			{
-				dDRThreshold = new JTextField("0.1");
+				dDRThreshold = new JTextField("10%");
 				dDRThreshold.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				dDRThreshold.setMaximumSize(new Dimension(50,35));
 				settingsPanel.add(dDRThreshold);
@@ -208,7 +208,9 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 				diffExpButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						double log2FCCutoff = Double.parseDouble(logFC.getText());
-						double dDRCutoff = Double.parseDouble(dDRThreshold.getText());
+						String dDRText = dDRThreshold.getText();
+						double dDRCutoff = (double)Integer.parseInt(dDRText.replaceAll("%",""))/100.0;
+
 						diffExpButton.setEnabled(false);
 						TaskIterator ti = new TaskIterator(new CalculateDETask(manager, currentCategory, dDRCutoff, log2FCCutoff));
 						try {
