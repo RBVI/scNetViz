@@ -290,7 +290,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			Object v = getValue(row, col);
 			if (!catMap.containsKey(v)) {
 				catMap.put(v, new ArrayList<>());
-				sizes.put(v, -1);
+				sizes.put(v, 0);
 			}
 			catMap.get(v).add(col);
 			sizes.put(v, sizes.get(v)+1);

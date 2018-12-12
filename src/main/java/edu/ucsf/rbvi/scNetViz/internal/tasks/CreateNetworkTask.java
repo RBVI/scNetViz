@@ -104,7 +104,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("species", diffExp.getCurrentCategory().getExperiment().getSpecies());
 		args.put("limit", "0");
 		manager.executeCommand("string", "protein query", args, 
-		                       new RenameNetwork(diffExp, cat, name, geneList, monitor), true);
+		                       new RenameNetwork(diffExp, cat, name, geneList, false, monitor), true);
 		cyEventHelper.flushPayloadEvents();
 	}
 
@@ -115,7 +115,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("networkName", name);
 		args.put("source", "SUID:"+unionNetwork.getSUID());
 		manager.executeCommand("network", "create", args,
-		                       new RenameNetwork(diffExp, cat, name, geneList, monitor), true);
+		                       new RenameNetwork(diffExp, cat, name, geneList, true, monitor), true);
 	}
 
 	private String listToString(List<String> list, String prefix) {
@@ -131,16 +131,18 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		String name;
 		List<String> geneList;
 		final DifferentialExpression diffExp;
+		boolean getEnrichment = false;
 		Object cat = null;
 		final TaskMonitor monitor;
 
 		public RenameNetwork(final DifferentialExpression diffExp, Object cat, String newName, 
-		                     List<String> geneList, final TaskMonitor monitor) {
+		                     List<String> geneList, boolean getEnrichment, final TaskMonitor monitor) {
 			this.name = newName;
 			this.cat = cat;
 			this.geneList = geneList;
 			this.diffExp = diffExp;
 			this.monitor = monitor;
+			this.getEnrichment = getEnrichment;
 		}
 
 		public void allFinished(FinishStatus status) {}
@@ -174,12 +176,14 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			manager.executeCommand("string", "hide images", args, null, true);
 			manager.executeCommand("string", "hide glass", args, null, true);
 
-			monitor.setTitle("Retrieving enrichment for : "+name);
-			args.clear();
+			if (getEnrichment) {
+				monitor.setTitle("Retrieving enrichment for : "+name);
+				args.clear();
 
-			manager.executeCommand("string", "retrieve enrichment", args, null, true);
-			manager.executeCommand("string", "show enrichment", args, null, true);
-			manager.executeCommand("string", "show charts", args, null, true);
+				manager.executeCommand("string", "retrieve enrichment", args, null, true);
+				manager.executeCommand("string", "show enrichment", args, null, true);
+				manager.executeCommand("string", "show charts", args, null, true);
+			}
 
 			// Create the columns
 			monitor.setTitle("Adding data to network for: "+name);

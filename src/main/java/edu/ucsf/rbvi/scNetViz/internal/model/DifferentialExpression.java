@@ -25,6 +25,9 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.MyDouble;
+import edu.ucsf.rbvi.scNetViz.internal.api.PercentDouble;
+import edu.ucsf.rbvi.scNetViz.internal.api.PValueDouble;
 import edu.ucsf.rbvi.scNetViz.internal.utils.MatrixUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
@@ -79,7 +82,6 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		matrix = new double[nCols][nRows];
 		int col = 0;
 		for (Object cat: means.keySet()) {
-			System.out.println("Category "+cat);
 			double[] mean = means.get(cat);
 			double[] drs = drMap.get(cat);
 			double[] mtdc = mtdcMap.get(cat);
@@ -97,7 +99,6 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 				matrix[col+4][row] = pValue[row];
 				matrix[col+5][row] = FDR[row];
 			}
-			// Arrays.fill(matrix[col+5], Double.NaN);
 			col += 6;
 		}
 	}
@@ -117,8 +118,16 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		if (nGenes > 0) {
 			// Sort
 			Integer[] sortedPValues = MatrixUtils.indexSort(pValues, pValues.length);
+
+			// Skip over the NaN's
+			int start = 0;
+			for (start = 0; start < pValues.length; start++) {
+				if (!Double.isNaN(pValues[sortedPValues[start]]))
+					break;
+			}
+
 			for (int topGene = 0; topGene < nGenes; topGene++) {
-				geneList.add(getRowLabel(sortedPValues[topGene]));
+				geneList.add(getRowLabel(sortedPValues[topGene+start]));
 			}
 		} else {
 			// Should this be pValue or fdr?
@@ -243,7 +252,21 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		public Class<?> getColumnClass(int column) {
 			if (column == 0)
 				return String.class;
-			return Double.class;
+
+			int col = column%6;
+			switch(col) {
+				case 1:
+				case 3:
+				case 4:
+					return MyDouble.class;
+				case 2:
+					return PercentDouble.class;
+				case 5:
+				case 0:
+					return PValueDouble.class;
+				default:
+					return Double.class;
+			}
 		}
 
 		@Override
