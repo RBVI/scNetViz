@@ -19,6 +19,9 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.PercentDouble;
+import edu.ucsf.rbvi.scNetViz.internal.api.MyDouble;
+import edu.ucsf.rbvi.scNetViz.internal.api.PValueDouble;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class SimpleTable extends JTable {
@@ -45,9 +48,15 @@ public class SimpleTable extends JTable {
 			columnModel.getColumn(col).setPreferredWidth(100);
 		}
 
+		setDefaultRenderer(MyDouble.class, new DoubleTableCellRenderer());
+		setDefaultRenderer(PercentDouble.class, new PercentTableCellRenderer());
+		setDefaultRenderer(PValueDouble.class, new PValueTableCellRenderer());
+
 		JTableHeader header = getTableHeader();
 		header.setDefaultRenderer(new HeaderRenderer(this));
 		header.setFont(new Font("SansSerif", Font.BOLD, 10));
+
+		setRowSorter(new NaNTableRowSorter(tableModel));
 
 		addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent mouseEvent) {

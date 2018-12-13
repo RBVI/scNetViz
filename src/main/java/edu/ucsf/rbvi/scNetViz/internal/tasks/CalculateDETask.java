@@ -38,10 +38,21 @@ public class CalculateDETask extends AbstractTask implements ObservableTask {
 		int row = category.getSelectedRow();
 		if (row < 0) {
 			row = category.getDefaultRow();
+			if (row < 0) {
+				// Nothing selected and no default
+				monitor.showMessage(TaskMonitor.Level.ERROR, 
+			                      "No row was selected and this category does not have a default row");
+				return;
+			}
 			category.setSelectedRow(row);
 		}
-		diffExp = new DifferentialExpression(manager, category, row, dDRCutoff, log2FCCutoff);
-		category.getExperiment().setDiffExp(diffExp);
+		try {
+			diffExp = new DifferentialExpression(manager, category, row, dDRCutoff, log2FCCutoff);
+			category.getExperiment().setDiffExp(diffExp);
+		} catch (Exception exp) {
+			monitor.showMessage(TaskMonitor.Level.ERROR, 
+			                    "Unable complete differential expression calculation: "+exp.getMessage());
+		}
 	}
 
 	public <R> R getResults(Class<? extends R> clazz) {

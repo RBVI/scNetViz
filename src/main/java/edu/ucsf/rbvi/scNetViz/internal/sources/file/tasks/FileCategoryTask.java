@@ -3,6 +3,7 @@ package edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks;
 import java.io.File;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.cytoscape.work.AbstractTask;
@@ -14,12 +15,15 @@ import org.cytoscape.work.util.ListSingleSelection;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileCategory;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileExperiment;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileMetadata;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
+import edu.ucsf.rbvi.scNetViz.internal.view.CategoriesTab;
+import edu.ucsf.rbvi.scNetViz.internal.view.ExperimentFrame;
 
 public class FileCategoryTask extends AbstractTask implements ObservableTask {
 	final ScNVManager scManager;
@@ -28,7 +32,7 @@ public class FileCategoryTask extends AbstractTask implements ObservableTask {
 	Experiment exp;
 
 	@Tunable (description="Experiment to add category data to")
-	public ListSingleSelection<Experiment> experiment;
+	public ListSingleSelection<Experiment> experiment = null;
 
 	@Tunable (description="CSV file with category data",params="input=true")
 	public File file;
@@ -49,9 +53,10 @@ public class FileCategoryTask extends AbstractTask implements ObservableTask {
 		this.exp = exp;
 
 		if (exp != null)
-			experiment = null;
-		else
+			experiment = new ListSingleSelection<Experiment>(Collections.singletonList(exp));
+		else {
 			experiment = new ListSingleSelection<Experiment>(scManager.getExperiments());
+		}
 		dataType = new ListSingleSelection<String>("text","integer","float");
 	}
 
@@ -68,6 +73,14 @@ public class FileCategoryTask extends AbstractTask implements ObservableTask {
 			                                 dataType.getSelectedValue(), 
 			                                 pivot, hdrCols, taskMonitor);
 			exp.addCategory(cat);
+			ExperimentFrame expFrame = scManager.getExperimentFrame(exp);
+			if (expFrame != null) {
+				String accession = (String)exp.getMetadata().get(Metadata.ACCESSION);
+				CategoriesTab catTab = new CategoriesTab(scManager, exp, expFrame);
+      	expFrame.addCategoriesContent(accession+": Categories Tab", catTab);
+				catTab.changeCategory(cat, -1);
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

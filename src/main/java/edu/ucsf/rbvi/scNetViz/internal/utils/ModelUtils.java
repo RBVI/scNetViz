@@ -84,9 +84,8 @@ public class ModelUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static void addStyle(ScNVManager manager, CyNetwork network, String name) {
+	public static void addStyle(ScNVManager manager, CyNetwork network, String name, VisualStyle baseStyle) {
 		String col = name+" logGER";
-		System.out.println("Column = "+col);
 		CyNetworkViewManager viewManager = manager.getService(CyNetworkViewManager.class);
 		VisualMappingManager vizMapManager = manager.getService(VisualMappingManager.class);
 		CyNetworkView view = null;
@@ -98,9 +97,8 @@ public class ModelUtils {
 		}
 		if (view == null) return;
 
-		VisualStyle style = vizMapManager.getVisualStyle(view);
-		VisualStyle newStyle = manager.getService(VisualStyleFactory.class).createVisualStyle(style);
-		newStyle.setTitle(style.getTitle()+" "+name);
+		VisualStyle newStyle = manager.getService(VisualStyleFactory.class).createVisualStyle(baseStyle);
+		newStyle.setTitle(baseStyle.getTitle()+" "+name);
 		newStyle.removeVisualMappingFunction(BasicVisualLexicon.NODE_FILL_COLOR);
 
 		// Now create the new mapping
@@ -122,8 +120,17 @@ public class ModelUtils {
 		colorMapping.addPoint (minMax[1], new BoundaryRangeValues<Paint>(colors[7], colors[7], colors[8]));
 
 		newStyle.addVisualMappingFunction(colorMapping);
-		vizMapManager.addVisualStyle(newStyle);
+		// vizMapManager.addVisualStyle(newStyle);
 		vizMapManager.setVisualStyle(newStyle, view);
+	}
+
+	public static VisualStyle getVisualStyle(ScNVManager manager, String name) {
+		VisualMappingManager vizMapManager = manager.getService(VisualMappingManager.class);
+		for (VisualStyle style: vizMapManager.getAllVisualStyles()) {
+			if (name.equals(style.getTitle()))
+				return style;
+		}
+		return null;
 	}
 
 	public static Map<String, CyRow> createQueryMap(CyNetwork network) {

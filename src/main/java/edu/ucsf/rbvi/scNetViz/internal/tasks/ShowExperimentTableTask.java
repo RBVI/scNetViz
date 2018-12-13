@@ -42,19 +42,24 @@ public class ShowExperimentTableTask extends AbstractTask {
 
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				// Create the Experiment Frame
-				ExperimentFrame frame = new ExperimentFrame(manager);
-				// Add our TPM tab
-				String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
-				System.out.println("Accession = "+accession);
-				frame.addTPMContent(accession+": TPM Tab", new TPMTab(manager, experiment, frame));
-				// Add our Categories tab
-				frame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, frame));
-				// Add our Differential Expression tab (if we have one)
-				DifferentialExpression diffExp = experiment.getDiffExp();
-				if (diffExp != null) {
-					DiffExpTab dTab = new DiffExpTab(manager, experiment, frame, diffExp.getCurrentCategory(), diffExp);
-					frame.addDiffExpContent(accession+": DiffExp Tab", dTab);
+				ExperimentFrame frame = manager.getExperimentFrame(experiment);
+				if (frame == null) {
+					// Create the Experiment Frame
+					frame = new ExperimentFrame(manager);
+					// Add our TPM tab
+					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
+					frame.addTPMContent(accession+": TPM Tab", new TPMTab(manager, experiment, frame));
+					// Add our Categories tab
+					frame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, frame));
+					// Add our Differential Expression tab (if we have one)
+					DifferentialExpression diffExp = experiment.getDiffExp();
+					if (diffExp != null) {
+						DiffExpTab dTab = new DiffExpTab(manager, experiment, frame, diffExp.getCurrentCategory(), diffExp);
+						frame.addDiffExpContent(accession+": DiffExp Tab", dTab);
+					}
+					manager.addExperimentFrame(experiment, frame);
+				} else {
+					frame.setVisible(true);
 				}
 			}
 		});

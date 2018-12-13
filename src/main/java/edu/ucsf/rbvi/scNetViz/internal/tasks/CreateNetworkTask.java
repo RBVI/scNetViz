@@ -9,6 +9,7 @@ import java.util.Set;
 import org.cytoscape.event.CyEventHelper;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.view.model.CyNetworkView;
+import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
@@ -28,6 +29,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	final ScNVManager manager;
 	final CyEventHelper cyEventHelper;
 	CyNetwork unionNetwork = null;
+	VisualStyle baseStyle = null;
 
 	// FIXME: these should be Tunables at some point
 	double pValue;
@@ -58,6 +60,8 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		Category category = diffExp.getCurrentCategory();
 		Experiment experiment = category.getExperiment();
 		Set<Object> categoryValues = diffExp.getCategoryValues();
+		List<String> rowLabels = category.getMatrix().getRowLabels();
+		String categoryRow = category.toString()+" ("+rowLabels.get(category.getSelectedRow())+")";
 
 		Map<Object, List<String>> geneMap = new HashMap<>();
 		List<String> allGenes = new ArrayList<String>();
@@ -78,7 +82,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 
 		// Create the union network
 		// Create the network
-		createStringNetwork(null, category.toString(), allGenes, monitor);
+		createStringNetwork(null, categoryRow, allGenes, monitor);
 
 		for (Object cat: categoryValues) {
 			List<String> geneList = geneMap.get(cat);
@@ -100,7 +104,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("species", diffExp.getCurrentCategory().getExperiment().getSpecies());
 		args.put("limit", "0");
 		manager.executeCommand("string", "protein query", args, 
-		                       new RenameNetwork(diffExp, cat, name, geneList, monitor), true);
+		                       new RenameNetwork(diffExp, cat, name, geneList, false, monitor), true);
 		cyEventHelper.flushPayloadEvents();
 	}
 
@@ -111,7 +115,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("networkName", name);
 		args.put("source", "SUID:"+unionNetwork.getSUID());
 		manager.executeCommand("network", "create", args,
-		                       new RenameNetwork(diffExp, cat, name, geneList, monitor), true);
+		                       new RenameNetwork(diffExp, cat, name, geneList, true, monitor), true);
 	}
 
 	private String listToString(List<String> list, String prefix) {
@@ -127,16 +131,18 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		String name;
 		List<String> geneList;
 		final DifferentialExpression diffExp;
+		boolean getEnrichment = false;
 		Object cat = null;
 		final TaskMonitor monitor;
 
 		public RenameNetwork(final DifferentialExpression diffExp, Object cat, String newName, 
-		                     List<String> geneList, final TaskMonitor monitor) {
+		                     List<String> geneList, boolean getEnrichment, final TaskMonitor monitor) {
 			this.name = newName;
 			this.cat = cat;
 			this.geneList = geneList;
 			this.diffExp = diffExp;
 			this.monitor = monitor;
+			this.getEnrichment = getEnrichment;
 		}
 
 		public void allFinished(FinishStatus status) {}
@@ -147,10 +153,12 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			if (res == null) return;
 
 			CyNetwork network = null;
+			CyNetworkView networkView = null;
 			if (res instanceof JSONResult) {
 				network = ModelUtils.getNetworkFromJSON(manager, (JSONResult)res);
 				// System.out.println("Got network "+network+" from "+((JSONResult)res).getJSON());
 			} else if (res instanceof CyNetworkView) {
+				networkView = (CyNetworkView)res;
 				network = ((CyNetworkView)res).getModel();
 			}
 			if (cat == null) {
@@ -168,18 +176,20 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			manager.executeCommand("string", "hide images", args, null, true);
 			manager.executeCommand("string", "hide glass", args, null, true);
 
-			monitor.setTitle("Retrieving enrichment for : "+name);
-			args.clear();
+			if (getEnrichment) {
+				monitor.setTitle("Retrieving enrichment for : "+name);
+				args.clear();
 
-			manager.executeCommand("string", "retrieve enrichment", args, null, true);
-			manager.executeCommand("string", "show enrichment", args, null, true);
-			manager.executeCommand("string", "show charts", args, null, true);
+				manager.executeCommand("string", "retrieve enrichment", args, null, true);
+				manager.executeCommand("string", "show enrichment", args, null, true);
+				manager.executeCommand("string", "show charts", args, null, true);
+			}
 
 			// Create the columns
 			monitor.setTitle("Adding data to network for: "+name);
 			if (cat != null) {
 				// Style the network
-				ModelUtils.addStyle(manager, network, name);
+				ModelUtils.addStyle(manager, network,  name, baseStyle);
 			} else {
 				unionNetwork = network;
 				Category category = diffExp.getCurrentCategory();
@@ -190,6 +200,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 					// Add the data
 					ModelUtils.updateDEData(manager, network, geneList, diffExp, category.mkLabel(cat1));
 				}
+				baseStyle = ModelUtils.getVisualStyle(manager, "STRING style");
 			}
 		}
 	}

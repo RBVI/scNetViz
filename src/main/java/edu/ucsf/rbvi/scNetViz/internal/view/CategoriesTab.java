@@ -20,11 +20,13 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableModel;
 
 import org.cytoscape.work.FinishStatus;
@@ -79,6 +81,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 
 	@Override
 	public void allFinished(FinishStatus status) {
+		diffExpButton.setEnabled(true);
 	}
 
 	@Override
@@ -88,6 +91,16 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
 		} else if (obsTask instanceof CalculateDETask) {
 			DifferentialExpression diffExp = obsTask.getResults(DifferentialExpression.class);
+			if (diffExp == null) {
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						JOptionPane.showConfirmDialog(expFrame, "Differential expression calculation failed", 
+						                              "DE Failure", JOptionPane.ERROR_MESSAGE);
+					}
+				});
+				diffExpButton.setEnabled(true);
+				return;
+			}
 			DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
 			expFrame.addDiffExpContent("Diff Exp", diffETab);
 			diffExpButton.setEnabled(true);
@@ -98,7 +111,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		// newCategory.setSelectedRow(newRow);
 		JTable categoryTable = getCategoryTable(newCategory);
 		categories.setSelectedItem(newCategory.toString());
-		categoryTable.setRowSelectionInterval(newRow, newRow);
+		if (newRow >= 0)
+			categoryTable.setRowSelectionInterval(newRow, newRow);
 	}
 
 	public void recalculateDE() {
@@ -181,7 +195,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			}
 
 			{
-				dDRThreshold = new JTextField("0.1");
+				dDRThreshold = new JTextField("10%");
 				dDRThreshold.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				dDRThreshold.setMaximumSize(new Dimension(50,35));
 				settingsPanel.add(dDRThreshold);
@@ -194,10 +208,16 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 				diffExpButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						double log2FCCutoff = Double.parseDouble(logFC.getText());
-						double dDRCutoff = Double.parseDouble(dDRThreshold.getText());
+						String dDRText = dDRThreshold.getText();
+						double dDRCutoff = (double)Integer.parseInt(dDRText.replaceAll("%",""))/100.0;
+
 						diffExpButton.setEnabled(false);
 						TaskIterator ti = new TaskIterator(new CalculateDETask(manager, currentCategory, dDRCutoff, log2FCCutoff));
-						manager.executeTasks(ti, thisComponent);
+						try {
+							manager.executeTasks(ti, thisComponent);
+						} catch (Exception ex) {
+							diffExpButton.setEnabled(true);
+						}
 					}
 				});
 				settingsPanel.add(diffExpButton);
