@@ -17,6 +17,8 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 public class ProcessAllTask extends AbstractTask implements TaskObserver {
 	final ScNVManager manager;
 	Experiment experiment = null;
+	int maxGenes = 100000;
+	// int maxGenes = 500;
 
 	public ProcessAllTask(final ScNVManager manager) {
 		super();
@@ -56,7 +58,8 @@ public class ProcessAllTask extends AbstractTask implements TaskObserver {
 	public void taskFinished(ObservableTask obsTask) {
 		if (obsTask instanceof CalculateDETask) {
 			DifferentialExpression diffExp = obsTask.getResults(DifferentialExpression.class);
-			TaskIterator ti = new TaskIterator(new CreateNetworkTask(manager, diffExp, 0.05, 1.0, -1));
+			// TODO: use a reasonable default for maxGenes: 500?
+			TaskIterator ti = new TaskIterator(new CreateNetworkTask(manager, diffExp, 0.05, 1.0, -1, maxGenes));
 			manager.executeTasks(ti);
 		}
 	}

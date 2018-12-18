@@ -283,7 +283,8 @@ public class DiffExpTab extends JPanel {
 							fdr = Double.parseDouble(pValue.getText());
 
 						createNetwork.setEnabled(false);
-						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, fdr, log2FCCutoff, topNGenes);
+						// Add max genes somewhere
+						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, fdr, log2FCCutoff, topNGenes, 100000);
 						manager.executeTasks(new TaskIterator(task));
 						createNetwork.setEnabled(true);
 					}
