@@ -17,8 +17,8 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 public class ProcessAllTask extends AbstractTask implements TaskObserver {
 	final ScNVManager manager;
 	Experiment experiment = null;
-	int maxGenes = 100000;
-	// int maxGenes = 500;
+	// int maxGenes = 100000;
+	int maxGenes = 500;
 
 	public ProcessAllTask(final ScNVManager manager) {
 		super();

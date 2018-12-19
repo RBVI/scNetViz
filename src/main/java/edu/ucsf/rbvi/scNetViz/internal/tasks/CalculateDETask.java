@@ -36,6 +36,7 @@ public class CalculateDETask extends AbstractTask implements ObservableTask {
 	public void run(TaskMonitor monitor) {
 		monitor.setTitle("Calculating Differential Expression");
 		int row = category.getSelectedRow();
+		System.out.println("Calculating differential expression: row = "+row);
 		if (row < 0) {
 			row = category.getDefaultRow();
 			if (row < 0) {
@@ -50,6 +51,7 @@ public class CalculateDETask extends AbstractTask implements ObservableTask {
 			diffExp = new DifferentialExpression(manager, category, row, dDRCutoff, log2FCCutoff);
 			category.getExperiment().setDiffExp(diffExp);
 		} catch (Exception exp) {
+			exp.printStackTrace();
 			monitor.showMessage(TaskMonitor.Level.ERROR, 
 			                    "Unable complete differential expression calculation: "+exp.getMessage());
 		}

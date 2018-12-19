@@ -211,9 +211,6 @@ public class FileCategory extends AbstractCategory implements Category {
 
 	public String getSortedRow() { return sortedRow; }
 
-	public int getSelectedRow() { return selectedRow; }
-	public void setSelectedRow(int selectedRow) { this.selectedRow = selectedRow; }
-
 	public SortableTableModel getTableModel() {
 		if (tableModel == null)
 			tableModel = new FileCategoryTableModel(this);

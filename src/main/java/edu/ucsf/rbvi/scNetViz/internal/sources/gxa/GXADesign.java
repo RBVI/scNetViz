@@ -73,9 +73,6 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 	@Override
 	public String getValue(int row, int col) { return categories[row][col];}
 
-	public int getSelectedRow() { return selectedRow; }
-	public void setSelectedRow(int selectedRow) { this.selectedRow = selectedRow; }
-
 	@Override
 	public String getValue(String rowLabel, String colLabel) { 
 		int row = rowLabels.indexOf(rowLabel);

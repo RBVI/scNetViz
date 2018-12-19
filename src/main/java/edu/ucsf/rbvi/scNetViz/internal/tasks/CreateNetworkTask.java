@@ -77,12 +77,15 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			List<String> geneList = diffExp.getGeneList(cat, pValue, log2FCCutoff, nGenes, maxGenes);
 			if (geneList != null && geneList.size() > 0) {
 				allGenes.addAll(geneList);
-				// Create the network
-				// createStringNetwork(cat, category.mkLabel(cat), geneList, monitor);
 				geneMap.put(cat, geneList);
 			} else {
 				monitor.showMessage(TaskMonitor.Level.WARN, "No genes passed the cutoff for "+category.mkLabel(cat));
 			}
+		}
+
+		if (allGenes.size() == 0) {
+			monitor.showMessage(TaskMonitor.Level.ERROR, "No genes passed the cutoffs for any cluster");
+			return;
 		}
 
 		// Create the union network
@@ -108,6 +111,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("query", listToString(geneList, ""));
 		args.put("species", diffExp.getCurrentCategory().getExperiment().getSpecies());
 		args.put("limit", "0");
+		args.put("includesViruses", "false");
 		manager.executeCommand("string", "protein query", args, 
 		                       new RenameNetwork(diffExp, cat, name, geneList, false, monitor), true);
 		cyEventHelper.flushPayloadEvents();
@@ -120,7 +124,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("networkName", name);
 		args.put("source", "SUID:"+unionNetwork.getSUID());
 		manager.executeCommand("network", "create", args,
-		                       new RenameNetwork(diffExp, cat, name, geneList, true, monitor), true);
+		                       new RenameNetwork(diffExp, cat, name, geneList, false, monitor), true);
 	}
 
 	private String listToString(List<String> list, String prefix) {

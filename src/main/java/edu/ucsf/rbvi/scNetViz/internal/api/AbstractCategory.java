@@ -47,6 +47,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	protected final String name;
 
 	protected int selectedRow = -1;
+	protected int lastCategory = -1;
 	protected int hdrCols = 1;
 
 	public AbstractCategory(final ScNVManager scManager, final Experiment exp,
@@ -59,8 +60,18 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	}
 
 	@Override
+	public int getSelectedRow() { return selectedRow; }
+
+	@Override
+	public void setSelectedRow(int selectedRow) { 
+		if (lastCategory != selectedRow)
+			lastCategory = -1;
+		this.selectedRow = selectedRow; 
+	}
+
+	@Override
 	public Map<Object, double[]> getMTDC(int category) {
-		if (means != null && category == selectedRow)
+		if (means != null && category == lastCategory)
 			return mtdcMap;
 		getMeans(category);
 		return mtdcMap;
@@ -68,16 +79,18 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 	@Override
 	public Map<Object, double[]> getMeans(int category) {
-		if (means != null && category == selectedRow)
+		if (means != null && category == lastCategory)
 			return means;
 
-		if (sizes == null || category != selectedRow) {
+		if (sizes == null || category != lastCategory) {
 			getSizes(category);
 		}
 
 		means = new HashMap<>();
 		countMap = new HashMap<>();
 		mtdcMap = new HashMap<>();
+
+		drMap = null;
 
 		Matrix mtx = experiment.getMatrix();
 		DoubleMatrix dMat = null;
@@ -87,6 +100,16 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		} else if (mtx instanceof IntegerMatrix) {
 			iMat = (IntegerMatrix)mtx;
 		}
+
+		HashMap<String, Integer> colLabelMap = new HashMap<>();
+		List<String> colLabels = mtx.getColLabels();
+		int colIndex = 0;
+		for (String str: colLabels) {
+			colLabelMap.put(str, colIndex);
+			colIndex++;
+		}
+
+		int tpmHeaderCols = 1;
 
 		int [] totalCount = new int[mtx.getNRows()];
 		Arrays.fill(totalCount, 0);
@@ -99,12 +122,15 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			for (int row = 0; row < mtx.getNRows(); row++) {
 				double mean = 0.0;
 				int foundCount = 0;
-				for (Integer col: arrays) {
+				for (Integer arrayCol: arrays) {
+					String colLabel = mtx.getColumnLabel(arrayCol);
+					int col = colLabelMap.get(colLabel);
+
 					double v = 0.0;
 					if (dMat != null) {
-						v = dMat.getDoubleValue(row, col);
+						v = dMat.getDoubleValue(row, col+tpmHeaderCols);
 					} else if (iMat != null) {
-						v = (double)iMat.getIntegerValue(row, col);
+						v = (double)iMat.getIntegerValue(row, col+tpmHeaderCols);
 					}
 					if (!Double.isNaN(v)) {
 						mean += v;
@@ -114,19 +140,20 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 				catMean[row] = mean/(double)arrays.size();
 				catCount[row] = foundCount;
 				totalCount[row] += foundCount;
-				catMTDC[row] = mean/foundCount;
+				catMTDC[row] = mean/(double)foundCount;
 			}
 			means.put(key, catMean);
 			countMap.put(key, catCount);
 			mtdcMap.put(key, catMTDC);
 		}
 		countMap.put("Total", totalCount); // Remember the total counts for each gene
+		lastCategory = category;
 		return means;
 	}
 
 	@Override
 	public Map<Object, int[]> getCounts(int category) {
-		if (means != null && category == selectedRow)
+		if (means != null && category == lastCategory)
 			return countMap;
 		getMeans(category);
 		return countMap;
@@ -134,12 +161,13 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 	@Override
 	public Map<Object, double[]> getDr(int category) {
-		if (drMap != null && category == selectedRow)
+		if (drMap != null && category == lastCategory)
 			return drMap;
-		if (means == null || category != selectedRow)
+		if (means == null || category != lastCategory)
 			getMeans(category);
 
 		drMap = new HashMap<>();
+
 		for (Object cat: means.keySet()) {
 			double dr[] = new double[experiment.getMatrix().getNRows()];
 			for (int row = 0; row < experiment.getMatrix().getNRows(); row++) {
@@ -155,7 +183,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 	@Override
 	public Map<Object, Integer> getSizes(int category) {
-		if (sizes == null || category != selectedRow) {
+		if (sizes == null || category != lastCategory) {
 			// This creates the sizes map as a by-product
 			getUniqValues(category);
 		}
@@ -164,7 +192,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 	@Override
 	public Map<Object, Map<String,double[]>> getLogGER(int category, double dDRthreshold, double log2FCCutoff) {
-		if (means == null || category == selectedRow)
+		if (means == null || category != lastCategory)
 			getMeans(category);
 
 		Map<Object, Map<String,double[]>> logGER = new HashMap<>();
@@ -178,7 +206,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 	@Override
 	public Map<String, double[]> getLogGER(int category, Object category1, double dDRthreshold, double log2FCCutoff) {
-		if (means == null || category == selectedRow)
+		if (means == null || category != lastCategory)
 			getMeans(category);
 
 		int geneRows = experiment.getMatrix().getNRows();
@@ -245,7 +273,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	@Override
 	public double[] getLogGER(int category, Object category1, Object category2, 
 	                          double dDRthreshold, double log2FCCutoff) {
-		if (means == null || category == selectedRow)
+		if (means == null || category != lastCategory)
 			getMeans(category);
 
 		int geneRows = experiment.getMatrix().getNRows();

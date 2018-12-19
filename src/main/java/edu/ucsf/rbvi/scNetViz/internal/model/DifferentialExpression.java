@@ -104,15 +104,20 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	}
 
 	public SortableTableModel getTableModel() {
-		if (tableModel == null)
+		if (tableModel == null) {
 			tableModel = new DiffExpTableModel(this, category, categoryRow);
+		}
 		return tableModel;
 	}
 
-	public List<String> getGeneList(Object cat, double fdrCutoff, double log2FCCutoff, int nGenes, int maxGenes) {
+	public String toString() {
+		return "Differential expression for category "+category+" row "+categoryRow;
+	}
+
+	public List<String> getGeneList(Object cat, double pvCutoff, double log2FCCutoff, int nGenes, int maxGenes) {
 		double[] logGER = logGERMap.get(cat).get("logFC");
 		double[] pValues = logGERMap.get(cat).get("pValue");
-		double[] fdr = fdrMap.get(cat);
+		// double[] fdr = fdrMap.get(cat);
 
 		List<String> geneList = new ArrayList<>();
 		if (nGenes > 0) {
@@ -122,8 +127,16 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			double pV[] = new double[nRows];
 			Arrays.fill(pV, Double.NaN);
 			int count = 0;
+			/*
 			for (int row = 0; row < nRows; row++) {
 				if (Math.abs(logGER[row]) > log2FCCutoff && fdr[row] < fdrCutoff) {
+					geneList.add(getRowLabel(row));
+					pV[count++] = pValues[row];
+				}
+			}
+			*/
+			for (int row = 0; row < nRows; row++) {
+				if (Math.abs(logGER[row]) > log2FCCutoff && pValues[row] < pvCutoff) {
 					geneList.add(getRowLabel(row));
 					pV[count++] = pValues[row];
 				}

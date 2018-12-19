@@ -204,7 +204,7 @@ public class DiffExpTab extends JPanel {
 			settingsPanel1.setBorder(BorderFactory.createEtchedBorder());
 			{
 				settingsPanel1.add(Box.createRigidArea(new Dimension(5,0)));
-				JLabel pValueLbl = new JLabel("FDR:");
+				JLabel pValueLbl = new JLabel("pValue:");
 				pValueLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
 				pValueLbl.setMaximumSize(new Dimension(50,35));
 				settingsPanel1.add(pValueLbl);
@@ -273,18 +273,18 @@ public class DiffExpTab extends JPanel {
 					public void actionPerformed(ActionEvent e) {
 						int topNGenes = -1;
 						double log2FCCutoff = 1.0;
-						double fdr = .05;
+						double pv = .05;
 
 						if (topGenes.getText().length() > 0)
 							topNGenes = Integer.parseInt(topGenes.getText());
 						if (log2FC.getText().length() > 0)
 							log2FCCutoff = Double.parseDouble(log2FC.getText());
 						if (pValue.getText().length() > 0)
-							fdr = Double.parseDouble(pValue.getText());
+							pv = Double.parseDouble(pValue.getText());
 
 						createNetwork.setEnabled(false);
-						// Add max genes somewhere
-						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, fdr, log2FCCutoff, topNGenes, 100000);
+						// TODO: Add max genes somewhere
+						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, pv, log2FCCutoff, topNGenes, 500);
 						manager.executeTasks(new TaskIterator(task));
 						createNetwork.setEnabled(true);
 					}
