@@ -119,9 +119,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		double[] pValues = logGERMap.get(cat).get("pValue");
 		// double[] fdr = fdrMap.get(cat);
 
-		List<String> geneList = new ArrayList<>();
 		if (nGenes > 0) {
-			return getTopGenes(geneList, pValues, nGenes);
+			return getTopGenes(null, pValues, nGenes);
 		} else {
 			// Should this be pValue or fdr?
 			double pV[] = new double[nRows];
@@ -135,6 +134,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 				}
 			}
 			*/
+			List<String> geneList = new ArrayList<String>();
 			for (int row = 0; row < nRows; row++) {
 				if (Math.abs(logGER[row]) > log2FCCutoff && pValues[row] < pvCutoff) {
 					geneList.add(getRowLabel(row));
@@ -142,11 +142,10 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 				}
 			}
 			if (count > maxGenes) {
-				geneList.clear();
 				return getTopGenes(geneList, pV, maxGenes);
 			}
+			return geneList;
 		}
-		return geneList;
 	}
 
 	public Category getCurrentCategory() {
@@ -182,10 +181,17 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 				break;
 		}
 
-		for (int topGene = 0; topGene < nGenes; topGene++) {
-			geneList.add(getRowLabel(sortedPValues[topGene+start]));
+		List<String> newGeneList = new ArrayList<String>();
+		if (geneList == null) {
+			for (int topGene = 0; topGene < nGenes; topGene++) {
+				newGeneList.add(getRowLabel(sortedPValues[topGene+start]));
+			}
+		} else {
+			for (int topGene = 0; topGene < nGenes; topGene++) {
+				newGeneList.add(geneList.get(sortedPValues[topGene+start]));
+			}
 		}
-		return geneList;
+		return newGeneList;
 	}
 
 	// Calculate the FDR using Benjamini Hochberg
