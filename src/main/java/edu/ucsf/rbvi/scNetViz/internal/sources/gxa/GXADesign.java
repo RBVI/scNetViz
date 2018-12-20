@@ -71,7 +71,10 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 	public String[][] getStringMatrix() { return categories;}
 
 	@Override
-	public String getValue(int row, int col) { return categories[row][col];}
+	public String getValue(int row, int col) { 
+		// System.out.println("categories["+row+"]["+col+"] = "+categories[row][col]);
+		return categories[row][col];
+	}
 
 	@Override
 	public String getValue(String rowLabel, String colLabel) { 
@@ -119,8 +122,10 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		if (input == null || input.size() < 2) return null;
 
 		GXADesign gxaDesign = new GXADesign(scManager, experiment);
-		gxaDesign.nCols = input.size();
+		gxaDesign.nCols = input.size()-1;
 		gxaDesign.nRows = input.get(0).length-1;
+
+		// System.out.println("nCols = "+gxaDesign.nCols+", experiment ncols = "+experiment.getMatrix().getNCols());
 
 		gxaDesign.setRowLabels(stripArray(input.get(0), 1));
 		gxaDesign.categories = new String[gxaDesign.nRows][gxaDesign.nCols];
@@ -133,12 +138,12 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 			if (first) {
 				first = false;
 			} else {
-				colLabels.add(line[0]);
+				colLabels.add(stripQuotes(line[0]));
 				for (int row = 1; row < gxaDesign.nRows; row++) {
-					gxaDesign.categories[row-1][col] = line[row];
+					gxaDesign.categories[row-1][col] = stripQuotes(line[row]);
 				}
+				col++;
 			}
-			col++;
 		}
 		gxaDesign.setColLabels(colLabels);
 
@@ -154,6 +159,10 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 			result.add(str.replaceAll("^\"|\"$", ""));
 		}
 		return result;
+	}
+
+	static private String stripQuotes(String str) {
+		return str.replaceAll("^\"|\"$", "");
 	}
 
 	public Map<String,List<String>> getClusterList(String factor) {

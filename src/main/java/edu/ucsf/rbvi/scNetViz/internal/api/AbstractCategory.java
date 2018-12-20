@@ -101,20 +101,12 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			iMat = (IntegerMatrix)mtx;
 		}
 
-		HashMap<String, Integer> colLabelMap = new HashMap<>();
-		List<String> colLabels = mtx.getColLabels();
-		int colIndex = 0;
-		for (String str: colLabels) {
-			colLabelMap.put(str, colIndex);
-			colIndex++;
-		}
-
-		int tpmHeaderCols = 1;
 
 		int [] totalCount = new int[mtx.getNRows()];
 		Arrays.fill(totalCount, 0);
 
 		for (Object key: catMap.keySet()) {
+			// System.out.println("Category: "+key);
 			List<Integer> arrays = catMap.get(key);
 			double[] catMean = new double[mtx.getNRows()];
 			int[] catCount = new int[mtx.getNRows()];
@@ -122,16 +114,14 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			for (int row = 0; row < mtx.getNRows(); row++) {
 				double mean = 0.0;
 				int foundCount = 0;
-				for (Integer arrayCol: arrays) {
-					String colLabel = mtx.getColumnLabel(arrayCol);
-					int col = colLabelMap.get(colLabel);
-
+				for (Integer col: arrays) {
 					double v = 0.0;
 					if (dMat != null) {
-						v = dMat.getDoubleValue(row, col+tpmHeaderCols);
+						v = dMat.getDoubleValue(row, col);
 					} else if (iMat != null) {
-						v = (double)iMat.getIntegerValue(row, col+tpmHeaderCols);
+						v = (double)iMat.getIntegerValue(row, col);
 					}
+					// if (row == 0) System.out.println("v["+row+"]["+(col+1)+"] = "+v);
 					if (!Double.isNaN(v)) {
 						mean += v;
 						foundCount++;
@@ -311,19 +301,46 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 	abstract public Object getValue(int row, int col);
 
+	/**
+	 * Note this returns an array of indices in the *experiment* matrix,
+	 * not in the category matrix.  This makes it much easier later on
+	 * to use this.
+	 */
 	protected int getUniqValues(int row) {
+		// We'll use the column names to map to the experiment matrix
+		Matrix mtx = experiment.getMatrix();
+		HashMap<String, Integer> colLabelMap = new HashMap<>();
+		List<String> colLabels = mtx.getColLabels();
+		// System.out.println("nCols = "+nCols+", colLabels.size() = "+colLabels.size());
+		int colIndex = 0;
+		for (String str: colLabels) {
+			colLabelMap.put(str, colIndex);
+			colIndex++;
+		}
+
 		catMap = new HashMap<>();
 		sizes = new HashMap<>();
+
+		int tpmHeaderCols = 1;
+
+		// System.out.println("hdrCols = "+hdrCols+", row = "+row);
+
 		for (int col = 0; col < nCols; col++) {
 			Object v = getValue(row, col);
+			// System.out.println("v("+col+") = "+v);
 			if (!catMap.containsKey(v)) {
 				catMap.put(v, new ArrayList<>());
 				sizes.put(v, 0);
 			}
-			catMap.get(v).add(col);
+			catMap.get(v).add(mapColumn(col, tpmHeaderCols, colLabelMap));
 			sizes.put(v, sizes.get(v)+1);
 		}
 		return catMap.keySet().size();
+	}
+
+	private int mapColumn(int col, int tpmHeaders, Map<String, Integer> colLabelMap) {
+		String lbl = getColumnLabel(col+hdrCols);
+		return colLabelMap.get(lbl);
 	}
 
 	protected double mannWhitney(MannWhitneyUTest test, int row, List<Integer> category1, 

@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.tasks;
 
+import java.util.List;
 import javax.swing.SwingUtilities;
 
 import org.cytoscape.work.AbstractTask;
@@ -7,6 +8,7 @@ import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
 import org.cytoscape.work.util.ListSingleSelection;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
@@ -49,8 +51,11 @@ public class ShowExperimentTableTask extends AbstractTask {
 					// Add our TPM tab
 					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 					frame.addTPMContent(accession+": TPM Tab", new TPMTab(manager, experiment, frame));
-					// Add our Categories tab
-					frame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, frame));
+					// Add our Categories tab if we have any categories
+					List<Category> categories = experiment.getCategories();
+					if (categories != null && categories.size() > 0)
+						frame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, frame));
+
 					// Add our Differential Expression tab (if we have one)
 					DifferentialExpression diffExp = experiment.getDiffExp();
 					if (diffExp != null) {
