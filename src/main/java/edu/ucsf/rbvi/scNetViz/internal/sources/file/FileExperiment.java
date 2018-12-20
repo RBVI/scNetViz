@@ -105,7 +105,7 @@ public class FileExperiment implements Experiment {
 				ZipEntry entry;
 				while ((entry = zipStream.getNextEntry()) != null) {
 					String name = entry.getName();
-					System.out.println("Name = "+name);
+					// System.out.println("Name = "+name);
 					if (name.endsWith(".mtx_cols")) {
 						colTable = CSVReader.readCSV(monitor, zipStream, name);
 						if (mtx != null) 
@@ -130,6 +130,7 @@ public class FileExperiment implements Experiment {
 			}
 		} catch (Exception e) {}
 		scNVManager.addExperiment(accession, this);
+		// System.out.println("mtx has "+mtx.getNRows()+" rows and "+mtx.getNCols()+" columns");
 	}
 
 	public String toString() {

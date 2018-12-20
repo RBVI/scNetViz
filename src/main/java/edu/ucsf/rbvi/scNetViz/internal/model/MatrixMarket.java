@@ -181,8 +181,10 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 	public void setColumnTable(List<String[]> colTable) {
 		this.colTable = colTable;
-		if (colTable != null)
+		if (colTable != null) {
+			// System.out.println("Column tables has "+colTable.size()+" entries");
 			colLabels = getLabels(colTable);
+		}
 	}
 
 	public void readMTX(TaskMonitor taskMonitor, File mmInputName) throws FileNotFoundException, IOException {
@@ -235,6 +237,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			// System.out.println("nonZeros = "+nonZeros);
 			colIndex = new int[nCols+1];
 			Arrays.fill(colIndex, -1);
+			colIndex[nCols] = nonZeros; // Point to the end
 			if (type == MTXTYPE.INTEGER) {
 				intMatrix = new int[nonZeros][3];
 			} else if (type == MTXTYPE.REAL) {
@@ -303,9 +306,9 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				int col = intMatrix[index][1];
 				if (transposed) { int rtmp = row; row = col; col = rtmp; }
 				if (type == MTXTYPE.INTEGER)
-					newArray[row-1][col-1] = intMatrix[index][2];
+					newArray[row][col] = intMatrix[index][2];
 				else if (type == MTXTYPE.REAL)
-					newArray[row-1][col-1] = (int)Math.round(doubleMatrix[index][0]);
+					newArray[row][col] = (int)Math.round(doubleMatrix[index][0]);
 			}
 			return newArray;
 		}
@@ -343,10 +346,11 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			// MTXFORMAT.COORDINATE
 			int index = findIndex(row, col);
 			if (index >= 0) {
-				if (type == MTXTYPE.REAL)
+				if (type == MTXTYPE.REAL) {
 					return doubleMatrix[index][0];
-				else if (type == MTXTYPE.INTEGER)
+				} else if (type == MTXTYPE.INTEGER) {
 					return (double)intMatrix[index][2];
+				}
 			}
 		}
 		return Double.NaN;
@@ -380,9 +384,9 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				int col = intMatrix[index][1];
 				if (transposed) { int rtmp = row; row = col; col = rtmp; }
 				if (type == MTXTYPE.INTEGER)
-					newArray[row-1][col-1] = (double)intMatrix[index][2];
+					newArray[row][col] = (double)intMatrix[index][2];
 				else if (type == MTXTYPE.REAL)
-					newArray[row-1][col-1] = doubleMatrix[index][0];
+					newArray[row][col] = doubleMatrix[index][0];
 			}
 			return newArray;
 		}
@@ -460,17 +464,18 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 		// We should have exactly three value: row, col, value
 		String[] vals = line.split("\\s+");
-		intMatrix[index][0] = Integer.parseInt(vals[0]);
-		intMatrix[index][1] = Integer.parseInt(vals[1]);
-		// System.out.println("row="+intMatrix[index][0]+", col="+intMatrix[index][1]);
+
+		// Subtract 1 to make everything 0 relative
+		intMatrix[index][0] = Integer.parseInt(vals[0])-1;
+		intMatrix[index][1] = Integer.parseInt(vals[1])-1;
 		if (colIndex[intMatrix[index][1]] < 0) {
 			colIndex[intMatrix[index][1]] = index;
-			// System.out.println("colIndex["+intMatrix[index][1]+"]="+index);
 		}
 		if (type == MTXTYPE.INTEGER) {
 			intMatrix[index][2] = Integer.parseInt(vals[2]);
 		} else if (type == MTXTYPE.REAL) {
 			doubleMatrix[index][0] = Double.parseDouble(vals[2]);
+			// System.out.println("value["+intMatrix[index][0]+"]["+intMatrix[index][1]+"] = "+doubleMatrix[index][0]);
 		}
 	}
 
@@ -487,9 +492,9 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				int row = intMatrix[index][0];
 				int col = intMatrix[index][1];
 				if (transposed) { int rtmp = row; row = col; col = rtmp; }
-				String rowLabel = rowLabels.get(row-1);
+				String rowLabel = rowLabels.get(row);
 				CyRow cyRow = table.getRow(rowLabel);
-				String colLabel = "MTX::"+colLabels.get(col-1);
+				String colLabel = "MTX::"+colLabels.get(col);
 				if (type == MTXTYPE.REAL) {
 					double v = doubleMatrix[index][0];
 					cyRow.set(colLabel, Double.valueOf(v));
@@ -504,8 +509,8 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				CyRow cyRow = table.getRow(rowLabel);
 				for (int col = 0; col < colLabels.size(); col++) {
 					String colLabel = "MTX::"+colLabels.get(col);
-					int r = row+1;
-					int c = col+1;
+					int r = row;
+					int c = col;
 					if (transposed) { int rtmp = r; r = c; c = rtmp; }
 					if (type == MTXTYPE.REAL) {
 						cyRow.set(colLabel, Double.valueOf(doubleMatrix[r][c]));
@@ -518,18 +523,22 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	}
 
 	private int findIndex(int row, int col) {
-		//System.out.println("findIndex("+row+","+col+")");
+		// System.out.println("findIndex("+row+","+col+")");
 		int index1 = colIndex[col];
-		//System.out.println("index1="+index1);
+		// System.out.println("index1="+index1);
 		if (index1 < 0) return Integer.MIN_VALUE;
-		int index2 = colIndex[++col];
-		//System.out.println("index2="+index2);
+
+		int index2 = colIndex[++col]-1;
+		// System.out.println("index2="+index2);
 
 		int indexMid = index1+(index2-index1)/2;
 		int index = -1;
 		while (index < 0) {
 			index = compare(index1, index2, indexMid, row);
-			if (index == -2) {
+			// System.out.println("compare = "+index);
+			if (index == -3) {
+				return -1;
+			} else if (index == -2) {
 				index2 = indexMid;
 				indexMid = index1+(index2-index1)/2;
 				if (index2 == indexMid)
@@ -548,10 +557,12 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	private int compare(int index1, int index2, int indexMid, int row) {
 		/*
 		System.out.println("index1="+index1+", index2="+index2+", indexMid="+indexMid+", row = "+row);
-		System.out.println("intMatrix[index1] = "+intMatrix[index1][0]);
-		System.out.println("intMatrix[indexMid] = "+intMatrix[indexMid][0]);
-		System.out.println("intMatrix[index2] = "+intMatrix[index2][0]);
+		System.out.println("intMatrix[index1][0] = "+intMatrix[index1][0]);
+		System.out.println("intMatrix[indexMid][0] = "+intMatrix[indexMid][0]);
+		System.out.println("intMatrix[index2][0] = "+intMatrix[index2][0]);
 		*/
+		if (intMatrix[index1][0] > row || intMatrix[index2][0] < row)
+			return -3;
 		if (intMatrix[index1][0] < row && intMatrix[indexMid][0] > row)
 			return -2;
 		if (intMatrix[indexMid][0] < row && intMatrix[index2][0] > row)

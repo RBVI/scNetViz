@@ -2,6 +2,7 @@ package edu.ucsf.rbvi.scNetViz.internal.tasks;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	double pValue;
 	double log2FCCutoff;
 	int nGenes;
+	int maxGenes;
 	DifferentialExpression diffExp = null;
 
 	public CreateNetworkTask(final ScNVManager manager) {
@@ -44,13 +46,14 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	}
 
 	public CreateNetworkTask(final ScNVManager manager, DifferentialExpression diffExp, 
-	                         double pValue, double log2FCCutoff, int nGenes) {
+	                         double pValue, double log2FCCutoff, int nGenes, int maxGenes) {
 		super();
 		this.manager = manager;
 		this.diffExp = diffExp;
 		this.pValue = pValue;
 		this.log2FCCutoff = log2FCCutoff;
 		this.nGenes = nGenes;
+		this.maxGenes = maxGenes;
 		cyEventHelper = manager.getService(CyEventHelper.class);
 	}
 
@@ -64,25 +67,30 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		String categoryRow = category.toString()+" ("+rowLabels.get(category.getSelectedRow())+")";
 
 		Map<Object, List<String>> geneMap = new HashMap<>();
-		List<String> allGenes = new ArrayList<String>();
+
+		// Use a hash set to avoid duplicate genes
+		Set<String> allGenes = new HashSet<String>();
 
 		// Iterate over each category value
 		for (Object cat: categoryValues) {
 			// Get the genes that match our criteria
-			List<String> geneList = diffExp.getGeneList(cat, pValue, log2FCCutoff, nGenes);
+			List<String> geneList = diffExp.getGeneList(cat, pValue, log2FCCutoff, nGenes, maxGenes);
 			if (geneList != null && geneList.size() > 0) {
 				allGenes.addAll(geneList);
-				// Create the network
-				// createStringNetwork(cat, category.mkLabel(cat), geneList, monitor);
 				geneMap.put(cat, geneList);
 			} else {
 				monitor.showMessage(TaskMonitor.Level.WARN, "No genes passed the cutoff for "+category.mkLabel(cat));
 			}
 		}
 
+		if (allGenes.size() == 0) {
+			monitor.showMessage(TaskMonitor.Level.ERROR, "No genes passed the cutoffs for any cluster");
+			return;
+		}
+
 		// Create the union network
 		// Create the network
-		createStringNetwork(null, categoryRow, allGenes, monitor);
+		createStringNetwork(null, categoryRow, new ArrayList(allGenes), monitor);
 
 		for (Object cat: categoryValues) {
 			List<String> geneList = geneMap.get(cat);
@@ -103,6 +111,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("query", listToString(geneList, ""));
 		args.put("species", diffExp.getCurrentCategory().getExperiment().getSpecies());
 		args.put("limit", "0");
+		args.put("includesViruses", "false");
 		manager.executeCommand("string", "protein query", args, 
 		                       new RenameNetwork(diffExp, cat, name, geneList, false, monitor), true);
 		cyEventHelper.flushPayloadEvents();
@@ -115,7 +124,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("networkName", name);
 		args.put("source", "SUID:"+unionNetwork.getSUID());
 		manager.executeCommand("network", "create", args,
-		                       new RenameNetwork(diffExp, cat, name, geneList, true, monitor), true);
+		                       new RenameNetwork(diffExp, cat, name, geneList, false, monitor), true);
 	}
 
 	private String listToString(List<String> list, String prefix) {
@@ -189,8 +198,10 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			monitor.setTitle("Adding data to network for: "+name);
 			if (cat != null) {
 				// Style the network
+				monitor.setTitle("Creating network style for: "+name);
 				ModelUtils.addStyle(manager, network,  name, baseStyle);
 			} else {
+				monitor.setTitle("Adding data to network for: "+name);
 				unionNetwork = network;
 				Category category = diffExp.getCurrentCategory();
 				Experiment experiment = category.getExperiment();

@@ -27,6 +27,8 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 
 import org.cytoscape.work.FinishStatus;
@@ -94,7 +96,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			if (diffExp == null) {
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
-						JOptionPane.showConfirmDialog(expFrame, "Differential expression calculation failed", 
+						JOptionPane.showMessageDialog(expFrame, "Differential expression calculation failed", 
 						                              "DE Failure", JOptionPane.ERROR_MESSAGE);
 					}
 				});
@@ -282,7 +284,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		this.repaint();
 	}
 
-	private JTable getCategoryTable(Category category) {
+	private JTable getCategoryTable(final Category category) {
 		if (categoryTables.containsKey(category))
 		 	return categoryTables.get(category);
 
@@ -291,6 +293,15 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		// 	tableModel = new DefaultCategoryTableModel(category);
 
 		JTable categoryTable = new SimpleTable(manager, tableModel);
+		categoryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent event) {
+				int row = categoryTable.getSelectedRow();
+				if (row >= 0) {
+					System.out.println("Setting selected row for "+category+" to "+row);
+					category.setSelectedRow(categoryTable.convertRowIndexToModel(row));
+				}
+			}
+		});
 		categoryTables.put(category, categoryTable);
 		return categoryTable;
 	}

@@ -104,36 +104,46 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	}
 
 	public SortableTableModel getTableModel() {
-		if (tableModel == null)
+		if (tableModel == null) {
 			tableModel = new DiffExpTableModel(this, category, categoryRow);
+		}
 		return tableModel;
 	}
 
-	public List<String> getGeneList(Object cat, double fdrCutoff, double log2FCCutoff, int nGenes) {
+	public String toString() {
+		return "Differential expression for category "+category+" row "+categoryRow;
+	}
+
+	public List<String> getGeneList(Object cat, double pvCutoff, double log2FCCutoff, int nGenes, int maxGenes) {
 		double[] logGER = logGERMap.get(cat).get("logFC");
 		double[] pValues = logGERMap.get(cat).get("pValue");
-		double[] fdr = fdrMap.get(cat);
+		// double[] fdr = fdrMap.get(cat);
 
 		List<String> geneList = new ArrayList<>();
 		if (nGenes > 0) {
-			// Sort
-			Integer[] sortedPValues = MatrixUtils.indexSort(pValues, pValues.length);
-
-			// Skip over the NaN's
-			int start = 0;
-			for (start = 0; start < pValues.length; start++) {
-				if (!Double.isNaN(pValues[sortedPValues[start]]))
-					break;
-			}
-
-			for (int topGene = 0; topGene < nGenes; topGene++) {
-				geneList.add(getRowLabel(sortedPValues[topGene+start]));
-			}
+			return getTopGenes(geneList, pValues, nGenes);
 		} else {
 			// Should this be pValue or fdr?
+			double pV[] = new double[nRows];
+			Arrays.fill(pV, Double.NaN);
+			int count = 0;
+			/*
 			for (int row = 0; row < nRows; row++) {
-				if (Math.abs(logGER[row]) > log2FCCutoff && fdr[row] < fdrCutoff)
+				if (Math.abs(logGER[row]) > log2FCCutoff && fdr[row] < fdrCutoff) {
 					geneList.add(getRowLabel(row));
+					pV[count++] = pValues[row];
+				}
+			}
+			*/
+			for (int row = 0; row < nRows; row++) {
+				if (Math.abs(logGER[row]) > log2FCCutoff && pValues[row] < pvCutoff) {
+					geneList.add(getRowLabel(row));
+					pV[count++] = pValues[row];
+				}
+			}
+			if (count > maxGenes) {
+				geneList.clear();
+				return getTopGenes(geneList, pV, maxGenes);
 			}
 		}
 		return geneList;
@@ -159,6 +169,23 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	// Simple Bonferroni adjustment
 	private double adjustPValue(double pValue, int testCount) {
 		return Math.min(1.0, pValue*(double)testCount);
+	}
+
+	private List<String> getTopGenes(List<String> geneList, double[] pValues, int nGenes) {
+		// Sort
+		Integer[] sortedPValues = MatrixUtils.indexSort(pValues, pValues.length);
+
+		// Skip over the NaN's
+		int start = 0;
+		for (start = 0; start < pValues.length; start++) {
+			if (!Double.isNaN(pValues[sortedPValues[start]]))
+				break;
+		}
+
+		for (int topGene = 0; topGene < nGenes; topGene++) {
+			geneList.add(getRowLabel(sortedPValues[topGene+start]));
+		}
+		return geneList;
 	}
 
 	// Calculate the FDR using Benjamini Hochberg

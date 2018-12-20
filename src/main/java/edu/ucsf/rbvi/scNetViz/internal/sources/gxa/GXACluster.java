@@ -53,8 +53,6 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	// K-sort
 	int sortedK = -1;
 
-	int selectedRow = -1;
-
 	// The Table model
 	GXAClusterTableModel tableModel = null;
 
@@ -132,11 +130,6 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	public int getMinK() { return minK; }
 	public int getK() { return k; }
 	public int getSortedK() { return sortedK; }
-
-	public int getSelectedRow() { return selectedRow; }
-	public void setSelectedRow(int selectedRow) { 
-		this.selectedRow = selectedRow; 
-	}
 
 	public Map<Integer,List<String>> getClusterList(int kClust) {
 		Map<Integer, List<String>> clusterMap = new HashMap<>();

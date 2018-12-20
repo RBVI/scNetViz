@@ -77,7 +77,8 @@ public class SimpleTable extends JTable {
 		selectionModel.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e) {
 				int row = thisComponent.getSelectedRow();
-				tableModel.setSelectedRow(thisComponent.convertRowIndexToModel(row));
+				if (row >= 0)
+					tableModel.setSelectedRow(thisComponent.convertRowIndexToModel(row));
 			}
 		});
 

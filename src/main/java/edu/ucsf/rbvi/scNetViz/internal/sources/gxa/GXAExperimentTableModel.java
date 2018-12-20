@@ -22,7 +22,7 @@ public class GXAExperimentTableModel extends SortableTableModel {
 	}
 
 	@Override
-	public int getColumnCount() { return matrixMarket.getNCols(); }
+	public int getColumnCount() { return matrixMarket.getNCols()+1; }
 
 	@Override
 	public int getSelectedRow() { return 0; }
@@ -65,9 +65,9 @@ public class GXAExperimentTableModel extends SortableTableModel {
 			default:
 				double v;
 			 	if (columnIndex != null)
-					v	= matrixMarket.getDoubleValue(row, columnIndex[column]);
+					v	= matrixMarket.getDoubleValue(row, columnIndex[column-1]);
 				else
-					v = matrixMarket.getDoubleValue(row, column);
+					v = matrixMarket.getDoubleValue(row, column-1);
 				if (Double.isNaN(v)) return null;
 				return new Double(v);
 		}
