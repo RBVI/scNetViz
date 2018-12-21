@@ -12,6 +12,9 @@ import java.util.Properties;
 
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
@@ -21,20 +24,12 @@ import org.cytoscape.application.swing.CytoPanel;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelName;
 import org.cytoscape.model.CyTable;
-import org.cytoscape.work.AbstractTask;
-import org.cytoscape.work.ProvidesTitle;
-import org.cytoscape.work.Task;
-import org.cytoscape.work.TaskIterator;
-import org.cytoscape.work.TaskFactory;
-import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAExperiment;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAMetadata;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
-import edu.ucsf.rbvi.scNetViz.internal.tasks.ProcessAllTask;
-import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTask;
 import edu.ucsf.rbvi.scNetViz.internal.view.HeaderRenderer;
 
 public class GXAEntryTable extends JTable {
@@ -63,6 +58,8 @@ public class GXAEntryTable extends JTable {
 		header.setDefaultRenderer(new HeaderRenderer(this));
 		header.setFont(new Font("SansSerif", Font.BOLD, 10));
 
+		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
 		// Figure out the row heights
 		for (int i = 0; i < entries.size(); i++) {
 			List<?> factors = (List)entries.get(i).get(GXAMetadata.FACTORS);
@@ -70,6 +67,18 @@ public class GXAEntryTable extends JTable {
 			this.setRowHeight(i, lines*16);
 		}
 
+		// Set up selection listener
+		getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent event) {
+				int row = getSelectedRow();
+				if (row != -1) {
+					String acc = (String)getValueAt(row,0);
+					gxaSource.getEntryFrame().enableButtons(acc, true);
+				}
+			}
+		});
+
+		// Set up double-click listener
 		addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent mouseEvent) {
 				JTable table = (JTable) mouseEvent.getSource();
@@ -78,8 +87,9 @@ public class GXAEntryTable extends JTable {
 				if (mouseEvent.getClickCount() == 2 && table.getSelectedRow() != -1) {
 					// Load the experiment
 					String acc = (String)table.getValueAt(row,0);
-					TaskIterator tasks = new TaskIterator(new LoadExperimentTask(acc));
-					scNVManager.executeTasks(tasks);
+					gxaSource.getEntryFrame().loadExperiment(acc);
+					// TaskIterator tasks = new TaskIterator(new LoadExperimentTask(acc));
+					// scNVManager.executeTasks(tasks);
 				}
 			}
 		});
@@ -98,36 +108,5 @@ public class GXAEntryTable extends JTable {
 		return returnComp;
 	}
 
-	public class LoadExperimentTask extends AbstractTask {
-		String accession;
-
-		LoadExperimentTask(String acc) {
-			this.accession = acc;
-		}
-
-		@Override
-		public void run(TaskMonitor taskMonitor) {
-			taskMonitor.setTitle("Loading Single Cell Expression Atlas experiment "+accession);
-			GXAExperiment experiment = (GXAExperiment)gxaSource.getExperiment(accession, taskMonitor);
-			if (experiment != null)
-				scNVManager.addExperiment(accession,experiment);
-			gxaSource.showEntriesTable(false);
-			experiment.fetchClusters(taskMonitor);
-			experiment.fetchDesign(taskMonitor);
-
-			// Now, depending on the setting of our checkbox, either show
-			// the experiments table or process the data
-			if (gxaSource.getEntryFrame().isLoadOnly()) {
-				// Create the Experiment table and show it
-				insertTasksAfterCurrentTask(new ShowExperimentTableTask(scNVManager, experiment));
-			} else {
-				// Create the autoprocess task and append it
-				insertTasksAfterCurrentTask(new ProcessAllTask(scNVManager, experiment));
-			}
-		}
-
-		@ProvidesTitle
-		public String getTitle() {return "Load Single Cell Expression Atlas Experiment "+accession;}
-	}
 
 }

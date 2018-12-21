@@ -36,6 +36,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 
@@ -211,7 +212,7 @@ public class DiffExpTab extends JPanel {
 			}
 
 			{
-				pValue = new JTextField("0.05");
+				pValue = new JTextField(manager.getSetting(SETTING.NET_PV_CUTOFF));
 				pValue.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				pValue.setMaximumSize(new Dimension(50,35));
 				settingsPanel1.add(pValue);
@@ -226,7 +227,7 @@ public class DiffExpTab extends JPanel {
 			}
 
 			{
-				log2FC = new JTextField("1.0");
+				log2FC = new JTextField(manager.getSetting(SETTING.NET_FC_CUTOFF));
 				log2FC.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				log2FC.setMaximumSize(new Dimension(50,35));
 				settingsPanel1.add(log2FC);

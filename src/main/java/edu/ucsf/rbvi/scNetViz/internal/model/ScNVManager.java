@@ -13,6 +13,7 @@ import org.json.simple.JSONObject;
 
 import org.cytoscape.command.AvailableCommands;
 import org.cytoscape.command.CommandExecutorTaskFactory;
+import org.cytoscape.property.CyProperty;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.SynchronousTaskManager;
 import org.cytoscape.work.TaskFactory;
@@ -37,6 +38,7 @@ public class ScNVManager {
 	final Map<String, Source> sourceMap;
 	final Map<Experiment, ExperimentFrame> frameMap;
 	final CyServiceRegistrar registrar; 
+	final ScNVSettings settings;
 
 	public ScNVManager(final CyServiceRegistrar registrar) {
 		experimentMap = new HashMap<>();
@@ -47,6 +49,7 @@ public class ScNVManager {
 		this.ceTaskFactory = registrar.getService(CommandExecutorTaskFactory.class);
 		this.taskManager = registrar.getService(TaskManager.class);
 		this.syncTaskManager = registrar.getService(SynchronousTaskManager.class);
+		settings = new ScNVSettings();
 	}
 
 	public void addSource(Source source) {
@@ -96,6 +99,10 @@ public class ScNVManager {
 
 	public ExperimentFrame getExperimentFrame(Experiment experiment) {
 		return frameMap.get(experiment);
+	}
+
+	public String getSetting(ScNVSettings.SETTING setting) {
+		return settings.getSetting(setting);
 	}
 
 	public void executeCommand(String namespace, String command, Map<String, Object> args, boolean synchronous) {
