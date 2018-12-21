@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTaskFactory;
 
 public class CyActivator extends AbstractCyActivator {
 
@@ -55,6 +56,16 @@ public class CyActivator extends AbstractCyActivator {
 		// Register our sources
 		scNVManager.addSource(new GXASource(scNVManager));
 		scNVManager.addSource(new FileSource(scNVManager));
+
+		{
+			SettingsTaskFactory settings = new SettingsTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.put(TITLE, "Settings");
+			props.put(PREFERRED_MENU, "Apps.scNetViz");
+			props.setProperty(IN_TOOL_BAR, "FALSE");
+			props.setProperty(IN_MENU_BAR, "TRUE");
+			scNVManager.registerService(settings, TaskFactory.class, props);
+		}
 
 		/*
 		{

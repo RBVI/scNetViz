@@ -30,6 +30,8 @@ import javax.swing.SwingConstants;
 import org.cytoscape.application.swing.CytoPanelComponent2;
 import org.cytoscape.application.swing.CytoPanelName;
 
+import org.cytoscape.util.swing.IconManager;
+
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.Task;
@@ -43,6 +45,7 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAExperiment;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAMetadata;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ProcessAllTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTask;
 
 public class GXAEntryFrame extends JFrame {
@@ -55,6 +58,7 @@ public class GXAEntryFrame extends JFrame {
 	JButton viewButton = null;
 	JButton createButton = null;
 	String selectedAcc = null;
+	final Font iconFont;
 
 	public GXAEntryFrame (final ScNVManager scNVManager, final GXASource gxaSource) {
 		super();
@@ -63,6 +67,7 @@ public class GXAEntryFrame extends JFrame {
 		this.setLayout(new BorderLayout());
 		this.setTitle("Single Cell Expression Atlas Browser");
 		this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		iconFont = scNVManager.getService(IconManager.class).getIconFont(17.0f);
 		init();
 	}
 
@@ -78,10 +83,15 @@ public class GXAEntryFrame extends JFrame {
 			JPanel rightPanel = new JPanel();
 			rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.LINE_AXIS));
 			{
-				JButton settings = new JButton("Settings");
-				settings.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				JButton settings = new JButton(IconManager.ICON_COG);
+				settings.setFont(iconFont);
+				settings.setBorderPainted(false);
+				settings.setContentAreaFilled(false);
+				settings.setFocusPainted(false);
 				settings.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+						TaskIterator tasks = new TaskIterator(new SettingsTask(scNVManager));
+						scNVManager.executeTasks(tasks);
 					}
 				});
 				rightPanel.add(settings);

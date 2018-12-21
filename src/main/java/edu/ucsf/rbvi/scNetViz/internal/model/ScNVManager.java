@@ -105,6 +105,22 @@ public class ScNVManager {
 		return settings.getSetting(setting);
 	}
 
+	public void setSetting(ScNVSettings.SETTING setting, double value) {
+		setSetting(setting, String.valueOf(value));
+	}
+
+	public void setSetting(ScNVSettings.SETTING setting, int value) {
+		setSetting(setting, String.valueOf(value));
+	}
+
+	public void setSetting(ScNVSettings.SETTING setting, boolean value) {
+		setSetting(setting, String.valueOf(value));
+	}
+
+	public void setSetting(ScNVSettings.SETTING setting, String value) {
+		settings.setSetting(setting, value);
+	}
+
 	public void executeCommand(String namespace, String command, Map<String, Object> args, boolean synchronous) {
 		executeCommand(namespace, command, args, null, synchronous);
 	}
