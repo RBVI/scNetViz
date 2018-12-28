@@ -157,13 +157,14 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			getMeans(category);
 
 		drMap = new HashMap<>();
+		int totalAssays = experiment.getMatrix().getNCols();
 
 		for (Object cat: means.keySet()) {
 			System.out.println("Cat: "+cat);
 			double dr[] = new double[experiment.getMatrix().getNRows()];
 			for (int row = 0; row < experiment.getMatrix().getNRows(); row++) {
 				double pct1 = (double)countMap.get(cat)[row]/(double)sizes.get(cat);
-				double pct2 = (double)(countMap.get("Total")[row]-countMap.get(cat)[row])/(double)(nCols-sizes.get(cat));
+				double pct2 = (double)(countMap.get("Total")[row]-countMap.get(cat)[row])/(double)(totalAssays-sizes.get(cat));
 				// dr[row] = Math.abs(pct1-pct2);
 				dr[row] = Math.max(pct1,pct2);
 			}
