@@ -51,7 +51,8 @@ public class FileExperiment implements Experiment {
 	final FileExperiment fileExperiment;
 	final FileSource source;
 	final FileMetadata fileMetadata;
-	DifferentialExpression diffExp;
+	DifferentialExpression diffExp = null;
+	FileExperimentTableModel tableModel = null;
 
 	public FileExperiment (ScNVManager manager, FileSource source, FileMetadata metadata) {
 		this.scNVManager = manager;
@@ -87,7 +88,11 @@ public class FileExperiment implements Experiment {
 
 	public String getSpecies() { return (String)fileMetadata.get(Metadata.SPECIES); }
 
-	public TableModel getTableModel() { return new FileExperimentTableModel(scNVManager, this); }
+	public FileExperimentTableModel getTableModel() { 
+		if (tableModel == null)
+			tableModel = new FileExperimentTableModel(scNVManager, this); 
+		return tableModel;
+	}
 
 	public DifferentialExpression getDiffExp() { return diffExp; }
 	public void setDiffExp(DifferentialExpression de) { diffExp = de; }

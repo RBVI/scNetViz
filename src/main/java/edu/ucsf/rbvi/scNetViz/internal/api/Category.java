@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.api;
 
+import java.util.List;
 import java.util.Map;
 import javax.swing.table.TableModel;
 

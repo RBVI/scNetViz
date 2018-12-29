@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 
+import java.util.List;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -63,6 +65,16 @@ public class ExperimentFrame extends JFrame {
 	public TPMTab getTPMTab() { return tpmTab; }
 	public CategoriesTab getCategoriesTab() { return categoriesTab; }
 	public DiffExpTab getDiffExpTab() { return diffExpTab; }
+
+	public void selectGenes(List<String> geneLabels) {
+		tpmTab.selectGenes(geneLabels);
+		diffExpTab.selectGenes(geneLabels);
+	}
+
+	public void selectAssays(List<String> assayLabels) {
+		categoriesTab.selectAssays(assayLabels);
+	}
+
 
 	private void init() {
 		tabbedPane = new JTabbedPane();

@@ -82,6 +82,22 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		init();
 	}
 
+	public void selectAssays(List<String> assayList) {
+		JTable catTable = categoryTables.get(currentCategory);
+
+		// Clear the selection list
+		catTable.clearSelection();
+		catTable.setColumnSelectionAllowed(true);
+
+		// Get the unsorted row labels
+		List<String> colLabels = experiment.getMatrix().getColLabels();
+		for (String assay: assayList) {
+			int index = colLabels.indexOf(assay);
+			catTable.setColumnSelectionInterval(index, index);
+		}
+	}
+
+
 	@Override
 	public void allFinished(FinishStatus status) {
 		diffExpButton.setEnabled(true);

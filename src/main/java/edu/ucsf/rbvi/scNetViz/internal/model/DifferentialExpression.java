@@ -123,6 +123,14 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return "Differential expression for category "+category+" row "+categoryRow;
 	}
 
+	public Map<Object,Map<String, double[]>> getLogGERMap() { return logGERMap; }
+	public Map<String, double[]> getLogGERMap(Object cat) { return logGERMap.get(cat); }
+	public double[] getLogGER(Object cat) { 
+		if (logGERMap.containsKey(cat))
+			return logGERMap.get(cat).get("logFC"); 
+		return null;
+	}
+
 	public List<String> getGeneList(Object cat, double pvCutoff, double log2FCCutoff, int nGenes, int maxGenes) {
 		double[] logGER = logGERMap.get(cat).get("logFC");
 		double[] pValues = logGERMap.get(cat).get("pValue");

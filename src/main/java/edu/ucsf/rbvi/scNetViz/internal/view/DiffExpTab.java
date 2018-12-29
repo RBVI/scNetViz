@@ -24,6 +24,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.TableModel;
@@ -39,6 +40,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 
 public class DiffExpTab extends JPanel {
 	final ScNVManager manager;
@@ -49,6 +51,7 @@ public class DiffExpTab extends JPanel {
 	final DifferentialExpression diffExp;
 	final DiffExpTab thisComponent;
 	final Map<Category, List<String>> categoryLabelMap;
+	JTable diffExpTable = null;
 
 	JTextField topGenes;
 	JTextField pValue;
@@ -70,6 +73,19 @@ public class DiffExpTab extends JPanel {
 			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
 		}
 		init();
+	}
+
+	public void selectGenes(List<String> geneList) {
+		// Clear the selection list
+		diffExpTable.clearSelection();
+		diffExpTable.setRowSelectionAllowed(true);
+		// Get the unsorted row labels
+		List<String> rowLabels = experiment.getMatrix().getRowLabels();
+		for (String gene: geneList) {
+			int index = rowLabels.indexOf(gene);
+			System.out.println("Adding selection of row "+index);
+			diffExpTable.getSelectionModel().addSelectionInterval(index, index);
+		}
 	}
 
 	private void init() {
@@ -97,6 +113,17 @@ public class DiffExpTab extends JPanel {
 			viewViolin.setFont(new Font("SansSerif", Font.PLAIN, 10));
       viewViolin.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
+					// Command: cyplot violin data="{\"A\":[1,5,2,5,6,1,1],\"B\":[0,1,2,3,4,5,6]}" names="a,b,c,d,e" title="Plot Title" xlabel="X Axis" ylabel="Y Axis" editorCol="No" selectionString="scnetviz select genes='%s'
+					Map<String, double[]> dataMap = new HashMap<>();
+					for (Object cat: diffExp.getLogGERMap().keySet()) {
+						double[] logGER = diffExp.getLogGER(cat);
+						if (logGER != null)
+							dataMap.put(currentCategory.mkLabel(cat), logGER);
+					}
+					String[] dataAndNames = CyPlotUtils.mapToDataAndNames(dataMap, diffExp.getRowLabels());
+					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
+					String title = experiment.getSource().toString()+" "+ accession+ " Differential Expression";
+					CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], title, "", "Log(FC)", accession);
 				}
 			});
 
@@ -306,7 +333,8 @@ public class DiffExpTab extends JPanel {
 
 		SortableTableModel tableModel = diffExp.getTableModel();
 
-		JTable diffExpTable = new SimpleTable(manager, tableModel);
+		diffExpTable = new SimpleTable(manager, tableModel);
+		diffExpTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		JScrollPane diffExpPane = new JScrollPane(diffExpTable);
 		diffExpPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);

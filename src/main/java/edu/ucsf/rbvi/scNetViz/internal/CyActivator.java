@@ -2,7 +2,10 @@ package edu.ucsf.rbvi.scNetViz.internal;
 
 import static org.cytoscape.work.ServiceProperties.COMMAND;
 import static org.cytoscape.work.ServiceProperties.COMMAND_DESCRIPTION;
+import static org.cytoscape.work.ServiceProperties.COMMAND_EXAMPLE_JSON;
+import static org.cytoscape.work.ServiceProperties.COMMAND_LONG_DESCRIPTION;
 import static org.cytoscape.work.ServiceProperties.COMMAND_NAMESPACE;
+import static org.cytoscape.work.ServiceProperties.COMMAND_SUPPORTS_JSON;
 import static org.cytoscape.work.ServiceProperties.ID;
 import static org.cytoscape.work.ServiceProperties.IN_MENU_BAR;
 import static org.cytoscape.work.ServiceProperties.IN_TOOL_BAR;
@@ -39,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.SelectTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTaskFactory;
 
 public class CyActivator extends AbstractCyActivator {
@@ -56,6 +60,19 @@ public class CyActivator extends AbstractCyActivator {
 		// Register our sources
 		scNVManager.addSource(new GXASource(scNVManager));
 		scNVManager.addSource(new FileSource(scNVManager));
+
+		{
+			SelectTaskFactory select = new SelectTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "select");
+			props.setProperty(COMMAND_DESCRIPTION, "Select genes or assays in current tables");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(select, TaskFactory.class, props);
+		}
+
 
 		{
 			SettingsTaskFactory settings = new SettingsTaskFactory(scNVManager);
