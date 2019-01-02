@@ -59,8 +59,9 @@ public class GXAExperiment implements Experiment {
 	final ScNVManager scNVManager;
 	final GXAExperiment gxaExperiment;
 	final GXASource source;
+	GXAExperimentTableModel tableModel = null;
 
-	DifferentialExpression diffExp;
+	DifferentialExpression diffExp = null;
 
 	public GXAExperiment (ScNVManager manager, GXASource source, GXAMetadata entry) {
 		this.scNVManager = manager;
@@ -97,7 +98,11 @@ public class GXAExperiment implements Experiment {
 	public DifferentialExpression getDiffExp() { return diffExp; }
 	public void setDiffExp(DifferentialExpression de) { diffExp = de; }
 
-	public TableModel getTableModel() { return new GXAExperimentTableModel(scNVManager, this); }
+	public TableModel getTableModel() { 
+		if (tableModel == null)
+			tableModel = new GXAExperimentTableModel(scNVManager, this);
+		return tableModel;
+	}
 
 	public void fetchMTX (final TaskMonitor monitor) {
 		// Get the URI

@@ -11,10 +11,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.table.TableModel;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.cytoscape.work.FinishStatus;
@@ -38,6 +40,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 	final Experiment experiment;
 	final TPMTab thisComponent;
 	final ExperimentFrame expFrame;
+	JTable experimentTable;
 
 	public TPMTab(final ScNVManager manager, final Experiment experiment, final ExperimentFrame expFrame) {
 		this.manager = manager;
@@ -47,6 +50,17 @@ public class TPMTab extends JPanel implements TaskObserver {
 		thisComponent = this;	// Access to inner classes
 		this.expFrame = expFrame;
 		init();
+	}
+
+	public void selectGenes(List<String> geneList) {
+		// Clear the selection list
+		experimentTable.getSelectionModel().clearSelection();
+		// Get the unsorted row labels
+		List<String> rowLabels = experiment.getMatrix().getRowLabels();
+		for (String gene: geneList) {
+			int index = rowLabels.indexOf(gene);
+			experimentTable.getSelectionModel().addSelectionInterval(index, index);
+		}
 	}
 
 	@Override
@@ -121,7 +135,8 @@ public class TPMTab extends JPanel implements TaskObserver {
 		if (tableModel == null)
 			tableModel = new DefaultExperimentTableModel(experiment);
 
-		JTable experimentTable = new ExperimentTable(manager, tableModel);
+		experimentTable = new ExperimentTable(manager, tableModel);
+		experimentTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		JScrollPane scrollPane = new JScrollPane(experimentTable);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);

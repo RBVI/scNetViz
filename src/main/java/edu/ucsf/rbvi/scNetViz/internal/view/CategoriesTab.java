@@ -43,6 +43,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDETask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
@@ -80,6 +81,22 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		this.expFrame = expFrame;
 		init();
 	}
+
+	public void selectAssays(List<String> assayList) {
+		JTable catTable = categoryTables.get(currentCategory);
+
+		// Clear the selection list
+		catTable.clearSelection();
+		catTable.setColumnSelectionAllowed(true);
+
+		// Get the unsorted row labels
+		List<String> colLabels = experiment.getMatrix().getColLabels();
+		for (String assay: assayList) {
+			int index = colLabels.indexOf(assay);
+			catTable.setColumnSelectionInterval(index, index);
+		}
+	}
+
 
 	@Override
 	public void allFinished(FinishStatus status) {
@@ -125,7 +142,6 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		// TODO: Add parameters for dDRThreshold, Log2FC cutoff, and mutiple testing adjustment
 
 		JPanel buttonsPanelRight = new JPanel(new GridLayout(4,1));
-		// buttonsPanelRight.setLayout(new BoxLayout(buttonsPanelRight, BoxLayout.PAGE_AXIS));
 		
 		{
 			JButton importCategory = new JButton("Add Category");
@@ -138,9 +154,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 					manager.executeTasks(importCategory, thisComponent);
 				}
 			});
-			// buttonsPanelRight.add(importCategory);
 
-			// JLabel lbl = new JLabel("");
 			JButton export = new JButton("Export CSV");
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
       export.addActionListener(new ActionListener() {
@@ -150,13 +164,10 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 				}
 			});
 
-			// buttonsPanelRight.add(lbl);
-			// buttonsPanelRight.add(Box.createVerticalGlue());
 			buttonsPanelRight.add(new JLabel(""));
 			buttonsPanelRight.add(new JLabel(""));
 			buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
-			// buttonsPanelRight.add(diffExpButton);
 		}
 
 		JPanel centerPanel = new JPanel();
@@ -182,7 +193,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			}
 
 			{
-				logFC = new JTextField("0.5");
+				logFC = new JTextField(manager.getSetting(SETTING.DE_FC_CUTOFF));
 				logFC.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				logFC.setMaximumSize(new Dimension(50,35));
 				settingsPanel.add(logFC);
@@ -197,7 +208,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			}
 
 			{
-				dDRThreshold = new JTextField("10%");
+				dDRThreshold = new JTextField(manager.getSetting(SETTING.DE_MIN_PCT_CUTOFF)+"%");
 				dDRThreshold.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				dDRThreshold.setMaximumSize(new Dimension(50,35));
 				settingsPanel.add(dDRThreshold);

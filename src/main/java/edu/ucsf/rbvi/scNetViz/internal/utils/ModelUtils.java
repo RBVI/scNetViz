@@ -144,7 +144,7 @@ public class ModelUtils {
 	public static double[] findMinMax(CyNetwork network, String col) {
 		double min = Double.MAX_VALUE;
 		double max = Double.MIN_VALUE;
-		System.out.println("Looking at: "+col);
+		// System.out.println("Looking at: "+col);
 		for (CyNode node: network.getNodeList()) {
 			Double v = network.getRow(node).get("scNetViz", col, Double.class);
 			if (v != null && !Double.isNaN(v)) {
@@ -162,7 +162,7 @@ public class ModelUtils {
 		double[] res = new double[2];
 		res[0] = min;
 		res[1] = max;
-		System.out.println("min = "+min+", max = "+max);
+		// System.out.println("min = "+min+", max = "+max);
 		return res;
 	}
 

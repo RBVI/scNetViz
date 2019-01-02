@@ -2,6 +2,9 @@ package edu.ucsf.rbvi.scNetViz.internal.view;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
+
+import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;

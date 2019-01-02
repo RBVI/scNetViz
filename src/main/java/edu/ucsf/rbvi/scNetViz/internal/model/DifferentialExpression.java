@@ -17,10 +17,12 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
@@ -62,6 +64,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 
 		logGERMap = category.getLogGER(categoryRow, dDRCutoff-.001, log2FCCutoff);
 		super.nCols = means.keySet().size()*6; // 6 columns for each category/cluster
+		if (means.containsKey(Category.UNUSED_CAT))
+			super.nCols = super.nCols - 6;  // We son't want to show the "unused" category
 
 		setRowLabels(experiment.getMatrix().getRowLabels());
 
@@ -69,6 +73,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		List<String> colHeaders = new ArrayList<>();
 		colHeaders.add("Gene");
 		for (Object cat: means.keySet()) {
+			if (cat.equals(Category.UNUSED_CAT))
+				continue;
 			colHeaders.add(category.mkLabel(cat)+" MTC");
 			colHeaders.add(category.mkLabel(cat)+" Min.pct");
 			colHeaders.add(category.mkLabel(cat)+" MDTC");
@@ -82,6 +88,9 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		matrix = new double[nCols][nRows];
 		int col = 0;
 		for (Object cat: means.keySet()) {
+			if (cat.equals(Category.UNUSED_CAT))
+				continue;
+
 			double[] mean = means.get(cat);
 			double[] drs = drMap.get(cat);
 			double[] mtdc = mtdcMap.get(cat);
@@ -114,14 +123,21 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return "Differential expression for category "+category+" row "+categoryRow;
 	}
 
+	public Map<Object,Map<String, double[]>> getLogGERMap() { return logGERMap; }
+	public Map<String, double[]> getLogGERMap(Object cat) { return logGERMap.get(cat); }
+	public double[] getLogGER(Object cat) { 
+		if (logGERMap.containsKey(cat))
+			return logGERMap.get(cat).get("logFC"); 
+		return null;
+	}
+
 	public List<String> getGeneList(Object cat, double pvCutoff, double log2FCCutoff, int nGenes, int maxGenes) {
 		double[] logGER = logGERMap.get(cat).get("logFC");
 		double[] pValues = logGERMap.get(cat).get("pValue");
 		// double[] fdr = fdrMap.get(cat);
 
-		List<String> geneList = new ArrayList<>();
 		if (nGenes > 0) {
-			return getTopGenes(geneList, pValues, nGenes);
+			return getTopGenes(null, pValues, nGenes);
 		} else {
 			// Should this be pValue or fdr?
 			double pV[] = new double[nRows];
@@ -135,6 +151,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 				}
 			}
 			*/
+			List<String> geneList = new ArrayList<String>();
 			for (int row = 0; row < nRows; row++) {
 				if (Math.abs(logGER[row]) > log2FCCutoff && pValues[row] < pvCutoff) {
 					geneList.add(getRowLabel(row));
@@ -142,11 +159,10 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 				}
 			}
 			if (count > maxGenes) {
-				geneList.clear();
 				return getTopGenes(geneList, pV, maxGenes);
 			}
+			return geneList;
 		}
-		return geneList;
 	}
 
 	public Category getCurrentCategory() {
@@ -154,6 +170,12 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	}
 
 	public Set<Object> getCategoryValues() {
+		// Make sure we exclude our "unused" category
+		if (category.getMeans(categoryRow).containsKey(Category.UNUSED_CAT)) {
+			Set<Object> set = new HashSet<>(category.getMeans(categoryRow).keySet());
+			set.remove(Category.UNUSED_CAT);
+			return set;
+		}
 		return category.getMeans(categoryRow).keySet();
 	}
 
@@ -182,10 +204,17 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 				break;
 		}
 
-		for (int topGene = 0; topGene < nGenes; topGene++) {
-			geneList.add(getRowLabel(sortedPValues[topGene+start]));
+		List<String> newGeneList = new ArrayList<String>();
+		if (geneList == null) {
+			for (int topGene = 0; topGene < nGenes; topGene++) {
+				newGeneList.add(getRowLabel(sortedPValues[topGene+start]));
+			}
+		} else {
+			for (int topGene = 0; topGene < nGenes; topGene++) {
+				newGeneList.add(geneList.get(sortedPValues[topGene+start]));
+			}
 		}
-		return geneList;
+		return newGeneList;
 	}
 
 	// Calculate the FDR using Benjamini Hochberg

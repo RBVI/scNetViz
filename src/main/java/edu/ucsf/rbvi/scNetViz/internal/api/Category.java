@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.api;
 
+import java.util.List;
 import java.util.Map;
 import javax.swing.table.TableModel;
 
@@ -9,6 +10,8 @@ import javax.swing.table.TableModel;
  * categorical values in each subsequent column.
  */
 public interface Category {
+
+	public static String UNUSED_CAT = "unused";
 	
 	/**
 	 * Return the category "type", which is actually just
