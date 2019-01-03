@@ -37,7 +37,7 @@ public class SettingsTask extends AbstractTask {
 
 	@Tunable(description="View Only", 
 	         tooltip="<html>By default, don't automatically create the networks</html>")
-	public boolean viewOnly = false;
+	public boolean viewOnly = true;
 
 	final ScNVManager manager;
 

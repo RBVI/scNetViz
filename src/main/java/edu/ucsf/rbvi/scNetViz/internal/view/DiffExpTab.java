@@ -98,13 +98,17 @@ public class DiffExpTab extends JPanel {
       viewHeatMap.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					Map<String, double[]> dataMap = new HashMap<>();
+					List<String> columns = new ArrayList<>();
 					for (Object cat: diffExp.getLogGERMap().keySet()) {
+						System.out.println("cat: "+cat);
 						double[] logGER = diffExp.getLogGER(cat);
-						if (logGER != null)
+						if (logGER != null) {
 							dataMap.put(currentCategory.mkLabel(cat), logGER);
+							columns.add(currentCategory.mkLabel(cat));
+						}
 					}
 					// Use a separate task for this since we've got some options...
-					HeatMapTask task = new HeatMapTask(manager, diffExp, currentCategory, dataMap);
+					HeatMapTask task = new HeatMapTask(manager, diffExp, currentCategory, dataMap, columns);
 					manager.executeTasks(new TaskIterator(task));
 				}
 			});
@@ -124,15 +128,20 @@ public class DiffExpTab extends JPanel {
 				public void actionPerformed(ActionEvent e) {
 					// FIXME: need to control cluster order
 					Map<String, double[]> dataMap = new HashMap<>();
+					List<String> columns = new ArrayList<>();
 					for (Object cat: diffExp.getLogGERMap().keySet()) {
+						System.out.println("cat: "+cat);
 						double[] logGER = diffExp.getLogGER(cat);
-						if (logGER != null)
+						if (logGER != null) {
 							dataMap.put(currentCategory.mkLabel(cat), logGER);
+							columns.add(currentCategory.mkLabel(cat));
+						}
 					}
-					String[] dataAndNames = CyPlotUtils.mapToDataAndNames(dataMap, diffExp.getRowLabels());
+					String[] dataAndNames = CyPlotUtils.mapToDataAndNames(dataMap, diffExp.getRowLabels(), columns);
 					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 					String title = experiment.getSource().toString()+" "+ accession+ " Differential Expression";
-					CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], title, "", "Log(FC)", accession);
+					CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], 
+					                             CyPlotUtils.listToCSV(columns), title, "", "Log(FC)", accession);
 				}
 			});
 

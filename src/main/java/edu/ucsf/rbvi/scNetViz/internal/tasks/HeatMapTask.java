@@ -27,14 +27,16 @@ public class HeatMapTask extends AbstractTask {
 	final DifferentialExpression diffExp;
 	final Category category;
 	final Map<String, double[]> dataMap;
+	final List<String> columnOrder;
 
 	public HeatMapTask(final ScNVManager manager, DifferentialExpression diffExp, Category currentCategory,
-	                   final Map<String, double[]> dataMap) {
+	                   final Map<String, double[]> dataMap, final List<String> columnOrder) {
 		super();
 		this.manager = manager;
 		this.diffExp = diffExp;
 		this.category = currentCategory;
 		this.dataMap = dataMap;
+		this.columnOrder = columnOrder;
 	}
 
 	// cyplot heat rowLabels="a,b,c,d,e,f" columnLabels="A,B,C" data="{\"A\":[1,2,3,4,5,6],\"B\":[-1,-2,-3,-4,-5,-6],\"C\":[0,1,-1,0,1,-1]}" title="Text Plot" xLabel="Upper" yLabel="Lower" editor=false
@@ -44,14 +46,14 @@ public class HeatMapTask extends AbstractTask {
 		List<String> geneList = new ArrayList<>();
 		String columnLabels = null;
 
-		for (Object cat: dataMap.keySet()) {
-			double[] fc = dataMap.get(cat);
+		for (String column: columnOrder) {
+			double[] fc = dataMap.get(column);
 			if (fc == null) continue;
 
 			if (columnLabels == null)
-				columnLabels = cat.toString();
+				columnLabels = column;
 			else
-				columnLabels += ","+cat.toString();
+				columnLabels += ","+column;
 
 			Integer[] sort = MatrixUtils.indexSort(fc, fc.length);
 
@@ -66,12 +68,10 @@ public class HeatMapTask extends AbstractTask {
 			// Now get the top 10 and the bottom 10
 			List<String> newGeneList = new ArrayList<String>();
 			for (int topGene = 0; topGene < 10; topGene++) {
-				System.out.println("Top gene("+(topGene+start)+"): "+diffExp.getRowLabel(sort[topGene+start])+" = "+fc[sort[topGene+start]]);
 				geneList.add(diffExp.getRowLabel(sort[topGene+start]));
 			}
 
-			for (int topGene = fc.length-10; topGene < fc.length-1; topGene++) {
-				System.out.println("Bottom gene("+(topGene)+"): "+diffExp.getRowLabel(sort[topGene])+" = "+fc[sort[topGene]]);
+			for (int topGene = fc.length-10; topGene < fc.length; topGene++) {
 				geneList.add(diffExp.getRowLabel(sort[topGene]));
 			}
 		}

@@ -168,21 +168,6 @@ public class GXAEntryFrame extends JFrame {
 
 			this.add(topPanel, BorderLayout.NORTH);
 
-
-			/*
-			boolean dontAnalyze = Boolean.parseBoolean(scNVManager.getSetting(SETTING.DONT_ANALYZE));
-
-			JPanel bottomPanel = new JPanel(new BorderLayout());
-			bottomPanel.add(new JLabel("<html><i>Double click on experiment row to launch network analysis</i></html>", SwingConstants.LEFT), 
-			             BorderLayout.WEST);
-			loadOnly = new JCheckBox("<html><span style=\"font-size: 80%\">Load experiment only (don't analyze)</span></html>");
-			loadOnly.setHorizontalTextPosition(SwingConstants.LEFT);
-			loadOnly.setSelected(dontAnalyze);
-			bottomPanel.add(loadOnly, BorderLayout.EAST);
-
-			this.add(bottomPanel, BorderLayout.SOUTH);
-			*/
-
 			GXAEntryTableModel tableModel = new GXAEntryTableModel(gxaSource.getMetadata());
 			gxaEntryTable = new GXAEntryTable(scNVManager, gxaSource, tableModel);
 			scrollPane = new JScrollPane(gxaEntryTable);

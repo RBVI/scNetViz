@@ -11,8 +11,9 @@ import org.json.simple.parser.JSONParser;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class CyPlotUtils {
-	public static void createViolinPlot(ScNVManager manager, String names, String data, String title, 
+	public static void createViolinPlot(ScNVManager manager, String names, String data, String groups, String title, 
 	                                    String xlabel, String ylabel, String accession) {
+		// System.out.println("createViolinPlot");
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("data", data);
 		argMap.put("editor", "false");
@@ -20,6 +21,7 @@ public class CyPlotUtils {
 		argMap.put("ylabel",ylabel);
 		argMap.put("title",title);
 		argMap.put("names",names);
+		argMap.put("groups",groups);
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "violin", argMap);
 	}
@@ -31,7 +33,7 @@ public class CyPlotUtils {
 		argMap.put("rowLabels", rowLabels);
 		argMap.put("columnLabels", columnLabels);
 		argMap.put("data", data);
-		argMap.put("editor", "false");
+		argMap.put("editor", "true");
 		argMap.put("xLabel",xlabel);
 		argMap.put("yLabel",ylabel);
 		argMap.put("title",title);
@@ -41,13 +43,13 @@ public class CyPlotUtils {
 
 	// For Violin plots, we want to exclude NaNs, which means that our name array is different
 	// for each trace.  So, we create a map with two strings, one for names and one for data
-	public static String[] mapToDataAndNames(Map<String, double[]> dataMap, List<String> names) {
+	public static String[] mapToDataAndNames(Map<String, double[]> dataMap, List<String> names, 
+	                                         List<String> columns) {
 		StringBuilder dataBuilder = new StringBuilder();
 		StringBuilder namesBuilder = new StringBuilder();
 		dataBuilder.append("{");
 		namesBuilder.append("{");
-		for (String key: dataMap.keySet()) {
-
+		for (String key: columns) {
 			dataBuilder.append("\""+key+"\":");
 			dataBuilder.append("[");
 			namesBuilder.append("\""+key+"\":");
