@@ -15,13 +15,28 @@ public class CyPlotUtils {
 	                                    String xlabel, String ylabel, String accession) {
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("data", data);
-		argMap.put("editorCol", "No");
+		argMap.put("editor", "false");
 		argMap.put("xlabel",xlabel);
 		argMap.put("ylabel",ylabel);
 		argMap.put("title",title);
 		argMap.put("names",names);
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "violin", argMap);
+	}
+
+	public static void createHeatMap(ScNVManager manager, String rowLabels, String columnLabels,
+	                                 String data, String title, 
+	                                 String xlabel, String ylabel, String accession) {
+		Map<String, Object> argMap = new HashMap<>();
+		argMap.put("rowLabels", rowLabels);
+		argMap.put("columnLabels", columnLabels);
+		argMap.put("data", data);
+		argMap.put("editor", "false");
+		argMap.put("xLabel",xlabel);
+		argMap.put("yLabel",ylabel);
+		argMap.put("title",title);
+		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
+		manager.executeCommand("cyplot", "heat", argMap);
 	}
 
 	// For Violin plots, we want to exclude NaNs, which means that our name array is different
@@ -66,7 +81,10 @@ public class CyPlotUtils {
 				else
 					builder.append(String.valueOf(values[i])+",");
 			}
-			builder.append(String.valueOf(values[values.length-1])+"],");
+			if (Double.isNaN(values[values.length-1]))
+				builder.append("\"NaN\"],");
+			else
+				builder.append(String.valueOf(values[values.length-1])+"],");
 		}
 		return builder.substring(0, builder.length()-1)+"}";
 	}
