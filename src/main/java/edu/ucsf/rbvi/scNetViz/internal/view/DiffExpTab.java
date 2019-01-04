@@ -40,6 +40,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.HeatMapTask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 
 public class DiffExpTab extends JPanel {
@@ -83,7 +84,6 @@ public class DiffExpTab extends JPanel {
 		List<String> rowLabels = experiment.getMatrix().getRowLabels();
 		for (String gene: geneList) {
 			int index = rowLabels.indexOf(gene);
-			System.out.println("Adding selection of row "+index);
 			diffExpTable.getSelectionModel().addSelectionInterval(index, index);
 		}
 	}
@@ -97,6 +97,19 @@ public class DiffExpTab extends JPanel {
 			viewHeatMap.setFont(new Font("SansSerif", Font.PLAIN, 10));
       viewHeatMap.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
+					Map<String, double[]> dataMap = new HashMap<>();
+					List<String> columns = new ArrayList<>();
+					for (Object cat: diffExp.getLogGERMap().keySet()) {
+						System.out.println("cat: "+cat);
+						double[] logGER = diffExp.getLogGER(cat);
+						if (logGER != null) {
+							dataMap.put(currentCategory.mkLabel(cat), logGER);
+							columns.add(currentCategory.mkLabel(cat));
+						}
+					}
+					// Use a separate task for this since we've got some options...
+					HeatMapTask task = new HeatMapTask(manager, diffExp, currentCategory, dataMap, columns);
+					manager.executeTasks(new TaskIterator(task));
 				}
 			});
 
@@ -113,17 +126,22 @@ public class DiffExpTab extends JPanel {
 			viewViolin.setFont(new Font("SansSerif", Font.PLAIN, 10));
       viewViolin.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					// Command: cyplot violin data="{\"A\":[1,5,2,5,6,1,1],\"B\":[0,1,2,3,4,5,6]}" names="a,b,c,d,e" title="Plot Title" xlabel="X Axis" ylabel="Y Axis" editorCol="No" selectionString="scnetviz select genes='%s'
+					// FIXME: need to control cluster order
 					Map<String, double[]> dataMap = new HashMap<>();
+					List<String> columns = new ArrayList<>();
 					for (Object cat: diffExp.getLogGERMap().keySet()) {
+						System.out.println("cat: "+cat);
 						double[] logGER = diffExp.getLogGER(cat);
-						if (logGER != null)
+						if (logGER != null) {
 							dataMap.put(currentCategory.mkLabel(cat), logGER);
+							columns.add(currentCategory.mkLabel(cat));
+						}
 					}
-					String[] dataAndNames = CyPlotUtils.mapToDataAndNames(dataMap, diffExp.getRowLabels());
+					String[] dataAndNames = CyPlotUtils.mapToDataAndNames(dataMap, diffExp.getRowLabels(), columns);
 					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 					String title = experiment.getSource().toString()+" "+ accession+ " Differential Expression";
-					CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], title, "", "Log(FC)", accession);
+					CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], 
+					                             CyPlotUtils.listToCSV(columns), title, "", "Log(FC)", accession);
 				}
 			});
 

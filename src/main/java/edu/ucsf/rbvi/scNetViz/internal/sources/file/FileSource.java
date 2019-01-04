@@ -67,6 +67,9 @@ public class FileSource implements Source {
 			props.put(PREFERRED_MENU, "Apps.scNetViz");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
+			props.put(COMMAND_NAMESPACE, "scnetviz");
+			props.put(COMMAND_DESCRIPTION, "Load an experiment from a file");
+			props.put(COMMAND, "load experiment");
 			scNVManager.registerService(new FileExperimentTaskFactory(manager, this), TaskFactory.class, props);
 		}
 
@@ -76,6 +79,9 @@ public class FileSource implements Source {
 			props.put(PREFERRED_MENU, "Apps.scNetViz");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
+			props.put(COMMAND_NAMESPACE, "scnetviz");
+			props.put(COMMAND_DESCRIPTION, "Add a category to an experiment from a file");
+			props.put(COMMAND, "load category");
 			scNVManager.registerService(new FileCategoryTaskFactory(manager, this), TaskFactory.class, props);
 		}
 		
@@ -87,6 +93,7 @@ public class FileSource implements Source {
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			scNVManager.registerService(new ShowExperimentTableTaskFactory(manager), TaskFactory.class, props);
 		}
+
 	}
 
 	public String getName() { return "File"; }

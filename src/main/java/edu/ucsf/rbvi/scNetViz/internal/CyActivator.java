@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ListExperimentsTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SelectTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTaskFactory;
 
@@ -57,9 +58,46 @@ public class CyActivator extends AbstractCyActivator {
 
 		final ScNVManager scNVManager = new ScNVManager(serviceRegistrar);
 
+		// Commands
+		//
+		// Source-specific commands (registered by source)
+		// *scnetviz load experiment file file=yyyy
+		// *scnetviz load category file file=yyyy accession=yyyy experiment=exp
+		// *scnetviz load experiment gxa accession=yyyy
+		// *scnetviz list gxa entries
+		//
+		// Manager commands
+		// *scnetviz list experiments
+		// scnetviz remove experiment accession=yyyy
+		// scnetviz show experiment accession=yyyy
+		// scnetviz export experiment accession=yyyy
+		//
+		// Category commands
+		// scnetviz export category accession=yyyy category=zzzz
+		// scnetviz calculate diffexp accession=yyyy category=zzzz categoryrow=nnn logfc=ddd min.pct=ppp
+		//
+		// Differential expression commands
+		// scnetviz export diffexp accesssion=yyyy
+		// scnetviz create networks accession=yyyy category=zzzz categoryrow=nnn logfc=ddd min.pct=ppp pvalue=ddd log2fc=nnn topgenes=nnn maxgenes=nnn
+		// scnetviz show experiment accession=yyyy
+		// scnetviz show violin accession=yyyy
+		// scnetviz show heatmap accession=yyyy
+
 		// Register our sources
 		scNVManager.addSource(new GXASource(scNVManager));
 		scNVManager.addSource(new FileSource(scNVManager));
+
+		{
+			ListExperimentsTaskFactory list = new ListExperimentsTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "list experiments");
+			props.setProperty(COMMAND_DESCRIPTION, "List the currently loaded experiments");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(list, TaskFactory.class, props);
+		}
 
 		{
 			SelectTaskFactory select = new SelectTaskFactory(scNVManager);

@@ -11,28 +11,47 @@ import org.json.simple.parser.JSONParser;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class CyPlotUtils {
-	public static void createViolinPlot(ScNVManager manager, String names, String data, String title, 
+	public static void createViolinPlot(ScNVManager manager, String names, String data, String groups, String title, 
 	                                    String xlabel, String ylabel, String accession) {
+		// System.out.println("createViolinPlot");
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("data", data);
-		argMap.put("editorCol", "No");
+		argMap.put("editor", "false");
 		argMap.put("xlabel",xlabel);
 		argMap.put("ylabel",ylabel);
 		argMap.put("title",title);
 		argMap.put("names",names);
+		argMap.put("groups",groups);
+		argMap.put("id",accession+" Violin");
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "violin", argMap);
 	}
 
+	public static void createHeatMap(ScNVManager manager, String rowLabels, String columnLabels,
+	                                 String data, String title, 
+	                                 String xlabel, String ylabel, String accession) {
+		Map<String, Object> argMap = new HashMap<>();
+		argMap.put("rowLabels", rowLabels);
+		argMap.put("columnLabels", columnLabels);
+		argMap.put("data", data);
+		argMap.put("editor", "true");
+		argMap.put("xLabel",xlabel);
+		argMap.put("yLabel",ylabel);
+		argMap.put("title",title);
+		argMap.put("id",accession+" Heatmap");
+		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
+		manager.executeCommand("cyplot", "heat", argMap);
+	}
+
 	// For Violin plots, we want to exclude NaNs, which means that our name array is different
 	// for each trace.  So, we create a map with two strings, one for names and one for data
-	public static String[] mapToDataAndNames(Map<String, double[]> dataMap, List<String> names) {
+	public static String[] mapToDataAndNames(Map<String, double[]> dataMap, List<String> names, 
+	                                         List<String> columns) {
 		StringBuilder dataBuilder = new StringBuilder();
 		StringBuilder namesBuilder = new StringBuilder();
 		dataBuilder.append("{");
 		namesBuilder.append("{");
-		for (String key: dataMap.keySet()) {
-
+		for (String key: columns) {
 			dataBuilder.append("\""+key+"\":");
 			dataBuilder.append("[");
 			namesBuilder.append("\""+key+"\":");
@@ -66,7 +85,10 @@ public class CyPlotUtils {
 				else
 					builder.append(String.valueOf(values[i])+",");
 			}
-			builder.append(String.valueOf(values[values.length-1])+"],");
+			if (Double.isNaN(values[values.length-1]))
+				builder.append("\"NaN\"],");
+			else
+				builder.append(String.valueOf(values[values.length-1])+"],");
 		}
 		return builder.substring(0, builder.length()-1)+"}";
 	}

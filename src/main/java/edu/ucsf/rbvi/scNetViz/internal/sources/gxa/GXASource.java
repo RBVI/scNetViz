@@ -22,6 +22,8 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.utils.HTTPUtils;
+import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.tasks.GXAListEntriesTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.tasks.GXALoadExperimentTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.tasks.GXAShowEntriesTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.view.GXAEntryFrame;
 
@@ -72,6 +74,24 @@ public class GXASource implements Source {
 			props.setProperty(LARGE_ICON_URL, ebiLogoURL);
 			scNVManager.registerService(new GXAShowEntriesTaskFactory(manager, this), TaskFactory.class, props);
 		}
+
+		// Register our commands
+		{
+			Properties props = new Properties();
+			props.put(COMMAND_DESCRIPTION, "List all Gene Expression Atlas (GXA) entries available");
+			props.put(COMMAND_NAMESPACE, "scnetviz");
+			props.put(COMMAND, "list gxa entries");
+			scNVManager.registerService(new GXAListEntriesTaskFactory(manager, this), TaskFactory.class, props);
+		}
+		
+		{
+			Properties props = new Properties();
+			props.put(COMMAND_NAMESPACE, "scnetviz");
+			props.put(COMMAND_DESCRIPTION, "Load an experiment from the EBI Gene Expression Atlas");
+			props.put(COMMAND, "load gxa experiment");
+			scNVManager.registerService(new GXALoadExperimentTaskFactory(manager, this), TaskFactory.class, props);
+		}
+
 	}
 
 	public String getName() { return "EBI GXA"; }
