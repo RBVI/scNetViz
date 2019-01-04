@@ -22,6 +22,7 @@ public class CyPlotUtils {
 		argMap.put("title",title);
 		argMap.put("names",names);
 		argMap.put("groups",groups);
+		argMap.put("id",accession+" Violin");
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "violin", argMap);
 	}
@@ -37,6 +38,7 @@ public class CyPlotUtils {
 		argMap.put("xLabel",xlabel);
 		argMap.put("yLabel",ylabel);
 		argMap.put("title",title);
+		argMap.put("id",accession+" Heatmap");
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "heat", argMap);
 	}
