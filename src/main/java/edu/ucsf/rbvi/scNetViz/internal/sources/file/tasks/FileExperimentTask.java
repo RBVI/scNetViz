@@ -26,6 +26,9 @@ public class FileExperimentTask extends AbstractTask {
 	@Tunable (description="Zip file with MTX matrix and headers",params="input=true")
 	public File file;
 
+	@Tunable (description="Show experiment table after loading",context="nogui")
+	public boolean showTable = true;
+
 	public FileExperimentTask(final ScNVManager scManager, final FileSource fileSource) {
 		super();
 		this.scManager = scManager;
@@ -40,8 +43,10 @@ public class FileExperimentTask extends AbstractTask {
 		metadata.put(Metadata.SPECIES, species);
 		Experiment experiment = fileSource.getExperiment(metadata, taskMonitor);
 
-		// Show the experiment
-		insertTasksAfterCurrentTask(new ShowExperimentTableTask(scManager, experiment));
+		if (showTable) {
+			// Show the experiment
+			insertTasksAfterCurrentTask(new ShowExperimentTableTask(scManager, experiment));
+		}
 	}
 
 	@ProvidesTitle
