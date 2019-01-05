@@ -25,6 +25,10 @@ public class FileMetadata extends HashMap<String, Object> implements Metadata {
 	}
 
 	public String toString() {
+		return get(ACCESSION)+": "+get(DESCRIPTION);
+	}
+
+	public String toHTML() {
 		return "<html><p style='width: 500px'><b>"+get(ACCESSION)+"</b>: "+get(DESCRIPTION)+"</p></html>";
 	}
 }

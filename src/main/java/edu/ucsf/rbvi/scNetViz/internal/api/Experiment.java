@@ -19,6 +19,9 @@ public interface Experiment {
 	public DifferentialExpression getDiffExp();
 	public void setDiffExp(DifferentialExpression expr);
 
+	public String toJSON();
+	public String toHTML();
+
 	// For efficiency purposes, sometimes implementations
 	// of Experiment might want to provide their own
 	// TableModel

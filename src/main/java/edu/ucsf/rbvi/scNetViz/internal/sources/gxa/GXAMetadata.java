@@ -33,8 +33,12 @@ public class GXAMetadata extends HashMap<String, Object> implements Metadata {
 		put(FACTORS, expFactors);
 	}
 
-	public String toString() {
+	public String toHTML() {
 		return "<html><p style='width: 500px'><b>"+get(ACCESSION)+"</b>: "+get(DESCRIPTION)+"</p></html>";
+	}
+
+	public String toString() {
+		return get(ACCESSION)+": "+get(DESCRIPTION);
 	}
 
 	public String toJSON() {

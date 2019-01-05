@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.tasks;
 
+import java.util.Collections;
 import java.util.List;
 import javax.swing.SwingUtilities;
 
@@ -23,24 +24,24 @@ public class ShowExperimentTableTask extends AbstractTask {
 	Experiment experiment = null;
 
 	@Tunable (description="Experiment to show")
-	public ListSingleSelection<Experiment> experiments = null;
+	public ListSingleSelection<Experiment> accession = null;
 
 	public ShowExperimentTableTask(final ScNVManager manager) {
 		super();
 		this.manager = manager;
-		experiments = new ListSingleSelection<>(manager.getExperiments());
+		accession = new ListSingleSelection<>(manager.getExperiments());
 	}
 
 	public ShowExperimentTableTask(final ScNVManager manager, Experiment experiment) {
 		super();
 		this.manager = manager;
 		this.experiment = experiment;
-		experiments = null;
+		accession = new ListSingleSelection<Experiment>(Collections.singletonList(experiment));
 	}
 
 	public void run(TaskMonitor monitor) {
-		if (experiments != null)
-			experiment = experiments.getSelectedValue();
+		if (accession != null)
+			experiment = accession.getSelectedValue();
 
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {

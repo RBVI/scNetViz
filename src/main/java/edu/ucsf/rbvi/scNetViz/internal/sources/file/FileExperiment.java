@@ -139,7 +139,28 @@ public class FileExperiment implements Experiment {
 	}
 
 	public String toString() {
-		return fileMetadata.toString();
+		return getAccession();
+	}
+
+	public String toHTML() {
+		return fileMetadata.toHTML();
+	}
+	
+	public String toJSON() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		builder.append("source: '"+getSource().toString()+"',");
+		builder.append("accession: '"+getMetadata().get(Metadata.ACCESSION).toString()+"',");
+		builder.append("species: '"+getSpecies().toString()+"',");
+		builder.append("description: '"+getMetadata().get(Metadata.DESCRIPTION).toString()+"',");
+		builder.append("rows: '"+getMatrix().getNRows()+"',");
+		builder.append("columns: '"+getMatrix().getNCols()+"',");
+		List<Category> categories = getCategories();
+		builder.append("categories: [");
+		for (Category cat: categories) {
+			builder.append(cat.toJSON()+",");
+		}
+		return builder.substring(0, builder.length()-1)+"]}";
 	}
 
 }

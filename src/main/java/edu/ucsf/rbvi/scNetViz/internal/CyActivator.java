@@ -42,9 +42,16 @@ import org.slf4j.LoggerFactory;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDECommandTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCategoryTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportDiffExpTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportExperimentTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.GetExperimentTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ListExperimentsTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SelectTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTaskFactory;
 
 public class CyActivator extends AbstractCyActivator {
 
@@ -69,23 +76,96 @@ public class CyActivator extends AbstractCyActivator {
 		// Manager commands
 		// *scnetviz list experiments
 		// scnetviz remove experiment accession=yyyy
-		// scnetviz show experiment accession=yyyy
-		// scnetviz export experiment accession=yyyy
+		// *scnetviz get experiment accession=yyyy
+		// *scnetviz show experiment table accession=yyyy
+		// *scnetviz export experiment accession=yyyy file=*
 		//
 		// Category commands
-		// scnetviz export category accession=yyyy category=zzzz
+		// *scnetviz export category accession=yyyy category=zzzz file=*
+		// ??scnetviz show category accession=yyyy category=zzzz
 		// scnetviz calculate diffexp accession=yyyy category=zzzz categoryrow=nnn logfc=ddd min.pct=ppp
 		//
 		// Differential expression commands
-		// scnetviz export diffexp accesssion=yyyy
+		// *scnetviz export diffexp accesssion=yyyy file=*
 		// scnetviz create networks accession=yyyy category=zzzz categoryrow=nnn logfc=ddd min.pct=ppp pvalue=ddd log2fc=nnn topgenes=nnn maxgenes=nnn
-		// scnetviz show experiment accession=yyyy
 		// scnetviz show violin accession=yyyy
 		// scnetviz show heatmap accession=yyyy
 
 		// Register our sources
 		scNVManager.addSource(new GXASource(scNVManager));
 		scNVManager.addSource(new FileSource(scNVManager));
+
+		{
+			CalculateDECommandTaskFactory calcDE = new CalculateDECommandTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "calculate diffexp");
+			props.setProperty(COMMAND_DESCRIPTION, "Calculate the table of differential expressions");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(calcDE, TaskFactory.class, props);
+		}
+		
+		{
+			CreateNetworkTaskFactory createNet = new CreateNetworkTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "create network");
+			props.setProperty(COMMAND_DESCRIPTION, "Create the networks for differentially expressed genes");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(createNet, TaskFactory.class, props);
+		}
+
+		{
+			ExportCategoryTaskFactory expCat = new ExportCategoryTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "export category");
+			props.setProperty(COMMAND_DESCRIPTION, "Export a currently loaded category table");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(expCat, TaskFactory.class, props);
+		}
+		
+		{
+			ExportDiffExpTaskFactory expDE = new ExportDiffExpTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "export diffexp");
+			props.setProperty(COMMAND_DESCRIPTION, "Export a differential expression table");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(expDE, TaskFactory.class, props);
+		}
+
+		{
+			ExportExperimentTaskFactory expExp = new ExportExperimentTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "export experiment");
+			props.setProperty(COMMAND_DESCRIPTION, "Export a currently loaded experiment table");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(expExp, TaskFactory.class, props);
+		}
+
+		{
+			GetExperimentTaskFactory getExp = new GetExperimentTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "show experiment");
+			props.setProperty(COMMAND_DESCRIPTION, "Show a currently loaded experiment");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(getExp, TaskFactory.class, props);
+		}
 
 		{
 			ListExperimentsTaskFactory list = new ListExperimentsTaskFactory(scNVManager);
@@ -111,6 +191,21 @@ public class CyActivator extends AbstractCyActivator {
 			scNVManager.registerService(select, TaskFactory.class, props);
 		}
 
+		{
+			ShowExperimentTableTaskFactory show = new ShowExperimentTableTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.put(TITLE, "Show experiment tables");
+			props.put(PREFERRED_MENU, "Apps.scNetViz");
+			props.setProperty(IN_TOOL_BAR, "FALSE");
+			props.setProperty(IN_MENU_BAR, "TRUE");
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "show experiment table");
+			props.setProperty(COMMAND_DESCRIPTION, "Display the experiment table for a single experiment");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(show, TaskFactory.class, props);
+		}
 
 		{
 			SettingsTaskFactory settings = new SettingsTaskFactory(scNVManager);

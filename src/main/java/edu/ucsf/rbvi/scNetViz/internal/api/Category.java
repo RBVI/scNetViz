@@ -127,4 +127,6 @@ public interface Category {
 	public double[] getLogGER(int category, Object category1, Object category2, double dDRthreshold, double log2FCCutoff);
 
 	public String toString();
+
+	public String toJSON();
 }

@@ -76,7 +76,11 @@ public class CSVWriter {
 			else
 				output.write(value+delimiter);
 		}
-		output.write(mat.getIntegerValue(row,nCols-1)+"\n");
+		int value = mat.getIntegerValue(row, nCols-1);
+		if (value == Integer.MIN_VALUE)
+			output.write("\n");
+		else
+			output.write(value+"\n");
 	}
 
 	private static void writeDoubleRow(BufferedWriter output, String rowLabel, 
@@ -90,6 +94,10 @@ public class CSVWriter {
 			else
 				output.write(value+delimiter);
 		}
-		output.write(mat.getDoubleValue(row,nCols-1)+"\n");
+		double value = mat.getDoubleValue(row, nCols-1);
+		if (Double.isNaN(value))
+			output.write("\n");
+		else
+			output.write(value+"\n");
 	}
 }

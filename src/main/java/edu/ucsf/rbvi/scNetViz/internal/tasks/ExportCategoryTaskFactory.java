@@ -5,21 +5,19 @@ import org.cytoscape.work.TaskIterator;
 
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
-public class CreateNetworkTaskFactory extends AbstractTaskFactory {
+public class ExportCategoryTaskFactory extends AbstractTaskFactory {
 	final ScNVManager manager;
 
-	public CreateNetworkTaskFactory(final ScNVManager manager) {
+	public ExportCategoryTaskFactory(final ScNVManager manager) {
 		super();
 		this.manager = manager;
 	}
 
 	public TaskIterator createTaskIterator() {
-		return new TaskIterator(new CreateNetworkCommandTask(manager));
+		return new TaskIterator(new ExportCategoryTask(manager));
 	}
 
 	public boolean isReady() {
-		if (manager.getExperiments() == null || manager.getExperiments().size() == 0)
-			return false;
 		return true;
 	}
 
