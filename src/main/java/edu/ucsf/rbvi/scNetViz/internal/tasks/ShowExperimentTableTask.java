@@ -48,7 +48,7 @@ public class ShowExperimentTableTask extends AbstractTask {
 				ExperimentFrame frame = manager.getExperimentFrame(experiment);
 				if (frame == null) {
 					// Create the Experiment Frame
-					frame = new ExperimentFrame(manager);
+					frame = new ExperimentFrame(manager, experiment);
 					// Add our TPM tab
 					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 					frame.addTPMContent(accession+": TPM Tab", new TPMTab(manager, experiment, frame));

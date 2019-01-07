@@ -78,7 +78,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			colHeaders.add(category.mkLabel(cat)+" MTC");
 			colHeaders.add(category.mkLabel(cat)+" Min.pct");
 			colHeaders.add(category.mkLabel(cat)+" MDTC");
-			colHeaders.add(category.mkLabel(cat)+" logGER");
+			colHeaders.add(category.mkLabel(cat)+" log2FC");
 			colHeaders.add(category.mkLabel(cat)+" pValue");
 			colHeaders.add(category.mkLabel(cat)+" FDR");
 		}

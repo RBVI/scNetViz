@@ -77,7 +77,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 	
 	private void init() {
 
-		JLabel experimentLabel = new ExperimentLabel(experiment);
+		// JLabel experimentLabel = new ExperimentLabel(experiment);
 
 		JPanel buttonsPanelRight = new JPanel();
 		{
@@ -127,7 +127,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 		}
 		
 		JPanel topPanel = new JPanel(new BorderLayout());
-		topPanel.add(experimentLabel, BorderLayout.WEST);
+		//topPanel.add(experimentLabel, BorderLayout.WEST);
 		topPanel.add(buttonsPanelRight, BorderLayout.EAST);
 		this.add(topPanel, BorderLayout.NORTH);
 

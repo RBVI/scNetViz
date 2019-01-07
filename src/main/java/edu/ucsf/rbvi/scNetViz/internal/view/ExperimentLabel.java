@@ -1,6 +1,7 @@
 package edu.ucsf.rbvi.scNetViz.internal.view;
 
 import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
@@ -9,7 +10,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 public class ExperimentLabel extends JLabel {
 
 	public ExperimentLabel(final Experiment experiment) {
-		super(createLabelText(experiment.getSource(), experiment.getMetadata()));
+		super(createLabelText(experiment.getSource(), experiment.getMetadata()), SwingConstants.CENTER);
 	}
 
 	private static String createLabelText(Source source, Metadata meta) {
