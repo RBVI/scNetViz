@@ -63,8 +63,13 @@ public class CyPlotUtils {
 					namesBuilder.append(names.get(i)+",");
 				}
 			}
-			dataBuilder.append(String.valueOf(values[values.length-1])+"],");
-			namesBuilder.append(names.get(values.length-1)+"],");
+			if (!Double.isNaN(values[values.length-1])) {
+				dataBuilder.append(String.valueOf(values[values.length-1])+"],");
+				namesBuilder.append(names.get(values.length-1)+"],");
+			} else {
+				dataBuilder.append("],");
+				namesBuilder.append("],");
+			}
 		}
 		String[] returnString = new String[2];
 		returnString[0] = namesBuilder.substring(0, namesBuilder.length()-1)+"}";

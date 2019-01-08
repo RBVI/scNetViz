@@ -127,13 +127,33 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 
 	public Map<Object,Map<String, double[]>> getLogGERMap() { return logGERMap; }
 	public Map<String, double[]> getLogGERMap(Object cat) { return logGERMap.get(cat); }
+
+	public double[] getLogGER(Object cat, boolean positiveOnly) { 
+		if (logGERMap.containsKey(cat)) {
+			double[] allGER = logGERMap.get(cat).get("logFC"); 
+
+			if (positiveOnly) {
+				double[] posGER = Arrays.copyOf(allGER, allGER.length);
+				for (int i = 0; i < posGER.length; i++) {
+					if (!Double.isNaN(posGER[i]) && posGER[i] < 0.0)
+						posGER[i] = Double.NaN;
+				}
+				return posGER;
+			} else {
+				return allGER;
+			}
+		}
+		return null;
+	}
+
 	public double[] getLogGER(Object cat) { 
 		if (logGERMap.containsKey(cat))
 			return logGERMap.get(cat).get("logFC"); 
 		return null;
 	}
 
-	public List<String> getGeneList(Object cat, double pvCutoff, double log2FCCutoff, int nGenes, int maxGenes) {
+	public List<String> getGeneList(Object cat, double pvCutoff, double log2FCCutoff, int nGenes, 
+	                                boolean positiveOnly, int maxGenes) {
 		double[] logGER = logGERMap.get(cat).get("logFC");
 		double[] pValues = logGERMap.get(cat).get("pValue");
 		// double[] fdr = fdrMap.get(cat);
@@ -155,7 +175,10 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			*/
 			List<String> geneList = new ArrayList<String>();
 			for (int row = 0; row < nRows; row++) {
-				if (Math.abs(logGER[row]) > log2FCCutoff && pValues[row] < pvCutoff) {
+				double fc = logGER[row];
+				if (positiveOnly)
+					fc = Math.abs(fc);
+				if (fc > log2FCCutoff && pValues[row] < pvCutoff) {
 					geneList.add(getRowLabel(row));
 					pV[count++] = pValues[row];
 				}

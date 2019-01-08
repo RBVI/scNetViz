@@ -18,6 +18,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -57,6 +58,7 @@ public class DiffExpTab extends JPanel {
 	JTextField topGenes;
 	JTextField pValue;
 	JTextField log2FC;
+	JCheckBox positiveOnly;
 
 	public DiffExpTab(final ScNVManager manager, final Experiment experiment, 
 	                  final ExperimentFrame expFrame, final Category currentCategory,
@@ -238,7 +240,7 @@ public class DiffExpTab extends JPanel {
 			}
 
 			{
-				topGenes = new JTextField("");
+				topGenes = new JTextField(manager.getSetting(SETTING.TOP_GENES));
 				topGenes.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				topGenes.setMaximumSize(new Dimension(50,35));
 				settingsPanel2.add(topGenes);
@@ -246,6 +248,14 @@ public class DiffExpTab extends JPanel {
 
 			settingsPanel.add(settingsPanel2);
 			settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+
+			{
+				positiveOnly = new JCheckBox("Positive only", 
+				                             Boolean.parseBoolean(manager.getSetting(SETTING.POSITIVE_ONLY)));
+				positiveOnly.setFont(new Font("SansSerif", Font.BOLD, 10));
+				settingsPanel.add(positiveOnly);
+				settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			}
 
 			{
 				JButton createNetwork = new JButton("Create Network");
@@ -263,9 +273,13 @@ public class DiffExpTab extends JPanel {
 						if (pValue.getText().length() > 0)
 							pv = Double.parseDouble(pValue.getText());
 
+						int maxGenes = Integer.parseInt(manager.getSetting(SETTING.MAX_GENES));
+						boolean posOnly = Boolean.parseBoolean(manager.getSetting(SETTING.POSITIVE_ONLY));
+
 						createNetwork.setEnabled(false);
 						// TODO: Add max genes somewhere
-						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, pv, log2FCCutoff, topNGenes, 500);
+						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, pv, log2FCCutoff, topNGenes,
+						                                               posOnly, maxGenes);
 						manager.executeTasks(new TaskIterator(task));
 						createNetwork.setEnabled(true);
 					}
@@ -286,16 +300,16 @@ public class DiffExpTab extends JPanel {
 				public void actionPerformed(ActionEvent e) {
 					Map<String, double[]> dataMap = new HashMap<>();
 					List<String> columns = new ArrayList<>();
+					boolean posOnly = positiveOnly.isSelected();
 					for (Object cat: diffExp.getLogGERMap().keySet()) {
-						System.out.println("cat: "+cat);
-						double[] logGER = diffExp.getLogGER(cat);
+						double[] logGER = diffExp.getLogGER(cat, posOnly);
 						if (logGER != null) {
 							dataMap.put(currentCategory.mkLabel(cat), logGER);
 							columns.add(currentCategory.mkLabel(cat));
 						}
 					}
 					// Use a separate task for this since we've got some options...
-					HeatMapTask task = new HeatMapTask(manager, diffExp, currentCategory, dataMap, columns);
+					HeatMapTask task = new HeatMapTask(manager, diffExp, currentCategory, dataMap, columns, posOnly);
 					manager.executeTasks(new TaskIterator(task));
 				}
 			});
@@ -313,12 +327,10 @@ public class DiffExpTab extends JPanel {
 			viewViolin.setFont(new Font("SansSerif", Font.PLAIN, 10));
       viewViolin.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					// FIXME: need to control cluster order
 					Map<String, double[]> dataMap = new HashMap<>();
 					List<String> columns = new ArrayList<>();
 					for (Object cat: diffExp.getLogGERMap().keySet()) {
-						System.out.println("cat: "+cat);
-						double[] logGER = diffExp.getLogGER(cat);
+						double[] logGER = diffExp.getLogGER(cat, positiveOnly.isSelected());
 						if (logGER != null) {
 							dataMap.put(currentCategory.mkLabel(cat), logGER);
 							columns.add(currentCategory.mkLabel(cat));

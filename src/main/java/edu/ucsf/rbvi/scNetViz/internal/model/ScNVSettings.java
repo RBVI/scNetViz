@@ -13,7 +13,9 @@ public class ScNVSettings extends AbstractConfigDirPropsReader {
 		TOP_GENES("topGenes",""),
 		NET_PV_CUTOFF("netPvCutoff","0.05"),
 		NET_FC_CUTOFF("netFcCutoff","1.00"),
-		DONT_ANALYZE("dontAnalyze","false");
+		POSITIVE_ONLY("positiveOnly","false"),
+		DONT_ANALYZE("dontAnalyze","false"),
+		HEATMAP_COUNT("heatMapCount","20");
 
 		String name;
 		String value;

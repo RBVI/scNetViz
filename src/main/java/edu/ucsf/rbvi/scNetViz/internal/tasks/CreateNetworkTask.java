@@ -40,9 +40,11 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	double log2FCCutoff;
 	int topGenes;
 	int maxGenes;
+	boolean positiveOnly;
 
 	public CreateNetworkTask(final ScNVManager manager, DifferentialExpression diffExp, 
-	                         double pValue, double log2FCCutoff, int nGenes, int maxGenes) {
+	                         double pValue, double log2FCCutoff, int nGenes, boolean positiveOnly,
+	                         int maxGenes) {
 		super();
 		this.manager = manager;
 		this.diffExp = diffExp;
@@ -50,6 +52,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		this.log2FCCutoff = log2FCCutoff;
 		this.topGenes = nGenes;
 		this.maxGenes = maxGenes;
+		this.positiveOnly = positiveOnly;
 		cyEventHelper = manager.getService(CyEventHelper.class);
 	}
 
@@ -70,7 +73,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		// Iterate over each category value
 		for (Object cat: categoryValues) {
 			// Get the genes that match our criteria
-			List<String> geneList = diffExp.getGeneList(cat, pValue, log2FCCutoff, topGenes, maxGenes);
+			List<String> geneList = diffExp.getGeneList(cat, pValue, log2FCCutoff, topGenes, positiveOnly, maxGenes);
 			if (geneList != null && geneList.size() > 0) {
 				allGenes.addAll(geneList);
 				geneMap.put(cat, geneList);

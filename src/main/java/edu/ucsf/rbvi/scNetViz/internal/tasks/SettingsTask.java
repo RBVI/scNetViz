@@ -35,6 +35,16 @@ public class SettingsTask extends AbstractTask {
 	         groups={"Network Creation Settings"})
 	public int maxGenes = 500;
 
+	@Tunable(description="Positive only", 
+	         tooltip="<html>Only include genes with a positive Log2FC</html>",
+	         groups={"Network Creation Settings"})
+	public boolean positiveOnly = false;
+
+	@Tunable(description="Heat map count limit", 
+	         tooltip="<html>The number of top genes for each category will be limited by this amount.</html>",
+	         groups={"Visualization Settings"})
+	public int heatMapCount = 20;
+
 	@Tunable(description="View Only", 
 	         tooltip="<html>By default, don't automatically create the networks</html>")
 	public boolean viewOnly = true;
@@ -64,6 +74,8 @@ public class SettingsTask extends AbstractTask {
 		deMinPctCutoff = Double.parseDouble(manager.getSetting(SETTING.DE_MIN_PCT_CUTOFF));
 		netPvCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_PV_CUTOFF));
 		netLogFCCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_FC_CUTOFF));
+		positiveOnly = Boolean.parseBoolean(manager.getSetting(SETTING.POSITIVE_ONLY));
+		heatMapCount = Integer.parseInt(manager.getSetting(SETTING.HEATMAP_COUNT));
 		viewOnly = Boolean.parseBoolean(manager.getSetting(SETTING.DONT_ANALYZE));
 	}
 

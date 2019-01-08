@@ -52,6 +52,9 @@ public class CreateNetworkCommandTask extends AbstractTask {
 	@Tunable (description="The maximum number of genes")
 	public int maxGenes;
 
+	@Tunable (description="Only consider positive fold changes")
+	public boolean positiveOnly;
+
 	public CreateNetworkCommandTask(final ScNVManager manager) {
 		super();
 		this.manager = manager;
@@ -62,6 +65,7 @@ public class CreateNetworkCommandTask extends AbstractTask {
 		if (manager.getSetting(SETTING.TOP_GENES) != "")
 			topGenes = Integer.parseInt(manager.getSetting(SETTING.TOP_GENES));
 		maxGenes = Integer.parseInt(manager.getSetting(SETTING.MAX_GENES));
+		positiveOnly = Boolean.parseBoolean(manager.getSetting(SETTING.POSITIVE_ONLY));
 	}
 
 	public void run(TaskMonitor monitor) {
@@ -75,6 +79,6 @@ public class CreateNetworkCommandTask extends AbstractTask {
 			}
 		}
 
-		insertTasksAfterCurrentTask(new CreateNetworkTask(manager, diffExp, pValue, log2FCCutoff, topGenes, maxGenes));
+		insertTasksAfterCurrentTask(new CreateNetworkTask(manager, diffExp, pValue, log2FCCutoff, topGenes, positiveOnly, maxGenes));
 	}
 }
