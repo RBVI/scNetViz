@@ -308,7 +308,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			public void valueChanged(ListSelectionEvent event) {
 				int row = categoryTable.getSelectedRow();
 				if (row >= 0) {
-					System.out.println("Setting selected row for "+category+" to "+row);
+					// System.out.println("Setting selected row for "+category+" to "+row);
 					category.setSelectedRow(categoryTable.convertRowIndexToModel(row));
 				}
 			}

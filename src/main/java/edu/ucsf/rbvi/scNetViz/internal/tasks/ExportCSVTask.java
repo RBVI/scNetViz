@@ -59,7 +59,7 @@ public class ExportCSVTask extends AbstractTask {
 	public void setMatrix(Matrix matrix) { this.matrix = matrix; }
 
 	public void run(TaskMonitor monitor) {
-		System.out.println("ExportCSVTask");
+		// System.out.println("ExportCSVTask");
 		monitor.setTitle("Exporting CSV file to "+file.toString());
 		CSVWriter.writeCSV(file, matrix, delimiter.getSelectedValue().delim());
 	}

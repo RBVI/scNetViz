@@ -247,7 +247,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		double[] adjustedPvalues = new double[pValues.length];
 		Arrays.fill(adjustedPvalues, Double.NaN);
 		int testCount = countValues(pValues);
-		System.out.println("  testCount = "+testCount);
+		// System.out.println("  testCount = "+testCount);
 		Integer[] sortIndex = MatrixUtils.indexSort(pValues, pValues.length);
 		/*
 		for (int index = (pValues.length-testCount); index < pValues.length; index++) {
