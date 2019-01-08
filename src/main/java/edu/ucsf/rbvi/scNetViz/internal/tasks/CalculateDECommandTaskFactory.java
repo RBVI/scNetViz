@@ -5,16 +5,16 @@ import org.cytoscape.work.TaskIterator;
 
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
-public class CreateNetworkTaskFactory extends AbstractTaskFactory {
+public class CalculateDECommandTaskFactory extends AbstractTaskFactory {
 	final ScNVManager manager;
 
-	public CreateNetworkTaskFactory(final ScNVManager manager) {
+	public CalculateDECommandTaskFactory(final ScNVManager manager) {
 		super();
 		this.manager = manager;
 	}
 
 	public TaskIterator createTaskIterator() {
-		return new TaskIterator(new CreateNetworkCommandTask(manager));
+		return new TaskIterator(new CalculateDECommandTask(manager));
 	}
 
 	public boolean isReady() {

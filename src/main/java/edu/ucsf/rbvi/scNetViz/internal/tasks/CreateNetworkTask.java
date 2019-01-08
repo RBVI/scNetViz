@@ -16,12 +16,15 @@ import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.TaskObserver;
+import org.cytoscape.work.Tunable;
 import org.cytoscape.work.json.JSONResult;
+import org.cytoscape.work.util.ListSingleSelection;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 
 // Tunable to choose experiment?
@@ -32,28 +35,24 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	CyNetwork unionNetwork = null;
 	VisualStyle baseStyle = null;
 
-	// FIXME: these should be Tunables at some point
+	final DifferentialExpression diffExp;
 	double pValue;
 	double log2FCCutoff;
-	int nGenes;
+	int topGenes;
 	int maxGenes;
-	DifferentialExpression diffExp = null;
-
-	public CreateNetworkTask(final ScNVManager manager) {
-		super();
-		this.manager = manager;
-		cyEventHelper = manager.getService(CyEventHelper.class);
-	}
+	boolean positiveOnly;
 
 	public CreateNetworkTask(final ScNVManager manager, DifferentialExpression diffExp, 
-	                         double pValue, double log2FCCutoff, int nGenes, int maxGenes) {
+	                         double pValue, double log2FCCutoff, int nGenes, boolean positiveOnly,
+	                         int maxGenes) {
 		super();
 		this.manager = manager;
 		this.diffExp = diffExp;
 		this.pValue = pValue;
 		this.log2FCCutoff = log2FCCutoff;
-		this.nGenes = nGenes;
+		this.topGenes = nGenes;
 		this.maxGenes = maxGenes;
+		this.positiveOnly = positiveOnly;
 		cyEventHelper = manager.getService(CyEventHelper.class);
 	}
 
@@ -74,7 +73,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		// Iterate over each category value
 		for (Object cat: categoryValues) {
 			// Get the genes that match our criteria
-			List<String> geneList = diffExp.getGeneList(cat, pValue, log2FCCutoff, nGenes, maxGenes);
+			List<String> geneList = diffExp.getGeneList(cat, pValue, log2FCCutoff, topGenes, positiveOnly, maxGenes);
 			if (geneList != null && geneList.size() > 0) {
 				allGenes.addAll(geneList);
 				geneMap.put(cat, geneList);
@@ -107,6 +106,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 
 	private void createStringNetwork(Object cat, String name, List<String> geneList, TaskMonitor monitor) {
 		monitor.setTitle("Retrieving STRING network for: "+name);
+		monitor.showMessage(TaskMonitor.Level.INFO, "Retrieving STRING network for: "+name);
 		Map<String, Object> args = new HashMap<>();
 		args.put("query", listToString(geneList, ""));
 		args.put("species", diffExp.getCurrentCategory().getExperiment().getSpecies());
@@ -119,6 +119,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 
 	private void createSubNetwork(Object cat, String name, List<String> geneList, TaskMonitor monitor) {
 		monitor.setTitle("Creating subnetwork for: "+name);
+		monitor.showMessage(TaskMonitor.Level.INFO, "Creating subnetwork for: "+name);
 		Map<String, Object> args = new HashMap<>();
 		args.put("nodeList", listToString(geneList, "query term:"));
 		args.put("networkName", name);

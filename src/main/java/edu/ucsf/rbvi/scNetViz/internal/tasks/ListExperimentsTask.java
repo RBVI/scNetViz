@@ -40,7 +40,15 @@ public class ListExperimentsTask extends AbstractTask implements ObservableTask 
 		if (type.equals(List.class)) {
 			return (R) experiments;
 		} else if (type.equals(JSONResult.class)) {
-			return (R) (new JSONExp(experiments));
+			JSONResult res = () -> {
+				StringBuilder builder = new StringBuilder();
+				builder.append("[");
+				for (Experiment exp: experiments) {
+					builder.append(exp.toJSON()+",");
+				}
+				return builder.substring(0, builder.length()-1)+"]";
+			};
+			return (R) res;
 		} else {
 			String str = "Current experiments: \n";
 			for (Experiment exp: experiments) {
@@ -49,30 +57,6 @@ public class ListExperimentsTask extends AbstractTask implements ObservableTask 
 				str += " ["+exp.getMatrix().getNRows()+"x"+exp.getMatrix().getNCols()+"]\n";
 			}
 			return (R) str;
-		}
-	}
-
-	class JSONExp implements JSONResult {
-		final List<Experiment> experiments;
-
-		JSONExp(final List<Experiment> exps) {
-			experiments = exps;
-		}
-
-		public String getJSON() {
-			StringBuilder builder = new StringBuilder();
-			builder.append("[");
-			for (Experiment exp: experiments) {
-				builder.append("{");
-				builder.append("source: '"+exp.getSource().toString()+"',");
-				builder.append("accession: '"+exp.getMetadata().get(Metadata.ACCESSION).toString()+"',");
-				builder.append("species: '"+exp.getSpecies().toString()+"',");
-				builder.append("description: '"+exp.getMetadata().get(Metadata.DESCRIPTION).toString()+"',");
-				builder.append("rows: '"+exp.getMatrix().getNRows()+"',");
-				builder.append("columns: '"+exp.getMatrix().getNCols()+"',");
-				builder.append("categories: '"+exp.getCategories().size()+"'}");
-			}
-			return builder.substring(0, builder.length()-1)+"]";
 		}
 	}
 

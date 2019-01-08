@@ -123,7 +123,6 @@ public class GXAExperiment implements Experiment {
 				ZipEntry entry;
 				while ((entry = zipStream.getNextEntry()) != null) {
 					String name = entry.getName();
-					System.out.println("Name = "+name);
 					if (name.endsWith(".mtx_cols")) {
 						colTable = CSVReader.readCSV(monitor, zipStream, name);
 						if (mtx != null) 
@@ -191,8 +190,29 @@ public class GXAExperiment implements Experiment {
 		return stream;
 	}
 
+	public String toHTML() {
+		return gxaMetadata.toHTML();
+	}
+
 	public String toString() {
-		return gxaMetadata.toString();
+		return getAccession();
+	}
+
+	public String toJSON() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		builder.append("source: '"+getSource().toString()+"',");
+		builder.append("accession: '"+getMetadata().get(Metadata.ACCESSION).toString()+"',");
+		builder.append("species: '"+getSpecies().toString()+"',");
+		builder.append("description: '"+getMetadata().get(Metadata.DESCRIPTION).toString()+"',");
+		builder.append("rows: '"+getMatrix().getNRows()+"',");
+		builder.append("columns: '"+getMatrix().getNCols()+"',");
+		List<Category> categories = getCategories();
+		builder.append("categories: [");
+		for (Category cat: categories) {
+			builder.append(cat.toJSON()+",");
+		}
+		return builder.substring(0, builder.length()-1)+"]}";
 	}
 
 	class FetchClusterThread implements Runnable {

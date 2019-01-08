@@ -85,15 +85,6 @@ public class FileSource implements Source {
 			scNVManager.registerService(new FileCategoryTaskFactory(manager, this), TaskFactory.class, props);
 		}
 		
-		{
-			Properties props = new Properties();
-			props.put(TITLE, "Show experiment tables");
-			props.put(PREFERRED_MENU, "Apps.scNetViz");
-			props.setProperty(IN_TOOL_BAR, "FALSE");
-			props.setProperty(IN_MENU_BAR, "TRUE");
-			scNVManager.registerService(new ShowExperimentTableTaskFactory(manager), TaskFactory.class, props);
-		}
-
 	}
 
 	public String getName() { return "File"; }

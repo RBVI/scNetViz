@@ -22,7 +22,7 @@ public class CyPlotUtils {
 		argMap.put("title",title);
 		argMap.put("names",names);
 		argMap.put("groups",groups);
-		argMap.put("id",accession+" Violin");
+		argMap.put("id",accession);
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "violin", argMap);
 	}
@@ -38,7 +38,7 @@ public class CyPlotUtils {
 		argMap.put("xLabel",xlabel);
 		argMap.put("yLabel",ylabel);
 		argMap.put("title",title);
-		argMap.put("id",accession+" Heatmap");
+		argMap.put("id",accession);
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "heat", argMap);
 	}
@@ -63,8 +63,13 @@ public class CyPlotUtils {
 					namesBuilder.append(names.get(i)+",");
 				}
 			}
-			dataBuilder.append(String.valueOf(values[values.length-1])+"],");
-			namesBuilder.append(names.get(values.length-1)+"],");
+			if (!Double.isNaN(values[values.length-1])) {
+				dataBuilder.append(String.valueOf(values[values.length-1])+"],");
+				namesBuilder.append(names.get(values.length-1)+"],");
+			} else {
+				dataBuilder.append("],");
+				namesBuilder.append("],");
+			}
 		}
 		String[] returnString = new String[2];
 		returnString[0] = namesBuilder.substring(0, namesBuilder.length()-1)+"}";

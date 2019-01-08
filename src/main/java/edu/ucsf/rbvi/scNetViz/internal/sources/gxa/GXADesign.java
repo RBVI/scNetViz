@@ -56,6 +56,18 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 	public String toString() { return "Design/Factors";}
 
 	@Override
+	public String toJSON() { 
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		builder.append("name: "+toString()+",");
+		builder.append("rows: "+getMatrix().getNRows()+",");
+		builder.append("columns: "+getMatrix().getNCols()+",");
+		builder.append("default row: "+getDefaultRow()+",");
+		builder.append("}");
+		return builder.toString();
+	}
+
+	@Override
 	public String getCategoryType() { return "Design/Factors";}
 
 	@Override

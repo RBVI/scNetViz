@@ -3,31 +3,51 @@ package edu.ucsf.rbvi.scNetViz.internal.view;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.cytoscape.util.swing.IconManager;
+
+import org.cytoscape.work.TaskIterator;
+
+import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTask;
 
 public class ExperimentFrame extends JFrame {
 	final ScNVManager scManager;
 	final String[] titles = {"TPM", "Categories", "DiffExp"};
 	final JFrame jFrame;
+	final Experiment experiment;
+	final Font iconFont;
 	JTabbedPane tabbedPane;
+	JPanel headerPane;
 
 	TPMTab tpmTab;
 	CategoriesTab categoriesTab;
 	DiffExpTab diffExpTab;
 
-	public ExperimentFrame(final ScNVManager scManager) {
+	public ExperimentFrame(final ScNVManager scManager, final Experiment experiment) {
 		this.scManager = scManager;
 		this.setLayout(new BorderLayout());
 		this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		this.experiment = experiment;
+		iconFont = scManager.getService(IconManager.class).getIconFont(17.0f);
 		init();
 		jFrame = this;
 	}
@@ -77,6 +97,49 @@ public class ExperimentFrame extends JFrame {
 
 
 	private void init() {
+		headerPane = new JPanel();
+		headerPane.setLayout(new BoxLayout(headerPane, BoxLayout.LINE_AXIS));
+		headerPane.add(Box.createRigidArea(new Dimension(10,0)));
+		{
+			JButton helpButton = new JButton("Help");
+			helpButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+			helpButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					Map<String, Object> args = new HashMap<>();
+					args.put("id","scNetViz");
+					args.put("title", "scNetViz Help");
+					args.put("url", "http://preview.rbvi.ucsf.edu/cytoscape/scNetViz/index.shtml");
+					scManager.executeCommand("cybrowser", "dialog", args, false);
+				}
+			});
+			headerPane.add(helpButton);
+		}
+
+		{
+			JLabel experimentLabel = new ExperimentLabel(experiment);
+			headerPane.add(Box.createHorizontalGlue());
+			headerPane.add(experimentLabel);
+			headerPane.add(Box.createHorizontalGlue());
+		}
+
+		{
+			JButton settings = new JButton(IconManager.ICON_COG);
+			settings.setFont(iconFont);
+			settings.setBorderPainted(false);
+			settings.setContentAreaFilled(false);
+			settings.setFocusPainted(false);
+			settings.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					TaskIterator tasks = new TaskIterator(new SettingsTask(scManager));
+					scManager.executeTasks(tasks);
+				}
+			});
+			headerPane.add(settings);
+			headerPane.add(Box.createRigidArea(new Dimension(10,0)));
+		}
+
+		this.add(headerPane, BorderLayout.NORTH);
+
 		tabbedPane = new JTabbedPane();
 		tabbedPane.setPreferredSize(new Dimension(1100, 500));
 		tabbedPane.setFont(new Font("SansSerif", Font.BOLD, 10));

@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.tasks;
 
+import java.util.Collections;
 import java.util.List;
 import javax.swing.SwingUtilities;
 
@@ -23,31 +24,31 @@ public class ShowExperimentTableTask extends AbstractTask {
 	Experiment experiment = null;
 
 	@Tunable (description="Experiment to show")
-	public ListSingleSelection<Experiment> experiments = null;
+	public ListSingleSelection<Experiment> accession = null;
 
 	public ShowExperimentTableTask(final ScNVManager manager) {
 		super();
 		this.manager = manager;
-		experiments = new ListSingleSelection<>(manager.getExperiments());
+		accession = new ListSingleSelection<>(manager.getExperiments());
 	}
 
 	public ShowExperimentTableTask(final ScNVManager manager, Experiment experiment) {
 		super();
 		this.manager = manager;
 		this.experiment = experiment;
-		experiments = null;
+		accession = new ListSingleSelection<Experiment>(Collections.singletonList(experiment));
 	}
 
 	public void run(TaskMonitor monitor) {
-		if (experiments != null)
-			experiment = experiments.getSelectedValue();
+		if (accession != null)
+			experiment = accession.getSelectedValue();
 
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				ExperimentFrame frame = manager.getExperimentFrame(experiment);
 				if (frame == null) {
 					// Create the Experiment Frame
-					frame = new ExperimentFrame(manager);
+					frame = new ExperimentFrame(manager, experiment);
 					// Add our TPM tab
 					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 					frame.addTPMContent(accession+": TPM Tab", new TPMTab(manager, experiment, frame));

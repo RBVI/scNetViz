@@ -74,6 +74,18 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	public String toString() { return "Cluster";}
 
 	@Override
+	public String toJSON() { 
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		builder.append("name: "+toString()+",");
+		builder.append("rows: "+getMatrix().getNRows()+",");
+		builder.append("columns: "+getMatrix().getNCols()+",");
+		builder.append("default row: "+getDefaultRow()+",");
+		builder.append("}");
+		return builder.toString();
+	}
+
+	@Override
 	public String mkLabel(Object cat) { return "Cluster "+cat.toString();}
 
 	@Override

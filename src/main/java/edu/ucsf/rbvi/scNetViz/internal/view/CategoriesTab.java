@@ -139,41 +139,52 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 	}
 
 	private void init() {
-		// TODO: Add parameters for dDRThreshold, Log2FC cutoff, and mutiple testing adjustment
-
-		JPanel buttonsPanelRight = new JPanel(new GridLayout(4,1));
-		
+		JPanel buttonsPanelLeft = new JPanel();
+		buttonsPanelLeft.setLayout(new BoxLayout(buttonsPanelLeft, BoxLayout.PAGE_AXIS));
+		buttonsPanelLeft.setAlignmentX(Component.LEFT_ALIGNMENT);
 		{
-			JButton importCategory = new JButton("Add Category");
-			importCategory.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      importCategory.addActionListener(new ActionListener() {
+			//JLabel experimentLabel = new ExperimentLabel(experiment);
+			//experimentLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+			//buttonsPanelLeft.add(experimentLabel);
+			// buttonsPanelLeft.add(Box.createRigidArea(new Dimension(0, 10)));
+
+			JLabel lbl = new JLabel("Available categories:");
+			lbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+			lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+			buttonsPanelLeft.add(Box.createRigidArea(new Dimension(10,0)));
+			buttonsPanelLeft.add(lbl);
+
+			categories = new JComboBox<String>(categoriesNameList.toArray(new String[1]));
+      categories.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					// We need to use the File importer for this
-					TaskFactory importCategory = 
-									new FileCategoryTaskFactory(manager, (FileSource)manager.getSource("file"), experiment);
-					manager.executeTasks(importCategory, thisComponent);
+					currentCategory = categoriesList.get(categories.getSelectedIndex());
+					JTable table = getCategoryTable(currentCategory);
+					SortableTableModel model = (SortableTableModel)table.getModel();
+					categoryPane.setViewportView(table);
+					// model.fireTableDataChanged();
+					categoryPane.revalidate();
+					categoryPane.repaint();
 				}
 			});
-
-			JButton export = new JButton("Export CSV");
-			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      export.addActionListener(new ActionListener() {
+			categories.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      categories.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					ExportCSVTask task = new ExportCSVTask(manager, currentCategory.getMatrix());
-					manager.executeTasks(new TaskIterator(task));
 				}
 			});
+			categories.setPreferredSize(new Dimension(200, 25));
+			categories.setMaximumSize(new Dimension(200, 25));
+			categories.setSize(new Dimension(200, 25));
+			categories.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-			buttonsPanelRight.add(new JLabel(""));
-			buttonsPanelRight.add(new JLabel(""));
-			buttonsPanelRight.add(importCategory);
-			buttonsPanelRight.add(export);
+			buttonsPanelLeft.add(Box.createRigidArea(new Dimension(10,0)));
+			buttonsPanelLeft.add(categories);
 		}
 
 		JPanel centerPanel = new JPanel();
 		centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.PAGE_AXIS));
 		{
 			centerPanel.add(Box.createVerticalGlue());
+			centerPanel.add(Box.createRigidArea(new Dimension(20,0)));
 			{
 				JLabel lbl = new JLabel("Cutoffs:");
 				lbl.setFont(new Font("SansSerif", Font.BOLD, 10));
@@ -239,44 +250,33 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			centerPanel.add(settingsPanel);
 
 		}
-
-		JPanel buttonsPanelLeft = new JPanel();
-		buttonsPanelLeft.setLayout(new BoxLayout(buttonsPanelLeft, BoxLayout.PAGE_AXIS));
-		buttonsPanelLeft.setAlignmentX(Component.LEFT_ALIGNMENT);
+		
+		JPanel buttonsPanelRight = new JPanel(new GridLayout(2,1));
 		{
-			JLabel experimentLabel = new ExperimentLabel(experiment);
-			experimentLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-			buttonsPanelLeft.add(experimentLabel);
-			buttonsPanelLeft.add(Box.createRigidArea(new Dimension(0, 10)));
-
-			JLabel lbl = new JLabel("Available categories:");
-			lbl.setFont(new Font("SansSerif", Font.BOLD, 10));
-			lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-			buttonsPanelLeft.add(lbl);
-
-			categories = new JComboBox<String>(categoriesNameList.toArray(new String[1]));
-      categories.addActionListener(new ActionListener() {
+			JButton importCategory = new JButton("Add Category");
+			importCategory.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      importCategory.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					currentCategory = categoriesList.get(categories.getSelectedIndex());
-					JTable table = getCategoryTable(currentCategory);
-					SortableTableModel model = (SortableTableModel)table.getModel();
-					categoryPane.setViewportView(table);
-					// model.fireTableDataChanged();
-					categoryPane.revalidate();
-					categoryPane.repaint();
+					// We need to use the File importer for this
+					TaskFactory importCategory = 
+									new FileCategoryTaskFactory(manager, (FileSource)manager.getSource("file"), experiment);
+					manager.executeTasks(importCategory, thisComponent);
 				}
 			});
-			categories.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      categories.addActionListener(new ActionListener() {
+
+			JButton export = new JButton("Export CSV");
+			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      export.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
+					ExportCSVTask task = new ExportCSVTask(manager, currentCategory.getMatrix());
+					manager.executeTasks(new TaskIterator(task));
 				}
 			});
-			categories.setPreferredSize(new Dimension(200, 25));
-			categories.setMaximumSize(new Dimension(200, 25));
-			categories.setSize(new Dimension(200, 25));
-			categories.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-			buttonsPanelLeft.add(categories);
+			// buttonsPanelRight.add(new JLabel(""));
+			// buttonsPanelRight.add(new JLabel(""));
+			buttonsPanelRight.add(importCategory);
+			buttonsPanelRight.add(export);
 		}
 
 		JPanel topPanel = new JPanel(new BorderLayout());
@@ -308,7 +308,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			public void valueChanged(ListSelectionEvent event) {
 				int row = categoryTable.getSelectedRow();
 				if (row >= 0) {
-					System.out.println("Setting selected row for "+category+" to "+row);
+					// System.out.println("Setting selected row for "+category+" to "+row);
 					category.setSelectedRow(categoryTable.convertRowIndexToModel(row));
 				}
 			}
