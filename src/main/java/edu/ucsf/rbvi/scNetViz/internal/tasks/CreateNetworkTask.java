@@ -176,6 +176,8 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 				cyEventHelper.flushPayloadEvents();
 			}
 
+			baseStyle = ModelUtils.getVisualStyle(manager, "STRING style");
+
 			Map<String, Object> args = new HashMap<>();
 			args.put("network", network.getRow(network).get(CyNetwork.NAME, String.class));
 			manager.executeCommand("view", "set current", args, null, true);
@@ -212,7 +214,6 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 					// Add the data
 					ModelUtils.updateDEData(manager, network, geneList, diffExp, category.mkLabel(cat1));
 				}
-				baseStyle = ModelUtils.getVisualStyle(manager, "STRING style");
 			}
 		}
 	}

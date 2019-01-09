@@ -15,7 +15,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 
 public class SettingsTask extends AbstractTask {
 
-	@Tunable(description="LogFC cutoff", groups={"Differential Expression Calculation Settings"})
+	@Tunable(description="Log2FC cutoff", groups={"Differential Expression Calculation Settings"})
 	public double deLogFCCutoff = 0.5;
 
 	@Tunable(description="Min.pct cutoff", groups={"Differential Expression Calculation Settings"})

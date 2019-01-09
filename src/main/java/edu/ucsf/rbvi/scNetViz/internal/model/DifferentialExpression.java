@@ -176,7 +176,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			List<String> geneList = new ArrayList<String>();
 			for (int row = 0; row < nRows; row++) {
 				double fc = logGER[row];
-				if (positiveOnly)
+				if (!positiveOnly)
 					fc = Math.abs(fc);
 				if (fc > log2FCCutoff && pValues[row] < pvCutoff) {
 					geneList.add(getRowLabel(row));
@@ -283,6 +283,9 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	public double getDoubleValue(String row, String column) {
 		int col = colLabels.indexOf(column);
 		int intRow = rowLabels.indexOf(row);
+		if (col < 0 || intRow < 0) {
+			System.out.println("Got negative index for "+row+","+column);
+		}
 		return getDoubleValue(intRow, col-1);
 	}
 

@@ -160,7 +160,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		int totalAssays = experiment.getMatrix().getNCols();
 
 		for (Object cat: means.keySet()) {
-			System.out.println("Cat: "+cat);
+			// System.out.println("Cat: "+cat);
 			double dr[] = new double[experiment.getMatrix().getNRows()];
 			for (int row = 0; row < experiment.getMatrix().getNRows(); row++) {
 				double pct1 = (double)countMap.get(cat)[row]/(double)sizes.get(cat);
