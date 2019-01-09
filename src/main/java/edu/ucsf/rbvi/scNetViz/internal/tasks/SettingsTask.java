@@ -1,11 +1,13 @@
 package edu.ucsf.rbvi.scNetViz.internal.tasks;
 
 import java.io.File;
+import java.util.Arrays;
 
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
+import org.cytoscape.work.util.ListSingleSelection;
 
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
@@ -19,13 +21,13 @@ public class SettingsTask extends AbstractTask {
 	@Tunable(description="Min.pct cutoff", groups={"Differential Expression Calculation Settings"})
 	public double deMinPctCutoff = 10.0;
 
-	@Tunable(description="LogFC cutoff", groups={"Network Creation Settings"})
+	@Tunable(description="Log2FC cutoff", groups={"Network Creation Settings"})
 	public double netLogFCCutoff = 1.0;
 
-	@Tunable(description="P-Value cutoff", groups={"Network Creation Settings"})
+	@Tunable(description="pValue cutoff", groups={"Network Creation Settings"})
 	public double netPvCutoff = 0.05;
 
-	@Tunable(description="Top Genes", 
+	@Tunable(description="Top n genes", 
 	         tooltip="<html>This will select the <i>n</i> most significant genes</html>",
 	         groups={"Network Creation Settings"})
 	public int topGenes = 0;
@@ -45,9 +47,9 @@ public class SettingsTask extends AbstractTask {
 	         groups={"Visualization Settings"})
 	public int heatMapCount = 20;
 
-	@Tunable(description="View Only", 
+	@Tunable(description="Double-Click Action", 
 	         tooltip="<html>By default, don't automatically create the networks</html>")
-	public boolean viewOnly = true;
+	public ListSingleSelection<String> doubleClickAction = new ListSingleSelection<String>(Arrays.asList("View Data", "Create Network"));
 
 	final ScNVManager manager;
 
@@ -76,7 +78,11 @@ public class SettingsTask extends AbstractTask {
 		netLogFCCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_FC_CUTOFF));
 		positiveOnly = Boolean.parseBoolean(manager.getSetting(SETTING.POSITIVE_ONLY));
 		heatMapCount = Integer.parseInt(manager.getSetting(SETTING.HEATMAP_COUNT));
-		viewOnly = Boolean.parseBoolean(manager.getSetting(SETTING.DONT_ANALYZE));
+		boolean viewOnly = Boolean.parseBoolean(manager.getSetting(SETTING.DONT_ANALYZE));
+		if (viewOnly)
+			doubleClickAction.setSelectedValue("View Data");
+		else
+			doubleClickAction.setSelectedValue("Create Network");
 	}
 
 	public void run(TaskMonitor monitor) {
@@ -92,7 +98,10 @@ public class SettingsTask extends AbstractTask {
 		manager.setSetting(SETTING.DE_MIN_PCT_CUTOFF, deMinPctCutoff);
 		manager.setSetting(SETTING.NET_PV_CUTOFF, netPvCutoff);
 		manager.setSetting(SETTING.NET_FC_CUTOFF, netLogFCCutoff);
-		manager.setSetting(SETTING.DONT_ANALYZE, viewOnly);
+		if (doubleClickAction.getSelectedValue().equals("View Data"))
+			manager.setSetting(SETTING.DONT_ANALYZE, "true");
+		else
+			manager.setSetting(SETTING.DONT_ANALYZE, "false");
 		//
 	}
 
