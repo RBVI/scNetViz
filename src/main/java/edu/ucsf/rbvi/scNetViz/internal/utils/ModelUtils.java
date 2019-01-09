@@ -61,7 +61,7 @@ public class ModelUtils {
 		nodeTable.createColumn("scNetViz", label+" MTC", Double.class, false);
 		nodeTable.createColumn("scNetViz", label+" Min.pct", Double.class, false);
 		nodeTable.createColumn("scNetViz", label+" MDTC", Double.class, false);
-		nodeTable.createColumn("scNetViz", label+" logGER", Double.class, false);
+		nodeTable.createColumn("scNetViz", label+" log2FC", Double.class, false);
 		nodeTable.createColumn("scNetViz", label+" pValue", Double.class, false);
 		nodeTable.createColumn("scNetViz", label+" FDR", Double.class, false);
 	}
@@ -77,7 +77,7 @@ public class ModelUtils {
 			updateValues(network, row, diffExp, gene, label+" MTC");
 			updateValues(network, row, diffExp, gene, label+" Min.pct");
 			updateValues(network, row, diffExp, gene, label+" MDTC");
-			updateValues(network, row, diffExp, gene, label+" logGER");
+			updateValues(network, row, diffExp, gene, label+" log2FC");
 			updateValues(network, row, diffExp, gene, label+" pValue");
 			updateValues(network, row, diffExp, gene, label+" FDR");
 		}
@@ -85,7 +85,7 @@ public class ModelUtils {
 
 	@SuppressWarnings("unchecked")
 	public static void addStyle(ScNVManager manager, CyNetwork network, String name, VisualStyle baseStyle) {
-		String col = name+" logGER";
+		String col = name+" log2FC";
 		CyNetworkViewManager viewManager = manager.getService(CyNetworkViewManager.class);
 		VisualMappingManager vizMapManager = manager.getService(VisualMappingManager.class);
 		CyNetworkView view = null;

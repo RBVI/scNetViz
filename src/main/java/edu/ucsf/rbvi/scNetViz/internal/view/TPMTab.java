@@ -21,11 +21,13 @@ import java.util.Map;
 
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
+import org.cytoscape.work.Task;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
@@ -34,6 +36,7 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
 
 public class TPMTab extends JPanel implements TaskObserver {
 	final ScNVManager manager;
@@ -72,6 +75,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 		if (obsTask instanceof FileCategoryTask) {
 			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
+		} else if (obsTask instanceof tSNETask) {
 		}
 	}
 	
@@ -85,15 +89,21 @@ public class TPMTab extends JPanel implements TaskObserver {
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
       tsne.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					if (experiment instanceof GXAExperiment) {
-						String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-						String uri = "https://www.ebi.ac.uk/gxa/sc/experiments/"+accession+"/Results";
-						Map<String, Object> args = new HashMap<>();
-						args.put("newTab", "true");
-						args.put("id", "GXA");
-						args.put("url", uri);
-
-						manager.executeCommand("cybrowser", "dialog", args);
+					boolean havetSNE = false;
+					if (!havetSNE) {
+						Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
+						manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
+					} else {
+						if (experiment instanceof GXAExperiment) {
+							String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+							String uri = "https://www.ebi.ac.uk/gxa/sc/experiments/"+accession+"/Results";
+							Map<String, Object> args = new HashMap<>();
+							args.put("newTab", "true");
+							args.put("id", "GXA");
+							args.put("url", uri);
+	
+							manager.executeCommand("cybrowser", "dialog", args);
+						}
 					}
 				}
 			});
