@@ -135,7 +135,7 @@ public class FileExperiment implements Experiment {
 			}
 		} catch (Exception e) {}
 		scNVManager.addExperiment(accession, this);
-		// System.out.println("mtx has "+mtx.getNRows()+" rows and "+mtx.getNCols()+" columns");
+		 System.out.println("mtx has "+mtx.getNRows()+" rows and "+mtx.getNCols()+" columns");
 	}
 
 	public String toString() {
