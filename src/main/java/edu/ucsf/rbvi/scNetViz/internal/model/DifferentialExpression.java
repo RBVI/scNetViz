@@ -291,7 +291,23 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 
 	@Override
 	public double[][] getDoubleMatrix(double missingValue) {
-		return matrix;
+		return getDoubleMatrix(missingValue, false);
+	}
+
+	@Override
+	public double[][] getDoubleMatrix(double missingValue, boolean transpose) {
+		if (transpose && transposed)
+			transpose = false;
+		if (!transpose)
+			return matrix;
+		
+		double[][] newArray = new double[nCols][nRows];
+		for (int row = 0; row < nRows; row++) {
+			for (int col = 0; col < nCols; col++) {
+				newArray[col][row] = matrix[row][col];
+			}
+		}
+		return newArray;
 	}
 
 	public Double getValue(int row, int column) {
