@@ -102,6 +102,11 @@ public class BHTSne implements BarnesHutTSne {
 			return null;
 		
 		double [] X = flatten(Xin);	
+
+		// Dispose of Xin
+		Xin = null;
+		System.gc();
+
 		int N = parameterObject.getNrRows();
 		int no_dims = parameterObject.getOutputDims();
 		
@@ -187,6 +192,11 @@ public class BHTSne implements BarnesHutTSne {
 			for(int i = 0; i < row_P[N]; i++) val_P[i] /= sum_P;
 		}
 		long end = System.currentTimeMillis();
+
+		// Can we dispose of X?
+		// XXX
+		X = null;
+		System.gc();
 
 		// Lie about the P-values
 		if(exact) { for(int i = 0; i < N * N; i++)        P[i] *= 12.0; }

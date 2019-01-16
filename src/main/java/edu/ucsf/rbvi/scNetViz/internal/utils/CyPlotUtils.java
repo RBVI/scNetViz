@@ -27,6 +27,22 @@ public class CyPlotUtils {
 		manager.executeCommand("cyplot", "violin", argMap);
 	}
 
+	public static void createScatterPlot(ScNVManager manager, String names, String data, String groups, String title, 
+	                                     String xlabel, String ylabel, String accession) {
+		// System.out.println("createViolinPlot");
+		Map<String, Object> argMap = new HashMap<>();
+		argMap.put("data", data);
+		argMap.put("editor", "false");
+		argMap.put("xlabel",xlabel);
+		argMap.put("ylabel",ylabel);
+		argMap.put("title",title);
+		argMap.put("names",names);
+		argMap.put("groups",groups);
+		argMap.put("id",accession);
+		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
+		manager.executeCommand("cyplot", "scatter", argMap);
+	}
+
 	public static void createHeatMap(ScNVManager manager, String rowLabels, String columnLabels,
 	                                 String data, String title, 
 	                                 String xlabel, String ylabel, String accession) {

@@ -22,6 +22,9 @@ public interface Experiment {
 	public String toJSON();
 	public String toHTML();
 
+	public double[][] getTSNE();
+	public void setTSNE(double[][] tnse);
+
 	// For efficiency purposes, sometimes implementations
 	// of Experiment might want to provide their own
 	// TableModel

@@ -15,7 +15,7 @@ public class tSNEContext implements TSneConfiguration {
 	                         "pca is not called.",
 	         exampleStringValue="30",
 	         groups={"t-SNE Parameters"}, gravity=66, format="#0")
-	public int dimensions=-1;
+	public int dimensions=20;
 
 	@Tunable(description="Perplexity", 
 	         longDescription="Perplexity is the balance between the local and global aspects of the data.",
@@ -35,7 +35,7 @@ public class tSNEContext implements TSneConfiguration {
 	                         "center of mass of all of those nodes",
 	         exampleStringValue="false",
 	         groups={"t-SNE Parameters"}, gravity=69)
-	public boolean useBarnesHut=false;
+	public boolean useBarnesHut=true;
 
 	@Tunable(description="Theta value for Barnes-Hut", 
 	         longDescription="The threshold value to activate Barnes-Hut.  This value reflects the accuracy "+

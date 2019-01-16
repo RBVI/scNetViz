@@ -76,6 +76,9 @@ public class TPMTab extends JPanel implements TaskObserver {
 			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
 		} else if (obsTask instanceof tSNETask) {
+			double[][] tSNEResults = ((tSNETask)obsTask).getResults();
+			experiment.setTSNE(tSNEResults);
+			showtSNE(experiment);
 		}
 	}
 	
@@ -89,11 +92,13 @@ public class TPMTab extends JPanel implements TaskObserver {
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
       tsne.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					boolean havetSNE = false;
-					if (!havetSNE) {
+					double[][] tSNEResults = experiment.getTSNE();
+					if (tSNEResults == null) {
 						Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
 						manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
 					} else {
+						showtSNE(experiment);
+						/*
 						if (experiment instanceof GXAExperiment) {
 							String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 							String uri = "https://www.ebi.ac.uk/gxa/sc/experiments/"+accession+"/Results";
@@ -104,6 +109,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 	
 							manager.executeCommand("cybrowser", "dialog", args);
 						}
+						*/
 					}
 				}
 			});
@@ -153,5 +159,10 @@ public class TPMTab extends JPanel implements TaskObserver {
 		this.add(scrollPane, BorderLayout.CENTER);
 		this.revalidate();
 		this.repaint();
+	}
+
+	public void showtSNE(Experiment exp) {
+		double[][] tSNEresults = exp.getTSNE();
+		System.out.println("tSNEresults: "+tSNEresults.length+"x"+tSNEresults[0].length);
 	}
 }

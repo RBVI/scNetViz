@@ -400,4 +400,19 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		return pValue;
 	}
 
+	protected int[][] getIntegerMatrix(boolean transpose) {
+		if (transpose)
+			return new int[nCols][nRows];
+		else
+			return new int[nRows][nCols];
+	}
+
+	protected String[][] getStringMatrix(boolean transpose) {
+		if (transpose)
+			return new String[nCols][nRows];
+		else
+			return new String[nRows][nCols];
+	}
+
+
 }

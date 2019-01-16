@@ -428,6 +428,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			double[][] newArray = getDoubleMatrix(transpose);
 
 			int maxFill = getNRows();
+			if (transpose) maxFill = getNCols();
 			for (int row = 0; row < maxFill; row++) {
 				Arrays.fill(newArray[row], missing);
 			}

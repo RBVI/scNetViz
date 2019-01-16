@@ -117,6 +117,27 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	public int[][] getIntegerMatrix(int missing) { return clusters; }
 
 	@Override
+	public int[][] getIntegerMatrix(int missing, boolean transpose) { 
+		if (transpose && transposed)
+			transpose = false;
+		else
+			transpose = transpose | transposed;
+		if (!transpose)
+			return clusters;
+
+		int[][] newArray = getIntegerMatrix(transpose);
+		for (int row = 0; row < nRows; row++) {
+			for (int col = 0; col < nCols; col++) {
+				if (transposed)
+					newArray[col][row] = clusters[col][row];
+				else
+					newArray[row][col] = clusters[row][col];
+			}
+		}
+		return newArray;
+	}
+
+	@Override
 	public int getHeaderCols() { return 2; }
 
 	public int getNRows() {
