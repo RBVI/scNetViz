@@ -111,6 +111,11 @@ public class FastTSne implements TSne {
 			monitor.showMessage(TaskMonitor.Level.INFO, "X:Shape after PCA is = " + X.length + " x " + X[0].length);
 
 		}
+
+		// Since the original X is done, we should be able to
+		// dispose of some memory
+		System.gc();
+
 		int n = X.length;
 		double momentum = .5;
 		double initial_momentum = 0.5;
@@ -131,6 +136,10 @@ public class FastTSne implements TSne {
 		
 		// Compute P-values
 		DMatrixRMaj P        = new DMatrixRMaj(x2p(X, 1e-5, perplexity).P); // P = n x n
+
+		// OK, now free up X
+		X = null;
+		System.gc();
 
 		if (config.cancelled())
 			return null;

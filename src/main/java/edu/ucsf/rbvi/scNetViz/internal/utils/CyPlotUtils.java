@@ -27,19 +27,20 @@ public class CyPlotUtils {
 		manager.executeCommand("cyplot", "violin", argMap);
 	}
 
-	public static void createScatterPlot(ScNVManager manager, String names, String data, String groups, String title, 
+	public static void createScatterPlot(ScNVManager manager, String names, String xValues, String yValues,
+	                                     String title, 
 	                                     String xlabel, String ylabel, String accession) {
 		// System.out.println("createViolinPlot");
 		Map<String, Object> argMap = new HashMap<>();
-		argMap.put("data", data);
+		argMap.put("xValues", xValues);
+		argMap.put("yValues", yValues);
 		argMap.put("editor", "false");
-		argMap.put("xlabel",xlabel);
-		argMap.put("ylabel",ylabel);
+		argMap.put("xLabel",xlabel);
+		argMap.put("yLabel",ylabel);
 		argMap.put("title",title);
 		argMap.put("names",names);
-		argMap.put("groups",groups);
 		argMap.put("id",accession);
-		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
+		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" cells=%s");
 		manager.executeCommand("cyplot", "scatter", argMap);
 	}
 
@@ -120,5 +121,55 @@ public class CyPlotUtils {
 			builder.append(s+",");
 		}
 		return builder.substring(0, builder.length()-1);
+	}
+
+	public static String listToJSON(List<String> names) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("[");
+		for (String s: names) {
+			builder.append("\""+s+"\",");
+		}
+		return builder.substring(0, builder.length()-1)+"]";
+	}
+
+	public static String coordinatesToJSON(double[][] coords, int index) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("[");
+		for (int cell = 0; cell < coords.length-1; cell++) {
+			builder.append(coords[cell][index]+",");
+		}
+		builder.append(coords[coords.length-1][index]+"]");
+		return builder.toString();
+
+	}
+
+	public static String listToMap(Map<Object, List<Integer>> map, List<String> list) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		for (Object trace: map.keySet()) {
+			builder.append("\""+trace.toString()+"\":[");
+			for (Integer index: map.get(trace)) {
+				builder.append("\""+list.get(index)+"\",");
+			}
+			builder.setCharAt(builder.length()-1, ']');
+			builder.append(",");
+		}
+		builder.setCharAt(builder.length()-1, '}');
+		return builder.toString();
+	}
+
+	public static String coordsToMap(Map<Object, List<Integer>> map, double[][] coords, int index) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		for (Object trace: map.keySet()) {
+			builder.append("\""+trace.toString()+"\":[");
+			for (Integer i: map.get(trace)) {
+				builder.append(coords[i][index]+",");
+			}
+			builder.setCharAt(builder.length()-1, ']');
+			builder.append(",");
+		}
+		builder.setCharAt(builder.length()-1, '}');
+		return builder.toString();
 	}
 }

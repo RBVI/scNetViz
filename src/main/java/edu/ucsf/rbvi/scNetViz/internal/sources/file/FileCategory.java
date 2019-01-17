@@ -127,29 +127,6 @@ public class FileCategory extends AbstractCategory implements Category {
 		return;
 	}
 
-	/*
-	// Calculate the logGER between each category and all other categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public Map<Object, double[]> getLogGER(int category) {
-		return null;
-	}
-
-	// Calculate the logGER between the category and all other categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public double[] getLogGER(int category, Object category1) {
-		return null;
-	};
-
-	// Calculate the logGER between the two categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public double[] getLogGER(int category, Object category1, Object category2) {
-		return null;
-	}
-	*/
-
 	public static FileCategory fetchCategory(ScNVManager scManager, Experiment experiment,
 	                                         File file, String dataCategory, boolean transpose, int hdrCols,
 	                                         TaskMonitor monitor) throws Exception {

@@ -183,6 +183,15 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	}
 
 	@Override
+	public Map<Object, List<Integer>> getCatMap(int category) {
+		if (sizes == null || category != lastCategory) {
+			// This creates the sizes map as a by-product
+			getUniqValues(category);
+		}
+		return catMap;
+	}
+
+	@Override
 	public Map<Object, Map<String,double[]>> getLogGER(int category, double dDRthreshold, double log2FCCutoff) {
 		if (means == null || category != lastCategory)
 			getMeans(category);

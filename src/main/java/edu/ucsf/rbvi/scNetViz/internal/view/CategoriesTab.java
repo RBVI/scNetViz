@@ -33,22 +33,26 @@ import javax.swing.table.TableModel;
 
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
+import org.cytoscape.work.Task;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
+import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
-import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDETask;
-import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDETask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 
 public class CategoriesTab extends JPanel implements TaskObserver {
 	final ScNVManager manager;
@@ -123,6 +127,10 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
 			expFrame.addDiffExpContent("Diff Exp", diffETab);
 			diffExpButton.setEnabled(true);
+		} else if (obsTask instanceof tSNETask) {
+			double[][] tSNEResults = ((tSNETask)obsTask).getResults();
+			experiment.setTSNE(tSNEResults);
+			showtSNE(experiment);
 		}
 	}
 
@@ -251,7 +259,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 
 		}
 		
-		JPanel buttonsPanelRight = new JPanel(new GridLayout(2,1));
+		JPanel buttonsPanelRight = new JPanel(new GridLayout(2,2));
 		{
 			JButton importCategory = new JButton("Add Category");
 			importCategory.setFont(new Font("SansSerif", Font.PLAIN, 10));
@@ -273,8 +281,23 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 				}
 			});
 
+			JButton tsne = new JButton("View tSNE");
+			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      tsne.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					double[][] tSNEResults = experiment.getTSNE();
+					if (tSNEResults == null) {
+						Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
+						manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
+					} else {
+						showtSNE(experiment);
+					}
+				}
+			});
+
 			// buttonsPanelRight.add(new JLabel(""));
 			// buttonsPanelRight.add(new JLabel(""));
+			buttonsPanelRight.add(tsne);
 			buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
 		}
@@ -315,5 +338,37 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		});
 		categoryTables.put(category, categoryTable);
 		return categoryTable;
+	}
+
+	public void showtSNE(Experiment exp) {
+		double[][] tSNEresults = exp.getTSNE();
+		Category cat = exp.getDefaultCategory();
+		int catRow = -1;
+		if (cat != null)
+			catRow = cat.getSelectedRow();
+		String names;
+		String xValues;
+		String yValues;
+		if (cat != null && catRow >= 0) {
+			Map<Object, List<Integer>> catMap = cat.getCatMap(catRow);
+			// Reformat the catmap so we have reasonable labels
+			Map<Object, List<Integer>> newMap = new HashMap<>();
+			for (Object key: catMap.keySet()) {
+				if (key.toString().equals("unused"))
+					continue;
+				newMap.put(cat.mkLabel(key), catMap.get(key));
+			}
+			names = CyPlotUtils.listToMap(newMap, exp.getMatrix().getColLabels());
+			xValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 0);
+			yValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 1);
+		} else {
+			names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels())+"}";
+			xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
+			yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
+		}
+
+		String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+		String title = "tSNE Plot for "+accession;
+		CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, title, "t-SNE 1", "t-SNE 2", accession);
 	}
 }

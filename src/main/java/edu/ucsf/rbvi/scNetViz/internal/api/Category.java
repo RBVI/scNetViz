@@ -72,6 +72,14 @@ public interface Category {
 	public void setSelectedRow(int selectedRow);
 
 	/**
+	 * Get the map of category names to column indices
+	 * 
+	 * @param categoryRow the row in the category to return the catmap for
+	 * @return the catmap
+	 */
+	public Map<Object, List<Integer>> getCatMap(int categoryRow);
+
+	/**
 	 * Return a user-readable label from a category value
 	 *
 	 * @param label

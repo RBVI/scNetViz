@@ -27,6 +27,7 @@ import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
@@ -37,6 +38,7 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 
 public class TPMTab extends JPanel implements TaskObserver {
 	final ScNVManager manager;
@@ -88,6 +90,18 @@ public class TPMTab extends JPanel implements TaskObserver {
 
 		JPanel buttonsPanelRight = new JPanel();
 		{
+			JButton export = new JButton("Export CSV");
+			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      export.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					ExportCSVTask task = new ExportCSVTask(manager, experiment.getMatrix());
+					manager.executeTasks(new TaskIterator(task));
+				}
+			});
+			buttonsPanelRight.add(export);
+		}
+
+		{
 			JButton tsne = new JButton("View tSNE");
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
       tsne.addActionListener(new ActionListener() {
@@ -98,18 +112,6 @@ public class TPMTab extends JPanel implements TaskObserver {
 						manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
 					} else {
 						showtSNE(experiment);
-						/*
-						if (experiment instanceof GXAExperiment) {
-							String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-							String uri = "https://www.ebi.ac.uk/gxa/sc/experiments/"+accession+"/Results";
-							Map<String, Object> args = new HashMap<>();
-							args.put("newTab", "true");
-							args.put("id", "GXA");
-							args.put("url", uri);
-	
-							manager.executeCommand("cybrowser", "dialog", args);
-						}
-						*/
 					}
 				}
 			});
@@ -117,15 +119,15 @@ public class TPMTab extends JPanel implements TaskObserver {
 		}
 		
 		{
-			JButton export = new JButton("Export CSV");
-			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      export.addActionListener(new ActionListener() {
+			JButton tsne = new JButton("(Re)calculate tSNE");
+			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      tsne.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					ExportCSVTask task = new ExportCSVTask(manager, experiment.getMatrix());
-					manager.executeTasks(new TaskIterator(task));
+					Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
+					manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
 				}
 			});
-			buttonsPanelRight.add(export);
+			buttonsPanelRight.add(tsne);
 		}
 		
 		{
@@ -161,8 +163,23 @@ public class TPMTab extends JPanel implements TaskObserver {
 		this.repaint();
 	}
 
+	// Change colors to gradient based on expression value
 	public void showtSNE(Experiment exp) {
 		double[][] tSNEresults = exp.getTSNE();
-		System.out.println("tSNEresults: "+tSNEresults.length+"x"+tSNEresults[0].length);
+
+		int geneRow = experimentTable.getSelectedRow();
+		if (geneRow >= 0)
+			geneRow = experimentTable.convertRowIndexToModel(geneRow);
+		System.out.println("geneRow = "+geneRow);
+
+		// See if a gene is selected and provide a color trace if it is
+		String names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels())+"}";
+		String xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
+		String yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
+		String colors;
+
+		String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+		String title = "tSNE Plot for "+accession;
+		CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, title, "t-SNE 1", "t-SNE 2", accession);
 	}
 }
