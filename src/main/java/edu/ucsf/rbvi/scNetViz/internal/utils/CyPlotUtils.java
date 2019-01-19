@@ -8,6 +8,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class CyPlotUtils {
@@ -28,6 +29,7 @@ public class CyPlotUtils {
 	}
 
 	public static void createScatterPlot(ScNVManager manager, String names, String xValues, String yValues,
+	                                     String zValues,
 	                                     String title, 
 	                                     String xlabel, String ylabel, String accession) {
 		// System.out.println("createViolinPlot");
@@ -37,6 +39,13 @@ public class CyPlotUtils {
 		argMap.put("editor", "false");
 		argMap.put("xLabel",xlabel);
 		argMap.put("yLabel",ylabel);
+		if (zValues != null) {
+			argMap.put("zValues",zValues);
+			argMap.put("colorscale","Blues");
+			argMap.put("editor","true");
+		} else {
+			argMap.put("editor","false");
+		}
 		argMap.put("title",title);
 		argMap.put("names",names);
 		argMap.put("id",accession);
@@ -140,7 +149,16 @@ public class CyPlotUtils {
 		}
 		builder.append(coords[coords.length-1][index]+"]");
 		return builder.toString();
+	}
 
+	public static String valuesToJSON(DoubleMatrix matrix, int row) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("[");
+		for (int column = 0; column < matrix.getNCols()-1; column++) {
+			builder.append(getNonNaNValue(matrix.getDoubleValue(row, column),0.0)+",");
+		}
+		builder.append(getNonNaNValue(matrix.getDoubleValue(row, matrix.getNCols()-1),0.0)+"]");
+		return builder.toString();
 	}
 
 	public static String listToMap(Map<Object, List<Integer>> map, List<String> list) {
@@ -171,5 +189,11 @@ public class CyPlotUtils {
 		}
 		builder.setCharAt(builder.length()-1, '}');
 		return builder.toString();
+	}
+
+	public static double getNonNaNValue(double v, double missing) {
+		if (!Double.isNaN(v))
+			return v;
+		return missing;
 	}
 }

@@ -296,7 +296,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			});
 
 			// buttonsPanelRight.add(new JLabel(""));
-			// buttonsPanelRight.add(new JLabel(""));
+			buttonsPanelRight.add(new JLabel(""));
 			buttonsPanelRight.add(tsne);
 			buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
@@ -369,6 +369,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 
 		String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 		String title = "tSNE Plot for "+accession;
-		CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, title, "t-SNE 1", "t-SNE 2", accession);
+		CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, null, 
+		                              title, "t-SNE 1", "t-SNE 2", accession);
 	}
 }

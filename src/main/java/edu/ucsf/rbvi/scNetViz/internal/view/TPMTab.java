@@ -176,10 +176,14 @@ public class TPMTab extends JPanel implements TaskObserver {
 		String names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels())+"}";
 		String xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
 		String yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
-		String colors;
+		String zValues = null;
+		if (geneRow >= 0)
+			zValues = "{\"trace\": "+
+							CyPlotUtils.valuesToJSON((DoubleMatrix)experiment.getMatrix(), geneRow)+"}";
 
 		String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 		String title = "tSNE Plot for "+accession;
-		CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, title, "t-SNE 1", "t-SNE 2", accession);
+		CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, zValues, 
+		                              title, "t-SNE 1", "t-SNE 2", accession);
 	}
 }

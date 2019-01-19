@@ -22,6 +22,7 @@ import edu.ucsf.rbvi.scNetViz.internal.view.TPMTab;
 public class ShowExperimentTableTask extends AbstractTask {
 	final ScNVManager manager;
 	Experiment experiment = null;
+	String tab = null;
 
 	@Tunable (description="Experiment to show")
 	public ListSingleSelection<Experiment> accession = null;
@@ -37,6 +38,14 @@ public class ShowExperimentTableTask extends AbstractTask {
 		this.manager = manager;
 		this.experiment = experiment;
 		accession = new ListSingleSelection<Experiment>(Collections.singletonList(experiment));
+	}
+
+	public ShowExperimentTableTask(final ScNVManager manager, Experiment experiment, String tab) {
+		super();
+		this.manager = manager;
+		this.experiment = experiment;
+		accession = new ListSingleSelection<Experiment>(Collections.singletonList(experiment));
+		this.tab = tab;
 	}
 
 	public void run(TaskMonitor monitor) {
@@ -66,6 +75,9 @@ public class ShowExperimentTableTask extends AbstractTask {
 					manager.addExperimentFrame(experiment, frame);
 				} else {
 					frame.setVisible(true);
+				}
+				if (tab != null) {
+					frame.selectTab(tab);
 				}
 			}
 		});
