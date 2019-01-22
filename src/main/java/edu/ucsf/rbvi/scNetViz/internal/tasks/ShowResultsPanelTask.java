@@ -5,8 +5,13 @@ import java.util.List;
 import java.util.Properties;
 import javax.swing.SwingUtilities;
 
+import org.cytoscape.application.events.SetCurrentNetworkListener;
+import org.cytoscape.application.swing.CySwingApplication;
+import org.cytoscape.application.swing.CytoPanel;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelComponent2;
+import org.cytoscape.application.swing.CytoPanelName;
+import org.cytoscape.application.swing.CytoPanelState;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
@@ -47,6 +52,12 @@ public class ShowResultsPanelTask extends AbstractTask {
 		if (accession != null)
 			experiment = accession.getSelectedValue();
 
-		manager.registerService(new ScNVCytoPanel(manager, experiment), CytoPanelComponent.class, new Properties());
+		ScNVCytoPanel resultsPanel = new ScNVCytoPanel(manager, experiment);
+		manager.registerService(resultsPanel, CytoPanelComponent.class, new Properties());
+		manager.registerService(resultsPanel, SetCurrentNetworkListener.class, new Properties());
+
+		CySwingApplication swingApp = manager.getService(CySwingApplication.class);
+		CytoPanel panel = swingApp.getCytoPanel(CytoPanelName.EAST);
+		panel.setState(CytoPanelState.DOCK);
 	}
 }

@@ -127,10 +127,6 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
 			expFrame.addDiffExpContent("Diff Exp", diffETab);
 			diffExpButton.setEnabled(true);
-		} else if (obsTask instanceof tSNETask) {
-			double[][] tSNEResults = ((tSNETask)obsTask).getResults();
-			experiment.setTSNE(tSNEResults);
-			showtSNE(experiment);
 		}
 	}
 
@@ -285,13 +281,11 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
       tsne.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					double[][] tSNEResults = experiment.getTSNE();
-					if (tSNEResults == null) {
-						Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
-						manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
-					} else {
-						showtSNE(experiment);
-					}
+					Category cat = experiment.getDefaultCategory();
+					int catRow = -1;
+					if (cat != null)
+						catRow = cat.getSelectedRow();
+					ViewUtils.showtSNE(manager, experiment, cat, catRow, -1);
 				}
 			});
 
@@ -340,36 +334,4 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		return categoryTable;
 	}
 
-	public void showtSNE(Experiment exp) {
-		double[][] tSNEresults = exp.getTSNE();
-		Category cat = exp.getDefaultCategory();
-		int catRow = -1;
-		if (cat != null)
-			catRow = cat.getSelectedRow();
-		String names;
-		String xValues;
-		String yValues;
-		if (cat != null && catRow >= 0) {
-			Map<Object, List<Integer>> catMap = cat.getCatMap(catRow);
-			// Reformat the catmap so we have reasonable labels
-			Map<Object, List<Integer>> newMap = new HashMap<>();
-			for (Object key: catMap.keySet()) {
-				if (key.toString().equals("unused"))
-					continue;
-				newMap.put(cat.mkLabel(key), catMap.get(key));
-			}
-			names = CyPlotUtils.listToMap(newMap, exp.getMatrix().getColLabels());
-			xValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 0);
-			yValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 1);
-		} else {
-			names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels())+"}";
-			xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
-			yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
-		}
-
-		String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-		String title = "tSNE Plot for "+accession;
-		CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, null, 
-		                              title, "t-SNE 1", "t-SNE 2", accession);
-	}
 }

@@ -10,6 +10,7 @@ public interface Experiment {
 	public Source getSource();
 	public Matrix getMatrix();
 	public List<Category> getCategories();
+	public Category getCategory(String categoryName);
 	public Metadata getMetadata();
 	public void addCategory(Category category);
 	public String getSpecies();

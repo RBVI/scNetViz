@@ -36,6 +36,13 @@ public interface Category {
 	public Experiment getExperiment();
 
 	/**
+	 * Return the category "source".
+	 *
+	 * @return category source
+	 */
+	public Source getSource();
+
+	/**
 	 * Return a table model suitable for visualizing this category
 	 * in a JTable
 	 *

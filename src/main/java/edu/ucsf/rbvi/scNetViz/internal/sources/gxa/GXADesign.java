@@ -27,6 +27,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.api.StringMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.SimpleMatrix;
@@ -44,9 +45,12 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 
 	SortableTableModel tableModel = null;
 
+	Source source;
+
 	public GXADesign(final ScNVManager scManager, final GXAExperiment experiment) {
 		super(scManager, experiment, "Design/Factors", 0, 0);
 		logger = Logger.getLogger(CyUserLog.NAME);
+		source = scManager.getSource("EBI GXA");
 	}
 
 	@Override
@@ -72,6 +76,9 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 
 	@Override
 	public Experiment getExperiment() { return experiment;}
+
+	@Override
+	public Source getSource() { return source; }
 
 	@Override
 	public String getMatrixType() { return "Simple String Matrix";}

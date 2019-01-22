@@ -77,11 +77,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 		if (obsTask instanceof FileCategoryTask) {
 			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
-		} else if (obsTask instanceof tSNETask) {
-			double[][] tSNEResults = ((tSNETask)obsTask).getResults();
-			experiment.setTSNE(tSNEResults);
-			showtSNE(experiment);
-		}
+		} 
 	}
 	
 	private void init() {
@@ -106,18 +102,15 @@ public class TPMTab extends JPanel implements TaskObserver {
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
       tsne.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					double[][] tSNEResults = experiment.getTSNE();
-					if (tSNEResults == null) {
-						Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
-						manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
-					} else {
-						showtSNE(experiment);
-					}
+					int geneRow = experimentTable.getSelectedRow();
+					if (geneRow >= 0)
+						geneRow = experimentTable.convertRowIndexToModel(geneRow);
+					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow);
 				}
 			});
 			buttonsPanelRight.add(tsne);
 		}
-		
+
 		{
 			JButton tsne = new JButton("(Re)calculate tSNE");
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
@@ -163,27 +156,4 @@ public class TPMTab extends JPanel implements TaskObserver {
 		this.repaint();
 	}
 
-	// Change colors to gradient based on expression value
-	public void showtSNE(Experiment exp) {
-		double[][] tSNEresults = exp.getTSNE();
-
-		int geneRow = experimentTable.getSelectedRow();
-		if (geneRow >= 0)
-			geneRow = experimentTable.convertRowIndexToModel(geneRow);
-		System.out.println("geneRow = "+geneRow);
-
-		// See if a gene is selected and provide a color trace if it is
-		String names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels())+"}";
-		String xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
-		String yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
-		String zValues = null;
-		if (geneRow >= 0)
-			zValues = "{\"trace\": "+
-							CyPlotUtils.valuesToJSON((DoubleMatrix)experiment.getMatrix(), geneRow)+"}";
-
-		String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-		String title = "tSNE Plot for "+accession;
-		CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, zValues, 
-		                              title, "t-SNE 1", "t-SNE 2", accession);
-	}
 }

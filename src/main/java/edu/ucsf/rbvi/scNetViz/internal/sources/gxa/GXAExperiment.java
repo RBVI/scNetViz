@@ -85,6 +85,14 @@ public class GXAExperiment implements Experiment {
 
 	public List<Category> getCategories() { return categories; }
 
+	public Category getCategory(String categoryName) { 
+		for (Category cat: categories) {
+			if (cat.toString().equals(categoryName))
+				return cat;
+		}
+		return null;
+	}
+
 	public void addCategory(Category c) { categories.add(c); }
 
 	public Metadata getMetadata() { return gxaMetadata; }
