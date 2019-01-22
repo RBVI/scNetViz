@@ -33,22 +33,26 @@ import javax.swing.table.TableModel;
 
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
+import org.cytoscape.work.Task;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
+import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
-import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDETask;
-import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDETask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 
 public class CategoriesTab extends JPanel implements TaskObserver {
 	final ScNVManager manager;
@@ -251,7 +255,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 
 		}
 		
-		JPanel buttonsPanelRight = new JPanel(new GridLayout(2,1));
+		JPanel buttonsPanelRight = new JPanel(new GridLayout(2,2));
 		{
 			JButton importCategory = new JButton("Add Category");
 			importCategory.setFont(new Font("SansSerif", Font.PLAIN, 10));
@@ -273,8 +277,21 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 				}
 			});
 
+			JButton tsne = new JButton("View tSNE");
+			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      tsne.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					Category cat = experiment.getDefaultCategory();
+					int catRow = -1;
+					if (cat != null)
+						catRow = cat.getSelectedRow();
+					ViewUtils.showtSNE(manager, experiment, cat, catRow, -1);
+				}
+			});
+
 			// buttonsPanelRight.add(new JLabel(""));
-			// buttonsPanelRight.add(new JLabel(""));
+			buttonsPanelRight.add(new JLabel(""));
+			buttonsPanelRight.add(tsne);
 			buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
 		}
@@ -316,4 +333,5 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		categoryTables.put(category, categoryTable);
 		return categoryTable;
 	}
+
 }

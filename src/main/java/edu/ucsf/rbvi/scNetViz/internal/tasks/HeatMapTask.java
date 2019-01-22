@@ -25,27 +25,29 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.MatrixUtils;
 
 public class HeatMapTask extends AbstractTask {
 	final ScNVManager manager;
-	final DifferentialExpression diffExp;
+	final List<String> geneNames;
 	final Category category;
 	final Map<String, double[]> dataMap;
 	final List<String> columnOrder;
 	final boolean posOnly;
+	int heatMapCount = -1;
 
-	public HeatMapTask(final ScNVManager manager, DifferentialExpression diffExp, Category currentCategory,
-	                   final Map<String, double[]> dataMap, final List<String> columnOrder, boolean posOnly) {
+	public HeatMapTask(final ScNVManager manager, final Category currentCategory, final List<String> rowLabels,
+	                   final Map<String, double[]> dataMap, final List<String> columnOrder, boolean posOnly,
+										 int count) {
 		super();
 		this.manager = manager;
-		this.diffExp = diffExp;
+		this.geneNames = rowLabels;
 		this.category = currentCategory;
 		this.dataMap = dataMap;
 		this.columnOrder = columnOrder;
 		this.posOnly = posOnly;
+		this.heatMapCount = count;
 	}
 
 	// cyplot heat rowLabels="a,b,c,d,e,f" columnLabels="A,B,C" data="{\"A\":[1,2,3,4,5,6],\"B\":[-1,-2,-3,-4,-5,-6],\"C\":[0,1,-1,0,1,-1]}" title="Text Plot" xLabel="Upper" yLabel="Lower" editor=false
 	public void run(TaskMonitor monitor) {
-		Experiment exp = diffExp.getExperiment();
-		List<String> geneNames = exp.getMatrix().getRowLabels();
+		Experiment exp = category.getExperiment();
 		List<String> geneList = new ArrayList<>();
 		String columnLabels = null;
 
@@ -67,20 +69,22 @@ public class HeatMapTask extends AbstractTask {
 					break;
 			}
 
-			int heatMapCount = Integer.parseInt(manager.getSetting(SETTING.HEATMAP_COUNT));
+			if (heatMapCount < 0)
+				heatMapCount = Integer.parseInt(manager.getSetting(SETTING.HEATMAP_COUNT));
+
 			double[] topFC = new double[heatMapCount];
 			// Now get the top 10 and the bottom 10
-			if (!posOnly)
+			if (!posOnly && heatMapCount < fc.length)
 				heatMapCount = heatMapCount/2;
-			
+
 			List<String> newGeneList = new ArrayList<String>();
 			for (int topGene = 0; topGene < heatMapCount; topGene++) {
-				geneList.add(diffExp.getRowLabel(sort[topGene+start]));
+				geneList.add(geneNames.get(sort[topGene+start]));
 			}
 
-			if (!posOnly) {
+			if (!posOnly && heatMapCount < fc.length) {
 				for (int topGene = fc.length-heatMapCount; topGene < fc.length; topGene++) {
-					geneList.add(diffExp.getRowLabel(sort[topGene]));
+					geneList.add(geneNames.get(sort[topGene]));
 				}
 			}
 		}

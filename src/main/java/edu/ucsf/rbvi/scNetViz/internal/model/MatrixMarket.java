@@ -279,12 +279,37 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	}
 
 	public int[][] getIntegerMatrix(int missing) {
+		return getIntegerMatrix(missing, false);
+	}
+
+	public int[][] getIntegerMatrix(int missing, boolean transpose) {
+		// Are we tranposing or not?
+		if (transpose && transposed)
+			transpose = false;
+		else
+			transpose = transpose | transposed;
+
 		if (format == MTXFORMAT.ARRAY) {
 			if (type == MTXTYPE.INTEGER)
-				return intMatrix;
+				if (!transpose)
+					return intMatrix;
+				else {
+					int[][] newArray = getIntegerMatrix(transpose);
+
+					for (int row = 0; row < nRows; row++) {
+						for (int col = 0; col < nCols; col++) {
+							if (transposed)
+								newArray[col][row] = (int)Math.round(doubleMatrix[col][row]);
+							else
+								newArray[row][col] = (int)Math.round(doubleMatrix[row][col]);
+						}
+					}
+					return newArray;
+				}
 
 			if (type == MTXTYPE.REAL) {
-				int[][] newArray = new int[getNRows()][getNCols()];
+				int[][] newArray = getIntegerMatrix(transpose);
+
 				for (int row = 0; row < nRows; row++) {
 					for (int col = 0; col < nCols; col++) {
 						if (transposed)
@@ -296,7 +321,8 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				return newArray;
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
-			int[][] newArray = new int[getNRows()][getNCols()];
+			int[][] newArray = getIntegerMatrix(transpose);
+
 			int maxFill = getNRows();
 			for (int row = 0; row < maxFill; row++) {
 				Arrays.fill(newArray[row], missing);
@@ -357,15 +383,40 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	}
 
 	public double[][] getDoubleMatrix(double missing) {
+		return getDoubleMatrix(missing, false);
+	}
+
+	public double[][] getDoubleMatrix(double missing, boolean transpose) {
+		// Are we tranposing or not?
+		if (transpose && transposed)
+			transpose = false;
+		else
+			transpose = transpose | transposed;
+
+		//
 		if (format == MTXFORMAT.ARRAY) {
-			if (type == MTXTYPE.REAL)
-				return doubleMatrix;
+			if (type == MTXTYPE.REAL) {
+				// FIXME: handle transposed
+				if (!transpose)
+					return doubleMatrix;
+				else {
+					double[][] newArray = getDoubleMatrix(transpose);
+
+					for (int row = 0; row < nRows; row++) {
+						for (int col = 0; col < nCols; col++) {
+							newArray[col][row] = (double)intMatrix[col][row];
+						}
+					}
+					return newArray;
+				}
+			}
 
 			if (type == MTXTYPE.INTEGER) {
-				double[][] newArray = new double[getNRows()][getNCols()];
+				double[][] newArray = getDoubleMatrix(transpose);
+
 				for (int row = 0; row < nRows; row++) {
 					for (int col = 0; col < nCols; col++) {
-						if (transposed)
+						if (transpose)
 							newArray[col][row] = (double)intMatrix[col][row];
 						else
 							newArray[row][col] = (double)intMatrix[row][col];
@@ -374,15 +425,17 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				return newArray;
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
-			double[][] newArray = new double[getNRows()][getNCols()];
+			double[][] newArray = getDoubleMatrix(transpose);
+
 			int maxFill = getNRows();
+			if (transpose) maxFill = getNCols();
 			for (int row = 0; row < maxFill; row++) {
 				Arrays.fill(newArray[row], missing);
 			}
 			for (int index = 0; index < nonZeros; index++) {
 				int row = intMatrix[index][0];
 				int col = intMatrix[index][1];
-				if (transposed) { int rtmp = row; row = col; col = rtmp; }
+				if (transpose) { int rtmp = row; row = col; col = rtmp; }
 				if (type == MTXTYPE.INTEGER)
 					newArray[row][col] = (double)intMatrix[index][2];
 				else if (type == MTXTYPE.REAL)
@@ -570,5 +623,19 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		if (intMatrix[index1][0] == row) return index1;
 		if (intMatrix[indexMid][0] == row) return indexMid;
 		return index2;
+	}
+
+	private double[][] getDoubleMatrix(boolean transpose) {
+		if (transpose)
+			return new double[nCols][nRows];
+		else
+			return new double[nRows][nCols];
+	}
+
+	private int[][] getIntegerMatrix(boolean transpose) {
+		if (transpose)
+			return new int[nCols][nRows];
+		else
+			return new int[nRows][nCols];
 	}
 }

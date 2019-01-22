@@ -10,6 +10,7 @@ public interface Experiment {
 	public Source getSource();
 	public Matrix getMatrix();
 	public List<Category> getCategories();
+	public Category getCategory(String categoryName);
 	public Metadata getMetadata();
 	public void addCategory(Category category);
 	public String getSpecies();
@@ -21,6 +22,9 @@ public interface Experiment {
 
 	public String toJSON();
 	public String toHTML();
+
+	public double[][] getTSNE();
+	public void setTSNE(double[][] tnse);
 
 	// For efficiency purposes, sometimes implementations
 	// of Experiment might want to provide their own

@@ -20,7 +20,6 @@ import static org.cytoscape.work.ServiceProperties.TOOLTIP;
 import java.util.Properties;
 
 import org.cytoscape.application.CyApplicationManager;
-import org.cytoscape.application.swing.CytoPanelComponent2;
 import org.cytoscape.io.BasicCyFileFilter;
 import org.cytoscape.io.DataCategory;
 import org.cytoscape.io.read.InputStreamTaskFactory;
@@ -52,6 +51,7 @@ import edu.ucsf.rbvi.scNetViz.internal.tasks.ListExperimentsTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SelectTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowResultsPanelTaskFactory;
 
 public class CyActivator extends AbstractCyActivator {
 
@@ -205,6 +205,16 @@ public class CyActivator extends AbstractCyActivator {
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
 			scNVManager.registerService(show, TaskFactory.class, props);
+		}
+
+		{
+			ShowResultsPanelTaskFactory results = new ShowResultsPanelTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.put(TITLE, "Show Results Panel");
+			props.put(PREFERRED_MENU, "Apps.scNetViz");
+			props.setProperty(IN_TOOL_BAR, "FALSE");
+			props.setProperty(IN_MENU_BAR, "TRUE");
+			scNVManager.registerService(results, TaskFactory.class, props);
 		}
 
 		{

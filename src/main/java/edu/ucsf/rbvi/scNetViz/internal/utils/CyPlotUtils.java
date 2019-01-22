@@ -8,6 +8,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class CyPlotUtils {
@@ -25,6 +26,31 @@ public class CyPlotUtils {
 		argMap.put("id",accession);
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "violin", argMap);
+	}
+
+	public static void createScatterPlot(ScNVManager manager, String names, String xValues, String yValues,
+	                                     String zValues,
+	                                     String title, 
+	                                     String xlabel, String ylabel, String accession) {
+		// System.out.println("createViolinPlot");
+		Map<String, Object> argMap = new HashMap<>();
+		argMap.put("xValues", xValues);
+		argMap.put("yValues", yValues);
+		argMap.put("editor", "false");
+		argMap.put("xLabel",xlabel);
+		argMap.put("yLabel",ylabel);
+		if (zValues != null) {
+			argMap.put("zValues",zValues);
+			argMap.put("colorscale","Blues");
+			argMap.put("editor","true");
+		} else {
+			argMap.put("editor","false");
+		}
+		argMap.put("title",title);
+		argMap.put("names",names);
+		argMap.put("id",accession);
+		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" cells=%s");
+		manager.executeCommand("cyplot", "scatter", argMap);
 	}
 
 	public static void createHeatMap(ScNVManager manager, String rowLabels, String columnLabels,
@@ -104,5 +130,70 @@ public class CyPlotUtils {
 			builder.append(s+",");
 		}
 		return builder.substring(0, builder.length()-1);
+	}
+
+	public static String listToJSON(List<String> names) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("[");
+		for (String s: names) {
+			builder.append("\""+s+"\",");
+		}
+		return builder.substring(0, builder.length()-1)+"]";
+	}
+
+	public static String coordinatesToJSON(double[][] coords, int index) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("[");
+		for (int cell = 0; cell < coords.length-1; cell++) {
+			builder.append(coords[cell][index]+",");
+		}
+		builder.append(coords[coords.length-1][index]+"]");
+		return builder.toString();
+	}
+
+	public static String valuesToJSON(DoubleMatrix matrix, int row) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("[");
+		for (int column = 0; column < matrix.getNCols()-1; column++) {
+			builder.append(getNonNaNValue(matrix.getDoubleValue(row, column),0.0)+",");
+		}
+		builder.append(getNonNaNValue(matrix.getDoubleValue(row, matrix.getNCols()-1),0.0)+"]");
+		return builder.toString();
+	}
+
+	public static String listToMap(Map<Object, List<Integer>> map, List<String> list) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		for (Object trace: map.keySet()) {
+			builder.append("\""+trace.toString()+"\":[");
+			for (Integer index: map.get(trace)) {
+				builder.append("\""+list.get(index)+"\",");
+			}
+			builder.setCharAt(builder.length()-1, ']');
+			builder.append(",");
+		}
+		builder.setCharAt(builder.length()-1, '}');
+		return builder.toString();
+	}
+
+	public static String coordsToMap(Map<Object, List<Integer>> map, double[][] coords, int index) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		for (Object trace: map.keySet()) {
+			builder.append("\""+trace.toString()+"\":[");
+			for (Integer i: map.get(trace)) {
+				builder.append(coords[i][index]+",");
+			}
+			builder.setCharAt(builder.length()-1, ']');
+			builder.append(",");
+		}
+		builder.setCharAt(builder.length()-1, '}');
+		return builder.toString();
+	}
+
+	public static double getNonNaNValue(double v, double missing) {
+		if (!Double.isNaN(v))
+			return v;
+		return missing;
 	}
 }

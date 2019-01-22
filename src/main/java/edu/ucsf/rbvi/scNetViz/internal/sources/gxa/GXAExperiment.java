@@ -52,9 +52,7 @@ public class GXAExperiment implements Experiment {
 	MatrixMarket mtx = null;
 	GXAMetadata gxaMetadata = null;
 	List<Category> categories;
-	// GXACluster gxaCluster = null;
-	// GXAIDF gxaIDF = null;
-	// GXADesign gxaDesign = null;
+	double[][] tSNE;
 
 	final ScNVManager scNVManager;
 	final GXAExperiment gxaExperiment;
@@ -87,6 +85,14 @@ public class GXAExperiment implements Experiment {
 
 	public List<Category> getCategories() { return categories; }
 
+	public Category getCategory(String categoryName) { 
+		for (Category cat: categories) {
+			if (cat.toString().equals(categoryName))
+				return cat;
+		}
+		return null;
+	}
+
 	public void addCategory(Category c) { categories.add(c); }
 
 	public Metadata getMetadata() { return gxaMetadata; }
@@ -94,6 +100,16 @@ public class GXAExperiment implements Experiment {
 	public Category getDefaultCategory() { return categories.get(0); }
 
 	public Source getSource() { return source; }
+
+	@Override
+	public void setTSNE(double[][] tsne) {
+		tSNE = tsne;
+	}
+
+	@Override
+	public double[][] getTSNE() {
+		return tSNE;
+	}
 
 	public DifferentialExpression getDiffExp() { return diffExp; }
 	public void setDiffExp(DifferentialExpression de) { diffExp = de; }

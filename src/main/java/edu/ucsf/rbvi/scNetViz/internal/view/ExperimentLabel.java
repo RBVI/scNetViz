@@ -13,6 +13,10 @@ public class ExperimentLabel extends JLabel {
 		super(createLabelText(experiment.getSource(), experiment.getMetadata()), SwingConstants.CENTER);
 	}
 
+	public void updateText(Experiment experiment) {
+		setText(createLabelText(experiment.getSource(), experiment.getMetadata()));
+	}
+
 	private static String createLabelText(Source source, Metadata meta) {
 		String title = "<html><span style=\"font-size:10pt\">"+
 						source.toString()+" <b>"+meta.get(Metadata.ACCESSION)+"</b></span>";

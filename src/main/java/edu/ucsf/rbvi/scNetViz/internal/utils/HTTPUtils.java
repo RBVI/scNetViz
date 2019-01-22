@@ -25,15 +25,23 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class HTTPUtils {
 	public static JSONObject fetchJSON(String uri, TaskMonitor monitor) {
+		System.out.println("Fetching JSON from: "+uri);
 		try {
 			CloseableHttpClient httpclient = HttpClients.createDefault();
 			HttpGet httpGet = new HttpGet(uri);
 			CloseableHttpResponse response1 = httpclient.execute(httpGet);
 			if (response1.getStatusLine().getStatusCode() != 200) {
+				monitor.showMessage(TaskMonitor.Level.ERROR, "Got "+response1.getStatusLine().getStatusCode()+" code from server");
 				return null;
 			}
 			HttpEntity entity1 = response1.getEntity();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(entity1.getContent()));
+			/*
+			String line;
+			while ((line = reader.readLine()) != null) {
+				System.out.println(line);
+			}
+			*/
 			JSONObject json = (JSONObject) new JSONParser().parse(reader);
 			httpclient.close();
 			return json;

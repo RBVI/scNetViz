@@ -86,6 +86,24 @@ public class ExperimentFrame extends JFrame {
 	public CategoriesTab getCategoriesTab() { return categoriesTab; }
 	public DiffExpTab getDiffExpTab() { return diffExpTab; }
 
+	public void selectTab(int tab) {
+		tabbedPane.setSelectedIndex(tab);
+	}
+
+	public void selectTab(String tab) {
+		switch(tab) {
+			case "tpmTable":
+				selectTab(0);
+				break;
+			case "catTable":
+				selectTab(1);
+				break;
+			case "DETable":
+				selectTab(2);
+				break;
+		}
+	}
+
 	public void selectGenes(List<String> geneLabels) {
 		tpmTab.selectGenes(geneLabels);
 		diffExpTab.selectGenes(geneLabels);
@@ -101,17 +119,7 @@ public class ExperimentFrame extends JFrame {
 		headerPane.setLayout(new BoxLayout(headerPane, BoxLayout.LINE_AXIS));
 		headerPane.add(Box.createRigidArea(new Dimension(10,0)));
 		{
-			JButton helpButton = new JButton("Help");
-			helpButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
-			helpButton.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					Map<String, Object> args = new HashMap<>();
-					args.put("id","scNetViz");
-					args.put("title", "scNetViz Help");
-					args.put("url", "http://preview.rbvi.ucsf.edu/cytoscape/scNetViz/index.shtml");
-					scManager.executeCommand("cybrowser", "dialog", args, false);
-				}
-			});
+			JButton helpButton = new HelpButton(scManager, null);
 			headerPane.add(helpButton);
 		}
 

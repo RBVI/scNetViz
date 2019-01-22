@@ -36,6 +36,13 @@ public interface Category {
 	public Experiment getExperiment();
 
 	/**
+	 * Return the category "source".
+	 *
+	 * @return category source
+	 */
+	public Source getSource();
+
+	/**
 	 * Return a table model suitable for visualizing this category
 	 * in a JTable
 	 *
@@ -70,6 +77,14 @@ public interface Category {
 	 * @param selectedRow
 	 */
 	public void setSelectedRow(int selectedRow);
+
+	/**
+	 * Get the map of category names to column indices
+	 * 
+	 * @param categoryRow the row in the category to return the catmap for
+	 * @return the catmap
+	 */
+	public Map<Object, List<Integer>> getCatMap(int categoryRow);
 
 	/**
 	 * Return a user-readable label from a category value

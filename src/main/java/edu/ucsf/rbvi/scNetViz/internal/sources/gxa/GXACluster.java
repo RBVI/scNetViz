@@ -21,13 +21,14 @@ import org.apache.log4j.Logger;
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.AbstractCategory;
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
-import edu.ucsf.rbvi.scNetViz.internal.api.AbstractCategory;
+import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.SimpleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
@@ -56,11 +57,14 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	// The Table model
 	GXAClusterTableModel tableModel = null;
 
+	Source source;
+
 	public GXACluster(final ScNVManager scManager, final GXAExperiment experiment) {
 		super(scManager, experiment, "Cluster", 0, 0);
 		super.hdrCols = 2;
 
 		logger = Logger.getLogger(CyUserLog.NAME);
+		source = scManager.getSource("EBI GXA");
 	}
 
 	@Override
@@ -95,6 +99,9 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	public Experiment getExperiment() { return experiment;}
 
 	@Override
+	public Source getSource() { return source;}
+
+	@Override
 	public Matrix getMatrix() { return this; }
 
 	@Override
@@ -115,6 +122,27 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 
 	@Override
 	public int[][] getIntegerMatrix(int missing) { return clusters; }
+
+	@Override
+	public int[][] getIntegerMatrix(int missing, boolean transpose) { 
+		if (transpose && transposed)
+			transpose = false;
+		else
+			transpose = transpose | transposed;
+		if (!transpose)
+			return clusters;
+
+		int[][] newArray = getIntegerMatrix(transpose);
+		for (int row = 0; row < nRows; row++) {
+			for (int col = 0; col < nCols; col++) {
+				if (transposed)
+					newArray[col][row] = clusters[col][row];
+				else
+					newArray[row][col] = clusters[row][col];
+			}
+		}
+		return newArray;
+	}
 
 	@Override
 	public int getHeaderCols() { return 2; }

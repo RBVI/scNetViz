@@ -22,6 +22,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.api.StringMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.SimpleMatrix;
@@ -42,6 +43,8 @@ public class FileCategory extends AbstractCategory implements Category {
 
 	SortableTableModel tableModel = null;
 
+	Source source = null;
+
 	public FileCategory(final ScNVManager scManager, 
 	                    final Experiment experiment, final String name,
 	                    final String type, int nRows, int nCols) {
@@ -54,6 +57,8 @@ public class FileCategory extends AbstractCategory implements Category {
 			intCategories = new int[nCols][nRows];
 		else if (dataType.equals("float"))
 			doubleCategories = new double[nCols][nRows];
+
+		source = scManager.getSource("File");
 	}
 
 	@Override
@@ -100,6 +105,9 @@ public class FileCategory extends AbstractCategory implements Category {
 	public Matrix getMatrix() { return this;}
 
 	@Override
+	public Source getSource() { return source;}
+
+	@Override
 	public int getHeaderCols() { return 1; }
 
 	public void setValue(int row, int col, String value) {
@@ -126,29 +134,6 @@ public class FileCategory extends AbstractCategory implements Category {
 	public void filter(int category, double dDRthreshold) {
 		return;
 	}
-
-	/*
-	// Calculate the logGER between each category and all other categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public Map<Object, double[]> getLogGER(int category) {
-		return null;
-	}
-
-	// Calculate the logGER between the category and all other categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public double[] getLogGER(int category, Object category1) {
-		return null;
-	};
-
-	// Calculate the logGER between the two categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public double[] getLogGER(int category, Object category1, Object category2) {
-		return null;
-	}
-	*/
 
 	public static FileCategory fetchCategory(ScNVManager scManager, Experiment experiment,
 	                                         File file, String dataCategory, boolean transpose, int hdrCols,

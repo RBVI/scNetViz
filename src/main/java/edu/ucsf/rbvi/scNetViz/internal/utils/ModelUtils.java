@@ -2,6 +2,7 @@ package edu.ucsf.rbvi.scNetViz.internal.utils;
 
 import java.awt.Color;
 import java.awt.Paint;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.model.CyTable;
+import org.cytoscape.model.CyTableUtil;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewManager;
 import org.cytoscape.view.presentation.property.BasicVisualLexicon;
@@ -32,10 +34,26 @@ import org.cytoscape.work.json.JSONResult;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class ModelUtils {
+	public static final String EXPERIMENT_ACCESSION = "Experiment Accession";
+	public static final String EXPERIMENT_SOURCE = "Experiment Source";
+	public static final String CATEGORY = "Category";
+	public static final String CATEGORY_NAMES = "Category Names";
+	public static final String CATEGORY_ROW = "Category Row";
+	public static final String CATEGORY_SOURCE = "Category Source";
+
+	public static final String POSITIVE_ONLY = "positiveOnly";
+	public static final String NEGATIVE_ONLY = "negativeOnly";
+	public static final String SELECTED_ONLY = "selectedOnly";
+	public static final String ENTIRE_NETWORK = "entireNetwork";
+
+	public static final String NAMESPACE = "scNetViz";
+;
 	public static CyNetwork getNetworkFromJSON(ScNVManager manager, JSONResult res) {
 		try {
 			JSONObject json = (JSONObject) new JSONParser().parse(res.getJSON());
@@ -58,12 +76,12 @@ public class ModelUtils {
 	public static void createDEColumns(ScNVManager manager, CyNetwork network, DifferentialExpression diffExp, 
 	                                   String label) {
 		CyTable nodeTable = network.getDefaultNodeTable();
-		nodeTable.createColumn("scNetViz", label+" MTC", Double.class, false);
-		nodeTable.createColumn("scNetViz", label+" Min.pct", Double.class, false);
-		nodeTable.createColumn("scNetViz", label+" MDTC", Double.class, false);
-		nodeTable.createColumn("scNetViz", label+" log2FC", Double.class, false);
-		nodeTable.createColumn("scNetViz", label+" pValue", Double.class, false);
-		nodeTable.createColumn("scNetViz", label+" FDR", Double.class, false);
+		createColumnIfNeeded(nodeTable, NAMESPACE, label+" MTC", Double.class);
+		createColumnIfNeeded(nodeTable, NAMESPACE, label+" Min.pct", Double.class);
+		createColumnIfNeeded(nodeTable, NAMESPACE, label+" MDTC", Double.class);
+		createColumnIfNeeded(nodeTable, NAMESPACE, label+" log2FC", Double.class);
+		createColumnIfNeeded(nodeTable, NAMESPACE, label+" pValue", Double.class);
+		createColumnIfNeeded(nodeTable, NAMESPACE, label+" FDR", Double.class);
 	}
 
 	public static void updateDEData(ScNVManager manager, CyNetwork network, 
@@ -80,6 +98,139 @@ public class ModelUtils {
 			updateValues(network, row, diffExp, gene, label+" log2FC");
 			updateValues(network, row, diffExp, gene, label+" pValue");
 			updateValues(network, row, diffExp, gene, label+" FDR");
+		}
+	}
+
+	// Add our information to the network tables: source, experiment accession, category, category row
+	public static void addNetworkColumns(ScNVManager manager, CyNetwork network) {
+		CyTable netTable = network.getDefaultNetworkTable();
+		createColumnIfNeeded(netTable, NAMESPACE, EXPERIMENT_SOURCE, String.class);
+		createColumnIfNeeded(netTable, NAMESPACE, EXPERIMENT_ACCESSION, String.class);
+		createColumnIfNeeded(netTable, NAMESPACE, CATEGORY_SOURCE, String.class);
+		createColumnIfNeeded(netTable, NAMESPACE, CATEGORY, String.class);
+		createColumnIfNeeded(netTable, NAMESPACE, CATEGORY_ROW, String.class);
+		createListColumnIfNeeded(netTable, NAMESPACE, CATEGORY_NAMES, String.class);
+	}
+
+	public static void updateNetworkData(ScNVManager manager, CyNetwork network, 
+	                                     Experiment experiment, Category category, String categoryRow) {
+		CyRow row = network.getRow(network);
+		
+		row.set(NAMESPACE, EXPERIMENT_SOURCE, experiment.getSource().toString());
+		row.set(NAMESPACE, EXPERIMENT_ACCESSION, experiment.getMetadata().get(Metadata.ACCESSION).toString());
+		row.set(NAMESPACE, CATEGORY_SOURCE, category.getSource().toString());
+		row.set(NAMESPACE, CATEGORY, category.toString());
+		if (categoryRow != null)
+			row.set(NAMESPACE, CATEGORY_ROW, categoryRow);
+
+		List<String> categoryNames = new ArrayList<>();
+		for (Object cat: experiment.getDiffExp().getLogGERMap().keySet()) {
+			categoryNames.add(category.mkLabel(cat));
+		}
+		row.set(NAMESPACE, CATEGORY_NAMES, categoryNames);
+	}
+
+	public static Experiment getExperimentFromNetwork(ScNVManager manager, CyNetwork network) {
+		String accession = network.getRow(network).get(NAMESPACE, EXPERIMENT_ACCESSION, String.class);
+		Experiment exp = manager.getExperiment(accession);
+		return exp;
+	}
+
+	public static Category getCategoryFromNetwork(ScNVManager manager, CyNetwork network) {
+		Experiment exp = getExperimentFromNetwork(manager, network);
+		String catName = network.getRow(network).get(NAMESPACE, CATEGORY, String.class);
+		return exp.getCategory(catName);
+	}
+
+	public static String getCategoryRowFromNetwork(ScNVManager manager, CyNetwork network) {
+		return network.getRow(network).get(NAMESPACE, CATEGORY_ROW, String.class);
+	}
+
+	public static List<String> getCategoryNamesFromNetwork(CyNetwork network) {
+		return network.getRow(network).getList(NAMESPACE, CATEGORY_NAMES, String.class);
+	}
+
+	public static List<String> getGeneNamesFromNetwork(CyNetwork network) {
+		return getGeneNamesFromNetwork(network, network.getNodeList());
+	}
+
+	public static List<String> getGeneNamesFromNetwork(CyNetwork network, List<CyNode> nodeList) {
+		List<String> names = new ArrayList<>();
+		for (CyNode node: nodeList) {
+			names.add(getGeneNameFromNode(network, node));
+		}
+		return names;
+	}
+
+	public static String getGeneNameFromNode(CyNetwork network, CyNode node) {
+		//TODO: add STRING namespace
+		return network.getRow(node).get("query term", String.class);
+	}
+
+	public static double[] getDataFromNetwork(CyNetwork network, String column, List<CyNode> nodes) {
+		double[] data = new double[nodes.size()];
+		int index = 0;
+		for (CyNode node: nodes) {
+			Double v = network.getRow(node).get(NAMESPACE, column, Double.class);
+			if (v == null)
+				data[index] = Double.NaN;
+			else
+				data[index] = v.doubleValue();
+			index++;
+		}
+		return data;
+	}
+
+	public static int getRowFromNode(Experiment exp, CyNetwork network, List<CyNode> nodes) {
+		if (nodes == null || nodes.size() == 0 || network == null) return -1;
+
+		List<String> rowLabels = exp.getMatrix().getRowLabels();
+		String name = getGeneNameFromNode(network, nodes.get(0));
+		return rowLabels.indexOf(name);
+	}
+
+	public static List<CyNode> selectNodes(ScNVManager manager, CyNetwork network, String enrichmentType) {
+		// Get DE column for this network
+		Category category = getCategoryFromNetwork(manager, network);
+
+		// First, get the current list of selected nodes
+		List<CyNode> selectedNodes = CyTableUtil.getNodesInState(network, CyNetwork.SELECTED, true);
+
+		// Now clear the selected nodes
+		for (CyNode node: selectedNodes) {
+			network.getRow(node).set(CyNetwork.SELECTED, false);
+		}
+
+		// Our row is encoded in the network name
+		String categoryRow = network.getRow(network).get(CyNetwork.NAME, String.class);
+		String column = categoryRow+" log2FC";
+		for (CyNode node: network.getNodeList()) {
+			CyRow row = network.getRow(node);
+			if (row == null) continue;
+			Double v = row.get(NAMESPACE, column, Double.class);
+			if (v == null) {
+				continue;
+			}
+
+			switch (enrichmentType) {
+				case POSITIVE_ONLY:
+					if (v > 0.0) {
+						row.set(CyNetwork.SELECTED, true);
+					}
+					break;
+				case NEGATIVE_ONLY:
+					if (v < 0.0) {
+						row.set(CyNetwork.SELECTED, true);
+					}
+					break;
+			}
+		}
+		return selectedNodes;
+	}
+
+	public static void selectNodes(CyNetwork network, List<CyNode> selectedNodes) {
+		for (CyNode node: selectedNodes) {
+			network.getRow(node).set(CyNetwork.SELECTED, true);
 		}
 	}
 
@@ -112,7 +263,8 @@ public class ModelUtils {
 
 		@SuppressWarnings("rawtypes")
 		ContinuousMapping colorMapping =
-		   (ContinuousMapping) vmff.createVisualMappingFunction("scNetViz::"+col, Double.class, BasicVisualLexicon.NODE_FILL_COLOR);
+		   (ContinuousMapping) vmff.createVisualMappingFunction("scNetViz::"+col, 
+		                                                        Double.class, BasicVisualLexicon.NODE_FILL_COLOR);
 
 		double[] minMax = findMinMax(network, col);
 		colorMapping.addPoint (minMax[0], new BoundaryRangeValues<Paint>(colors[0], colors[1], colors[1]));
@@ -141,12 +293,16 @@ public class ModelUtils {
 		return qMap;
 	}
 
+	public static List<CyNode> getSelectedNodes(CyNetwork network) {
+		return CyTableUtil.getNodesInState(network, CyNetwork.SELECTED, true);
+	}
+
 	public static double[] findMinMax(CyNetwork network, String col) {
 		double min = Double.MAX_VALUE;
 		double max = Double.MIN_VALUE;
 		// System.out.println("Looking at: "+col);
 		for (CyNode node: network.getNodeList()) {
-			Double v = network.getRow(node).get("scNetViz", col, Double.class);
+			Double v = network.getRow(node).get(NAMESPACE, col, Double.class);
 			if (v != null && !Double.isNaN(v)) {
 				if (v < min) min = v;
 				if (v > max) max = v;
@@ -170,6 +326,16 @@ public class ModelUtils {
 	                                String rowLabel, String colLabel) {
 		double v = dMat.getDoubleValue(rowLabel, colLabel);
 		if (!Double.isNaN(v) && !Double.isInfinite(v))
-			row.set("scNetViz", colLabel, v);
+			row.set(NAMESPACE, colLabel, v);
+	}
+
+	public static void createColumnIfNeeded(CyTable table, String namespace, String column, Class<?> clazz) {
+		if (table.getColumn(namespace, column) == null)
+			table.createColumn(namespace, column, clazz, false);
+	}
+
+	public static void createListColumnIfNeeded(CyTable table, String namespace, String column, Class<?> clazz) {
+		if (table.getColumn(namespace, column) == null)
+			table.createListColumn(namespace, column, clazz, false);
 	}
 }

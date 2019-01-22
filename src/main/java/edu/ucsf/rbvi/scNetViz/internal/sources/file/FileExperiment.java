@@ -43,6 +43,7 @@ public class FileExperiment implements Experiment {
 	List<String[]> colTable = null;
 	MatrixMarket mtx = null;
 	final List<Category> categories;
+	double[][] tSNE;
 	// GXACluster fileCluster = null;
 	// GXAIDF fileIDF = null;
 	// GXADesign fileDesign = null;
@@ -74,12 +75,30 @@ public class FileExperiment implements Experiment {
 
 	public List<Category> getCategories() { return categories; }
 
+	public Category getCategory(String categoryName) { 
+		for (Category cat: categories) {
+			if (cat.toString().equals(categoryName))
+				return cat;
+		}
+		return null;
+	}
+
 	public void addCategory(Category c) { categories.add(c); }
 
 	public Category getDefaultCategory() { 
 		if (categories.size() > 0)
 			return categories.get(0); 
 		return null;
+	}
+
+	@Override
+	public void setTSNE(double[][] tsne) {
+		tSNE = tsne;
+	}
+
+	@Override
+	public double[][] getTSNE() {
+		return tSNE;
 	}
 
 	public Metadata getMetadata() { return fileMetadata; }

@@ -27,6 +27,7 @@ import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
@@ -37,6 +38,7 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 
 public class TPMTab extends JPanel implements TaskObserver {
 	final ScNVManager manager;
@@ -75,8 +77,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 		if (obsTask instanceof FileCategoryTask) {
 			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
-		} else if (obsTask instanceof tSNETask) {
-		}
+		} 
 	}
 	
 	private void init() {
@@ -84,32 +85,6 @@ public class TPMTab extends JPanel implements TaskObserver {
 		// JLabel experimentLabel = new ExperimentLabel(experiment);
 
 		JPanel buttonsPanelRight = new JPanel();
-		{
-			JButton tsne = new JButton("View tSNE");
-			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      tsne.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					boolean havetSNE = false;
-					if (!havetSNE) {
-						Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
-						manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
-					} else {
-						if (experiment instanceof GXAExperiment) {
-							String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-							String uri = "https://www.ebi.ac.uk/gxa/sc/experiments/"+accession+"/Results";
-							Map<String, Object> args = new HashMap<>();
-							args.put("newTab", "true");
-							args.put("id", "GXA");
-							args.put("url", uri);
-	
-							manager.executeCommand("cybrowser", "dialog", args);
-						}
-					}
-				}
-			});
-			buttonsPanelRight.add(tsne);
-		}
-		
 		{
 			JButton export = new JButton("Export CSV");
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
@@ -120,6 +95,32 @@ public class TPMTab extends JPanel implements TaskObserver {
 				}
 			});
 			buttonsPanelRight.add(export);
+		}
+
+		{
+			JButton tsne = new JButton("View tSNE");
+			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      tsne.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					int geneRow = experimentTable.getSelectedRow();
+					if (geneRow >= 0)
+						geneRow = experimentTable.convertRowIndexToModel(geneRow);
+					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow);
+				}
+			});
+			buttonsPanelRight.add(tsne);
+		}
+
+		{
+			JButton tsne = new JButton("(Re)calculate tSNE");
+			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      tsne.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
+					manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
+				}
+			});
+			buttonsPanelRight.add(tsne);
 		}
 		
 		{
@@ -154,4 +155,5 @@ public class TPMTab extends JPanel implements TaskObserver {
 		this.revalidate();
 		this.repaint();
 	}
+
 }

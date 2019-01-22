@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.event.CyEventHelper;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.view.model.CyNetworkView;
@@ -14,6 +15,8 @@ import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
+import org.cytoscape.work.Task;
+import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.TaskObserver;
 import org.cytoscape.work.Tunable;
@@ -34,6 +37,8 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	final CyEventHelper cyEventHelper;
 	CyNetwork unionNetwork = null;
 	VisualStyle baseStyle = null;
+	Experiment experiment;
+	final CyApplicationManager appManager;
 
 	final DifferentialExpression diffExp;
 	double pValue;
@@ -54,13 +59,14 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		this.maxGenes = maxGenes;
 		this.positiveOnly = positiveOnly;
 		cyEventHelper = manager.getService(CyEventHelper.class);
+		appManager = manager.getService(CyApplicationManager.class);
 	}
 
 	public void run(TaskMonitor monitor) {
 		monitor.setTitle("Creating Networks");
 
 		Category category = diffExp.getCurrentCategory();
-		Experiment experiment = category.getExperiment();
+		experiment = category.getExperiment();
 		Set<Object> categoryValues = diffExp.getCategoryValues();
 		List<String> rowLabels = category.getMatrix().getRowLabels();
 		String categoryRow = category.toString()+" ("+rowLabels.get(category.getSelectedRow())+")";
@@ -162,6 +168,12 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			Object res = task.getResults(JSONResult.class);
 			if (res == null) return;
 
+			// Get some information we're going to need later
+			Category category = diffExp.getCurrentCategory();
+			Experiment experiment = category.getExperiment();
+			List<String> rowLabels = category.getMatrix().getRowLabels();
+			String categoryRow = rowLabels.get(category.getSelectedRow());
+
 			CyNetwork network = null;
 			CyNetworkView networkView = null;
 			if (res instanceof JSONResult) {
@@ -203,17 +215,25 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 				// Style the network
 				monitor.setTitle("Creating network style for: "+name);
 				ModelUtils.addStyle(manager, network,  name, baseStyle);
+				// Add our information to the network tables: source, experiment accession, category, category row
+				ModelUtils.addNetworkColumns(manager, network);
+				ModelUtils.updateNetworkData(manager, network, experiment, category, categoryRow);
+				// Set the current network again so we can get the experiment
+				appManager.setCurrentNetwork(network);
 			} else {
 				monitor.setTitle("Adding data to network for: "+name);
 				unionNetwork = network;
-				Category category = diffExp.getCurrentCategory();
-				Experiment experiment = category.getExperiment();
 				Set<Object> categoryValues = diffExp.getCategoryValues();
+				// Add our information to the network tables: source, experiment accession, category
+				ModelUtils.addNetworkColumns(manager, network);
+				ModelUtils.updateNetworkData(manager, network, experiment, category, null);
 				for (Object cat1: categoryValues) {
 					ModelUtils.createDEColumns(manager, network, diffExp, category.mkLabel(cat1));
 					// Add the data
 					ModelUtils.updateDEData(manager, network, geneList, diffExp, category.mkLabel(cat1));
 				}
+				Task resultsPanelTask = new ShowResultsPanelTask(manager, experiment);
+				manager.executeTasks(new TaskIterator(resultsPanelTask));
 			}
 		}
 	}

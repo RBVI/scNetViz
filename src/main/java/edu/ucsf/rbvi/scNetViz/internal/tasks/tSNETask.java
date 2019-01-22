@@ -8,6 +8,7 @@ import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.BHTSne;
 import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.FastTSne;
+import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.ParallelBHTsne;
 import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.TSne;
 import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.tSNEContext;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
@@ -44,12 +45,14 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 		}
 		
 		context.cancelled = false;
-		context.setXin(matrix.getDoubleMatrix(0.0));
+
+		// Get the transposed matrix
+		context.setXin(matrix.getDoubleMatrix(0.0, true));
 		
 		TSne tsne;
 		if (context.useBarnesHut) {
 			monitor.setTitle("Running t-Distributed Stochastic Neighbor (tSNE) using Barnes-Hut approximation");
-			tsne = new BHTSne();
+			tsne = new ParallelBHTsne();
 		} else {
 			monitor.setTitle("Running t-Distributed Stochastic Neighbor (tSNE)");
 			tsne = new FastTSne();
@@ -65,6 +68,8 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 	public void cancel() {
 		context.cancelled = true;
 	}
+
+	public double[][] getResults() { return tsneResult; }
 
 	@Override
 	public <R> R getResults(Class<? extends R> type) {
