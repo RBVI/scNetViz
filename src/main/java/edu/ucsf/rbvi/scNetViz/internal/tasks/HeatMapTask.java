@@ -74,15 +74,15 @@ public class HeatMapTask extends AbstractTask {
 
 			double[] topFC = new double[heatMapCount];
 			// Now get the top 10 and the bottom 10
-			if (!posOnly)
+			if (!posOnly && heatMapCount < fc.length)
 				heatMapCount = heatMapCount/2;
-			
+
 			List<String> newGeneList = new ArrayList<String>();
 			for (int topGene = 0; topGene < heatMapCount; topGene++) {
 				geneList.add(geneNames.get(sort[topGene+start]));
 			}
 
-			if (!posOnly) {
+			if (!posOnly && heatMapCount < fc.length) {
 				for (int topGene = fc.length-heatMapCount; topGene < fc.length; topGene++) {
 					geneList.add(geneNames.get(sort[topGene]));
 				}

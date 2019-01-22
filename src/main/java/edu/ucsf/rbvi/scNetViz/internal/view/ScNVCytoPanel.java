@@ -83,7 +83,7 @@ public class ScNVCytoPanel extends JPanel
 	private JTextField topNGenes;
 	private JTextField maxGenes;
 	private JTextField FDRCutoff;
-	private JLabel experimentLabel;
+	private ExperimentLabel experimentLabel;
 
 	private String enrichmentType = "entireNetwork";
 
@@ -151,6 +151,7 @@ public class ScNVCytoPanel extends JPanel
 		for (Category cat: categories) {
 			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
 		}
+		experimentLabel.updateText(experiment);
 	}
 
 	@Override
