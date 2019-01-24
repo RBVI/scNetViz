@@ -77,7 +77,14 @@ public class TPMTab extends JPanel implements TaskObserver {
 		if (obsTask instanceof FileCategoryTask) {
 			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
-		} 
+		} else if (obsTask instanceof tSNETask) {
+			double[][] tSNEResults = ((tSNETask)obsTask).getResults();
+			experiment.setTSNE(tSNEResults);
+			int geneRow = experimentTable.getSelectedRow();
+			if (geneRow >= 0)
+				geneRow = experimentTable.convertRowIndexToModel(geneRow);
+			ViewUtils.showtSNE(manager, experiment, null, -1, geneRow);
+		}
 	}
 	
 	private void init() {

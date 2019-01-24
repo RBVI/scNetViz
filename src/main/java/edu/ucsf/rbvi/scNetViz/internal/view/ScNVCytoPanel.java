@@ -103,8 +103,8 @@ public class ScNVCytoPanel extends JPanel
 		if (this.experiment == null)
 			throw new RuntimeException("Experiment is null!");
 
-		this.accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
-		this.categories = experiment.getCategories();
+		accession = this.experiment.getMetadata().get(Metadata.ACCESSION).toString();
+		categories = this.experiment.getCategories();
 
 		categoryLabelMap = new HashMap<>();
 		for (Category cat: categories) {
@@ -144,6 +144,11 @@ public class ScNVCytoPanel extends JPanel
 		network = scne.getNetwork();
 		experiment = ModelUtils.getExperimentFromNetwork(manager, network);
 		if (experiment == null) return;
+		setExperiment(experiment);
+	}
+
+	public void setExperiment(Experiment experiment) {
+		this.experiment = experiment;
 		accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 		categories = experiment.getCategories();
 
@@ -369,7 +374,7 @@ public class ScNVCytoPanel extends JPanel
 
 					args.clear();
 					// Hide the glass effect
-					manager.executeCommand("string", "hide glass", args, null, true);
+					manager.executeCommand("string", "show glass", args, null, true);
 
 					args.clear();
 					// Hide the glass effect
@@ -385,6 +390,7 @@ public class ScNVCytoPanel extends JPanel
 			case "catTable":
 			case "DETable":
 				{
+					// System.out.println("Experiment = "+experiment);
 					ShowExperimentTableTask t = new ShowExperimentTableTask(manager, experiment, command);
 					manager.executeTasks(new TaskIterator(t));
 				}

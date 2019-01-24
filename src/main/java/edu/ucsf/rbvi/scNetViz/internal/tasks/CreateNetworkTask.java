@@ -164,9 +164,10 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		public void allFinished(FinishStatus status) {}
 		
 		public void taskFinished(ObservableTask task) {
-			// System.out.println("task = "+task.toString());
 			Object res = task.getResults(JSONResult.class);
 			if (res == null) return;
+			if (task.toString().contains("RegisterNetworkTask"))
+				return;
 
 			// Get some information we're going to need later
 			Category category = diffExp.getCurrentCategory();
@@ -218,8 +219,8 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 				// Add our information to the network tables: source, experiment accession, category, category row
 				ModelUtils.addNetworkColumns(manager, network);
 				ModelUtils.updateNetworkData(manager, network, experiment, category, categoryRow);
-				// Set the current network again so we can get the experiment
-				appManager.setCurrentNetwork(network);
+				Task resultsPanelTask = new ShowResultsPanelTask(manager, experiment);
+				manager.executeTasks(new TaskIterator(resultsPanelTask));
 			} else {
 				monitor.setTitle("Adding data to network for: "+name);
 				unionNetwork = network;
@@ -232,8 +233,8 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 					// Add the data
 					ModelUtils.updateDEData(manager, network, geneList, diffExp, category.mkLabel(cat1));
 				}
-				Task resultsPanelTask = new ShowResultsPanelTask(manager, experiment);
-				manager.executeTasks(new TaskIterator(resultsPanelTask));
+				// Task resultsPanelTask = new ShowResultsPanelTask(manager, experiment);
+				// manager.executeTasks(new TaskIterator(resultsPanelTask));
 			}
 		}
 	}

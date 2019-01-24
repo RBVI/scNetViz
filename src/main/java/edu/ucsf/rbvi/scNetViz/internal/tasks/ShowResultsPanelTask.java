@@ -31,6 +31,7 @@ import edu.ucsf.rbvi.scNetViz.internal.view.TPMTab;
 public class ShowResultsPanelTask extends AbstractTask {
 	final ScNVManager manager;
 	Experiment experiment = null;
+	ScNVCytoPanel resultsPanel;
 
 	@Tunable (description="Experiment to show")
 	public ListSingleSelection<Experiment> accession = null;
@@ -52,12 +53,20 @@ public class ShowResultsPanelTask extends AbstractTask {
 		if (accession != null)
 			experiment = accession.getSelectedValue();
 
-		ScNVCytoPanel resultsPanel = new ScNVCytoPanel(manager, experiment);
-		manager.registerService(resultsPanel, CytoPanelComponent.class, new Properties());
-		manager.registerService(resultsPanel, SetCurrentNetworkListener.class, new Properties());
-
 		CySwingApplication swingApp = manager.getService(CySwingApplication.class);
 		CytoPanel panel = swingApp.getCytoPanel(CytoPanelName.EAST);
 		panel.setState(CytoPanelState.DOCK);
+		int id = panel.indexOfComponent("edu.ucsf.rbvi.scNetViz.ResultsPanel");
+		if (id < 0) {
+			// System.out.println("Experiment = "+experiment);
+			resultsPanel = new ScNVCytoPanel(manager, experiment);
+			manager.registerService(resultsPanel, CytoPanelComponent.class, new Properties());
+			manager.registerService(resultsPanel, SetCurrentNetworkListener.class, new Properties());
+		} else {
+			resultsPanel = (ScNVCytoPanel)panel.getComponentAt(id);
+			resultsPanel.setExperiment(experiment);
+			panel.setSelectedIndex(id);
+		}
+
 	}
 }
