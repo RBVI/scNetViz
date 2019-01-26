@@ -15,13 +15,13 @@ public class tSNEContext implements TSneConfiguration {
 	                         "pca is not called.",
 	         exampleStringValue="30",
 	         groups={"t-SNE Parameters"}, gravity=66, format="#0")
-	public int dimensions=20;
+	public int dimensions=10;
 
 	@Tunable(description="Perplexity", 
 	         longDescription="Perplexity is the balance between the local and global aspects of the data.",
 	         exampleStringValue="20",
 	         groups={"t-SNE Parameters"}, gravity=67)
-	public double perplexity=20;
+	public double perplexity=10;
 
 	@Tunable(description="Number of Iterations", 
 	         longDescription="The number of iterations of the algorithm to perform",
@@ -40,9 +40,21 @@ public class tSNEContext implements TSneConfiguration {
 	@Tunable(description="Theta value for Barnes-Hut", 
 	         longDescription="The threshold value to activate Barnes-Hut.  This value reflects the accuracy "+
 	                         "of the simulation.  If theta=0 then the approximation is never used",
-	         exampleStringValue="0.9",
+	         exampleStringValue="0.5",
 	         dependsOn="useBarnesHut=true", groups={"t-SNE Parameters"}, gravity=70)
 	public BoundedDouble theta=new BoundedDouble(0.0, 0.9, 2.0, false, false);
+
+	@Tunable(description="Log normalize the data", 
+	         longDescription="Normalize the data by taking the log of each data point",
+	         exampleStringValue="true",
+	         groups={"t-SNE Parameters"}, gravity=76)
+	public boolean logNormalize=true;
+
+	@Tunable(description="Center and scale the data", 
+	         longDescription="Center and scale the data before calculating the tSNE",
+	         exampleStringValue="true",
+	         groups={"t-SNE Parameters"}, gravity=76)
+	public boolean centerAndScale=true;
 
 	public tSNEContext(){}
 
@@ -133,4 +145,10 @@ public class tSNEContext implements TSneConfiguration {
 
 	@Override
 	public void setUsePca(boolean use_pca) {}
+
+	@Override
+	public boolean centerAndScale() { return centerAndScale; }
+
+	@Override
+	public boolean logNormalize() { return logNormalize; }
 }

@@ -109,7 +109,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 
 	@Override
 	public int getIntegerValue(int row, int column) {
-		return clusters[row][column];
+		return clusters[column][row];
 	}
 
 	@Override
@@ -117,11 +117,17 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		int col = colLabels.indexOf(column);
 
 		int intRow = Integer.valueOf(row);
-		return clusters[intRow-minK][col-2];
+		return clusters[col-2][intRow-minK];
 	}
 
 	@Override
 	public int[][] getIntegerMatrix(int missing) { return clusters; }
+
+	@Override
+	public int[][] getIntegerMatrix(int missing, boolean transpose, boolean excludeControls) { 
+		// We don't have controls, so just ignore it
+		return getIntegerMatrix(missing, transpose);
+	}
 
 	@Override
 	public int[][] getIntegerMatrix(int missing, boolean transpose) { 

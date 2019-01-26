@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.StringMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.SimpleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
@@ -49,6 +51,8 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	protected int selectedRow = -1;
 	protected int lastCategory = -1;
 	protected int hdrCols = 1;
+	protected BitSet excludeRows = null;
+	protected int geneRows = 0;
 
 	public AbstractCategory(final ScNVManager scManager, final Experiment exp,
 	                        final String name, int nRows, int nCols) {
@@ -57,6 +61,9 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		super.nCols = nCols;
 		this.experiment = exp;
 		this.name = name;
+
+		// XXX - should this be Matrix api?
+		updateMatrixInfo();
 	}
 
 	@Override
@@ -79,6 +86,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 	@Override
 	public Map<Object, double[]> getMeans(int category) {
+		updateMatrixInfo();
 		if (means != null && category == lastCategory)
 			return means;
 
@@ -102,16 +110,21 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		}
 
 
-		int [] totalCount = new int[mtx.getNRows()];
+		int [] totalCount = new int[geneRows];
 		Arrays.fill(totalCount, 0);
 
 		for (Object key: catMap.keySet()) {
 			// System.out.println("Category: "+key);
 			List<Integer> arrays = catMap.get(key);
-			double[] catMean = new double[mtx.getNRows()];
-			int[] catCount = new int[mtx.getNRows()];
-			double[] catMTDC = new double[mtx.getNRows()];
+			double[] catMean = new double[geneRows];
+			int[] catCount = new int[geneRows];
+			double[] catMTDC = new double[geneRows];
+
+			int rowNumber = 0;
 			for (int row = 0; row < mtx.getNRows(); row++) {
+				if (excludeRows.get(row))
+					continue;
+
 				double mean = 0.0;
 				int foundCount = 0;
 				for (Integer col: arrays) {
@@ -127,10 +140,11 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 						foundCount++;
 					}
 				}
-				catMean[row] = mean/(double)arrays.size();
-				catCount[row] = foundCount;
-				totalCount[row] += foundCount;
-				catMTDC[row] = mean/(double)foundCount;
+				catMean[rowNumber] = mean/(double)arrays.size();
+				catCount[rowNumber] = foundCount;
+				totalCount[rowNumber] += foundCount;
+				catMTDC[rowNumber] = mean/(double)foundCount;
+				rowNumber++;
 			}
 			means.put(key, catMean);
 			countMap.put(key, catCount);
@@ -151,18 +165,21 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 	@Override
 	public Map<Object, double[]> getDr(int category) {
+		updateMatrixInfo();
 		if (drMap != null && category == lastCategory)
 			return drMap;
 		if (means == null || category != lastCategory)
 			getMeans(category);
 
+		Matrix mtx = experiment.getMatrix();
+
 		drMap = new HashMap<>();
-		int totalAssays = experiment.getMatrix().getNCols();
+		int totalAssays = mtx.getNCols();
 
 		for (Object cat: means.keySet()) {
 			// System.out.println("Cat: "+cat);
-			double dr[] = new double[experiment.getMatrix().getNRows()];
-			for (int row = 0; row < experiment.getMatrix().getNRows(); row++) {
+			double dr[] = new double[geneRows];
+			for (int row = 0; row < geneRows; row++) {
 				double pct1 = (double)countMap.get(cat)[row]/(double)sizes.get(cat);
 				double pct2 = (double)(countMap.get("Total")[row]-countMap.get(cat)[row])/(double)(totalAssays-sizes.get(cat));
 				// dr[row] = Math.abs(pct1-pct2);
@@ -211,7 +228,8 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		if (means == null || category != lastCategory)
 			getMeans(category);
 
-		int geneRows = experiment.getMatrix().getNRows();
+		updateMatrixInfo();
+
 		double[] logFC = new double[geneRows];
 		double[] catMean = means.get(category1);
 		double[] otherMean = new double[geneRows];
@@ -278,7 +296,8 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		if (means == null || category != lastCategory)
 			getMeans(category);
 
-		int geneRows = experiment.getMatrix().getNRows();
+		updateMatrixInfo();
+
 		double[] logFC = new double[geneRows];
 		double[] catMean = means.get(category1);
 		double[] otherMean = means.get(category2);
@@ -423,5 +442,10 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			return new String[nRows][nCols];
 	}
 
+	protected void updateMatrixInfo() {
+		if (experiment.getMatrix() == null) return;
+		excludeRows = ((MatrixMarket)experiment.getMatrix()).findControls();
+		geneRows = experiment.getMatrix().getNRows() - excludeRows.cardinality();
+	}
 
 }

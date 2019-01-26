@@ -1,9 +1,33 @@
 package edu.ucsf.rbvi.scNetViz.internal.utils;
 
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Comparator;
+import java.util.List;
 
 public class MatrixUtils {
+
+	public static String CONTROL_PREFIX = "ERCC";
+
+	public static BitSet findControls(final List<String> rowLabels, final String prefix) {
+		BitSet bitSet = new BitSet(rowLabels.size());
+		for (int index = 0; index < rowLabels.size(); index++) {
+			if (rowLabels.get(index).startsWith(prefix))
+				bitSet.set(index);
+		}
+		return bitSet;
+	}
+
+	public static List<String> filterLabels(final List<String> rowLabels, BitSet excludeRows) {
+		List<String> newList = new ArrayList<String>(rowLabels.size() - excludeRows.cardinality());
+		for (int row = 0; row < rowLabels.size(); row++) {
+			if (excludeRows.get(row))
+				continue;
+			newList.add(rowLabels.get(row));
+		}
+		return newList;
+	}
 
 	public static Integer[] indexSort(double[] tData, int nVals) {
     Integer[] index = new Integer[nVals];

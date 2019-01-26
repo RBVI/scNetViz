@@ -281,7 +281,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
       tsne.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					Category cat = experiment.getDefaultCategory();
+					Category cat = currentCategory;
 					int catRow = -1;
 					if (cat != null)
 						catRow = cat.getSelectedRow();

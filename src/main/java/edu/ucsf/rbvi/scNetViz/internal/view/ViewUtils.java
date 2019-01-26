@@ -142,6 +142,7 @@ public class ViewUtils {
 				// Reformat the catmap so we have reasonable labels
 				Map<Object, List<Integer>> newMap = new HashMap<>();
 				for (Object key: catMap.keySet()) {
+					System.out.println("key = "+key);
 					if (key.toString().equals("unused"))
 						continue;
 					newMap.put(category.mkLabel(key), catMap.get(key));

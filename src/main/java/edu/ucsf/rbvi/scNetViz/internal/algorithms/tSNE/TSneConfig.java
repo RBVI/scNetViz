@@ -10,9 +10,11 @@ public class TSneConfig implements TSneConfiguration {
 	protected double theta;
 	protected boolean silent;
 	protected boolean print_error;
+	protected boolean scale;
+	protected boolean logNormalize;
 
 	public TSneConfig(double[][] xin, int outputDims, int initial_dims, double perplexity, int max_iter,
-			boolean use_pca, double theta, boolean silent, boolean print_error) {
+			boolean use_pca, double theta, boolean silent, boolean print_error, boolean scale, boolean logNormalize) {
 		this.xin = xin;
 		this.outputDims = outputDims;
 		this.initial_dims = initial_dims;
@@ -22,6 +24,8 @@ public class TSneConfig implements TSneConfiguration {
 		this.theta = theta;
 		this.silent = silent;
 		this.print_error = print_error;
+		this.scale = scale;
+		this.logNormalize = logNormalize;
 	}
 
 	/* (non-Javadoc)
@@ -182,6 +186,18 @@ public class TSneConfig implements TSneConfiguration {
 	public boolean cancelled() {
 		return false;
 	}
-	
-	
+
+	@Override
+	public boolean logNormalize() {
+		return this.logNormalize;
+	}
+
+	public void setLogNormalize(boolean logNormalize) {
+		this.logNormalize = logNormalize;
+	}
+
+	@Override
+	public boolean centerAndScale() { return scale; }
+
+	public void setCenterAndScale(boolean scale) { this.scale = scale; }
 }
