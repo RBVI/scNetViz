@@ -65,12 +65,18 @@ public class HeatMapTask extends AbstractTask {
 
 			Integer[] sort = MatrixUtils.indexSort(fc, fc.length);
 
+			// FIXME:  This really messes things up when we're getting called
+			// with a small gene list -- i.e. when heatMapCount ~= fc.length
 			// Skip over the NaN's
 			int start = 0;
 			for (start = 0; start < fc.length; start++) {
 				if (!Double.isNaN(fc[sort[start]]))
 					break;
 			}
+
+			System.out.println("start = "+start);
+			System.out.println("fc.length = "+fc.length);
+			System.out.println("heatMapCount = "+heatMapCount);
 
 			int count = heatMapCount;
 			if (!posOnly && heatMapCount < fc.length)
@@ -81,7 +87,7 @@ public class HeatMapTask extends AbstractTask {
 			// System.out.println("fc.length = "+fc.length);
 
 			List<String> newGeneList = new ArrayList<String>();
-			for (int topGene = 0; topGene < count; topGene++) {
+			for (int topGene = 0; (topGene < count) && (topGene+start < fc.length); topGene++) {
 				// System.out.println("Adding gene: "+geneNames.get(sort[topGene+start]));
 				geneList.add(geneNames.get(sort[topGene+start]));
 			}
