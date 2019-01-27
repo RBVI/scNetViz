@@ -184,7 +184,8 @@ public class ModelUtils {
 	public static int getRowFromNode(Experiment exp, CyNetwork network, List<CyNode> nodes) {
 		if (nodes == null || nodes.size() == 0 || network == null) return -1;
 
-		List<String> rowLabels = exp.getMatrix().getRowLabels();
+		// We want to use the diff exp because it's already removed the spike-ins
+		List<String> rowLabels = exp.getDiffExp().getRowLabels();
 		String name = getGeneNameFromNode(network, nodes.get(0));
 		return rowLabels.indexOf(name);
 	}

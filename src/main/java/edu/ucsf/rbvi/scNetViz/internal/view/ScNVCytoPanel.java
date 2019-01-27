@@ -399,8 +399,10 @@ public class ScNVCytoPanel extends JPanel
 			case "tSNEPlot":
 				{
 					List<CyNode> selectedNodes = ModelUtils.getSelectedNodes(network);
-					int geneRow  = ModelUtils.getRowFromNode(experiment, network, selectedNodes);
-					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow);
+					int geneRow = ModelUtils.getRowFromNode(experiment, network, selectedNodes);
+					String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+					String title = accession+" Expression for "+ModelUtils.getGeneNameFromNode(network, selectedNodes.get(0));
+					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
 					// Set flag that tSNE is up?
 					tSNEShown = true;
 				}
