@@ -18,8 +18,8 @@ public class CyPlotUtils {
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("data", data);
 		argMap.put("editor", "false");
-		argMap.put("xlabel",xlabel);
-		argMap.put("ylabel",ylabel);
+		argMap.put("xLabel",xlabel);
+		argMap.put("yLabel",ylabel);
 		argMap.put("title",title);
 		argMap.put("names",names);
 		argMap.put("groups",groups);
