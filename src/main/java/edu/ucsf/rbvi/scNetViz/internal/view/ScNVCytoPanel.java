@@ -74,6 +74,7 @@ public class ScNVCytoPanel extends JPanel
 	private List<Category> categories;
 	private Map<Category, List<String>> categoryLabelMap;
 	private String accession;
+	private String currentCategoryColumn;
 
 	private CyNetwork network;
 	private Experiment experiment;
@@ -110,6 +111,7 @@ public class ScNVCytoPanel extends JPanel
 		for (Category cat: categories) {
 			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
 		}
+		currentCategoryColumn = ModelUtils.getName(network, network);
 
 		IconManager iconManager = manager.getService(IconManager.class);
 		iconFont = iconManager.getIconFont(17.0f);
@@ -157,6 +159,7 @@ public class ScNVCytoPanel extends JPanel
 			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
 		}
 		experimentLabel.updateText(experiment);
+		currentCategoryColumn = ModelUtils.getName(network, network);
 	}
 
 	@Override
@@ -429,7 +432,7 @@ public class ScNVCytoPanel extends JPanel
 
 					// Use a separate task for this since we've got some options...
 					HeatMapTask task = new HeatMapTask(manager, currentCategory, geneNames, dataMap, categoryNames, 
-					                                   positiveOnly, selectedNodes.size());
+					                                   positiveOnly, selectedNodes.size(), currentCategoryColumn);
 					manager.executeTasks(new TaskIterator(task));
 				}
 				break;
