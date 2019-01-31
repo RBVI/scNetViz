@@ -31,10 +31,11 @@ public class HeatMapTask extends AbstractTask {
 	final List<String> columnOrder;
 	final boolean posOnly;
 	int heatMapCount = -1;
+	final String selectedColumn;
 
 	public HeatMapTask(final ScNVManager manager, final Category currentCategory, final List<String> rowLabels,
 	                   final Map<String, double[]> dataMap, final List<String> columnOrder, boolean posOnly,
-										 int count) {
+										 int count, final String column) {
 		super();
 		this.manager = manager;
 		this.geneNames = rowLabels;
@@ -43,6 +44,7 @@ public class HeatMapTask extends AbstractTask {
 		this.columnOrder = columnOrder;
 		this.posOnly = posOnly;
 		this.heatMapCount = count;
+		this.selectedColumn = column;
 	}
 
 	// cyplot heat rowLabels="a,b,c,d,e,f" columnLabels="A,B,C" data="{\"A\":[1,2,3,4,5,6],\"B\":[-1,-2,-3,-4,-5,-6],\"C\":[0,1,-1,0,1,-1]}" title="Text Plot" xLabel="Upper" yLabel="Lower" editor=false
@@ -50,6 +52,9 @@ public class HeatMapTask extends AbstractTask {
 		Experiment exp = category.getExperiment();
 		List<String> geneList = new ArrayList<>();
 		String columnLabels = null;
+
+		if (heatMapCount < 0)
+			heatMapCount = Integer.parseInt(manager.getSetting(SETTING.HEATMAP_COUNT));
 
 		for (String column: columnOrder) {
 			double[] fc = dataMap.get(column);
@@ -60,8 +65,13 @@ public class HeatMapTask extends AbstractTask {
 			else
 				columnLabels += ","+column;
 
+			if (selectedColumn != null && !column.equals(selectedColumn))
+				continue;
+
 			Integer[] sort = MatrixUtils.indexSort(fc, fc.length);
 
+			// FIXME:  This really messes things up when we're getting called
+			// with a small gene list -- i.e. when heatMapCount ~= fc.length
 			// Skip over the NaN's
 			int start = 0;
 			for (start = 0; start < fc.length; start++) {
@@ -69,21 +79,27 @@ public class HeatMapTask extends AbstractTask {
 					break;
 			}
 
-			if (heatMapCount < 0)
-				heatMapCount = Integer.parseInt(manager.getSetting(SETTING.HEATMAP_COUNT));
+			// System.out.println("start = "+start);
+			// System.out.println("fc.length = "+fc.length);
+			// System.out.println("heatMapCount = "+heatMapCount);
 
-			double[] topFC = new double[heatMapCount];
-			// Now get the top 10 and the bottom 10
+			int count = heatMapCount;
 			if (!posOnly && heatMapCount < fc.length)
-				heatMapCount = heatMapCount/2;
+				count = heatMapCount/2;
+			double[] topFC = new double[count];
+
+			// System.out.println("count = "+count);
+			// System.out.println("fc.length = "+fc.length);
 
 			List<String> newGeneList = new ArrayList<String>();
-			for (int topGene = 0; topGene < heatMapCount; topGene++) {
+			for (int topGene = 0; (topGene < count) && (topGene+start < fc.length); topGene++) {
+				// System.out.println("Adding gene: "+geneNames.get(sort[topGene+start]));
 				geneList.add(geneNames.get(sort[topGene+start]));
 			}
 
-			if (!posOnly && heatMapCount < fc.length) {
-				for (int topGene = fc.length-heatMapCount; topGene < fc.length; topGene++) {
+			if (!posOnly && count < fc.length) {
+				for (int topGene = fc.length-count; topGene < fc.length; topGene++) {
+					// System.out.println("Adding gene: "+geneNames.get(sort[topGene]));
 					geneList.add(geneNames.get(sort[topGene]));
 				}
 			}
@@ -99,6 +115,7 @@ public class HeatMapTask extends AbstractTask {
 			double[] fcData = new double[geneList.size()];
 			for (int index = 0; index < geneList.size(); index++) {
 				fcData[index] = fc[geneNames.indexOf(geneList.get(index))];
+				// System.out.println(geneList.get(index)+" = "+fcData[index]);
 			}
 			sortedData.put(cat.toString(), fcData);
 		}

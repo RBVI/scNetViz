@@ -300,7 +300,7 @@ public class MatrixOps {
 				for (int j = 0; j < rows; j++)
 					transpose[i][j] = matrix[j][i];
 		} else {
-			MatrixTransposer process = new MatrixTransposer(matrix, transpose,0,rows,ll);                
+			MatrixTransposer process = new MatrixTransposer(matrix, transpose,0,rows,ll);
 			pool.invoke(process);
 		}
 		return transpose;

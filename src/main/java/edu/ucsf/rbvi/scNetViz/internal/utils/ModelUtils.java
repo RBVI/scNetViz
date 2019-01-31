@@ -73,6 +73,10 @@ public class ModelUtils {
 		network.getRow(id).set(CyNetwork.NAME, name);
 	}
 
+	public static String getName(CyNetwork network, CyIdentifiable id) {
+		return network.getRow(id).get(CyNetwork.NAME, String.class);
+	}
+
 	public static void createDEColumns(ScNVManager manager, CyNetwork network, DifferentialExpression diffExp, 
 	                                   String label) {
 		CyTable nodeTable = network.getDefaultNodeTable();
@@ -184,7 +188,8 @@ public class ModelUtils {
 	public static int getRowFromNode(Experiment exp, CyNetwork network, List<CyNode> nodes) {
 		if (nodes == null || nodes.size() == 0 || network == null) return -1;
 
-		List<String> rowLabels = exp.getMatrix().getRowLabels();
+		// We want to use the diff exp because it's already removed the spike-ins
+		List<String> rowLabels = exp.getDiffExp().getRowLabels();
 		String name = getGeneNameFromNode(network, nodes.get(0));
 		return rowLabels.indexOf(name);
 	}
@@ -267,9 +272,9 @@ public class ModelUtils {
 		                                                        Double.class, BasicVisualLexicon.NODE_FILL_COLOR);
 
 		double[] minMax = findMinMax(network, col);
-		colorMapping.addPoint (minMax[0], new BoundaryRangeValues<Paint>(colors[0], colors[1], colors[1]));
+		colorMapping.addPoint (minMax[0], new BoundaryRangeValues<Paint>(colors[8], colors[7], colors[7]));
 		colorMapping.addPoint (0, new BoundaryRangeValues<Paint>(colors[4], colors[4], colors[4]));
-		colorMapping.addPoint (minMax[1], new BoundaryRangeValues<Paint>(colors[7], colors[7], colors[8]));
+		colorMapping.addPoint (minMax[1], new BoundaryRangeValues<Paint>(colors[1], colors[1], colors[0]));
 
 		newStyle.addVisualMappingFunction(colorMapping);
 		// vizMapManager.addVisualStyle(newStyle);

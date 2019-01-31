@@ -15,6 +15,7 @@ package edu.ucsf.rbvi.scNetViz.internal.model;
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +57,12 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		this.dDRCutoff = dDRCutoff;
 		this.log2FCCutoff = log2FCCutoff;
 		this.experiment = category.getExperiment();
+		Matrix mtx = experiment.getMatrix();
 		super.nRows = experiment.getMatrix().getNRows();
+		if (mtx instanceof MatrixMarket) {
+			super.nRows = super.nRows - ((MatrixMarket)mtx).findControls().cardinality();
+		}
+
 		Map<Object, double[]> means = category.getMeans(categoryRow);
 		Map<Object, double[]> drMap = category.getDr(categoryRow);
 		Map<Object, double[]> mtdcMap = category.getMTDC(categoryRow);
@@ -67,7 +73,13 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		if (means.containsKey(Category.UNUSED_CAT))
 			super.nCols = super.nCols - 6;  // We son't want to show the "unused" category
 
-		setRowLabels(experiment.getMatrix().getRowLabels());
+		List<String> labels = new ArrayList<String>(nRows);
+		for (int row = 0; row < mtx.getNRows(); row++) {
+			if (mtx instanceof MatrixMarket && ((MatrixMarket)mtx).isControl(row))
+				continue;
+			labels.add(mtx.getRowLabels().get(row));
+		}
+		setRowLabels(labels);
 
 		// Get the column headers
 		List<String> colHeaders = new ArrayList<>();
@@ -100,7 +112,6 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			fdrMap.put(cat, FDR);
 
 			for (int row = 0; row < nRows; row++) {
-				// System.out.println("row: "+row+" = "+mean[row]);
 				matrix[col][row] = mean[row];
 				matrix[col+1][row] = drs[row];
 				matrix[col+2][row] = mtdc[row];
@@ -296,15 +307,29 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 
 	@Override
 	public double[][] getDoubleMatrix(double missingValue, boolean transpose) {
+		return getDoubleMatrix(missingValue, transpose, true);
+	}
+
+	// Note: we've already excluded controls
+	@Override
+	public double[][] getDoubleMatrix(double missingValue, boolean transpose, boolean excludeControls) {
 		if (transpose && transposed)
 			transpose = false;
 		if (!transpose)
 			return matrix;
-		
-		double[][] newArray = new double[nCols][nRows];
+
+		double[][] newArray;
+	 	if (transpose)
+			newArray = new double[nCols][nRows];
+		else
+			newArray = new double[nRows][nCols];
+
 		for (int row = 0; row < nRows; row++) {
 			for (int col = 0; col < nCols; col++) {
-				newArray[col][row] = matrix[row][col];
+				if (transpose)
+					newArray[col][row] = matrix[row][col];
+				else
+					newArray[row][col] = matrix[row][col];
 			}
 		}
 		return newArray;

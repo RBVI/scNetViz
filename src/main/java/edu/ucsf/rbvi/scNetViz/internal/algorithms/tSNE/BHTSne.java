@@ -91,6 +91,16 @@ public class BHTSne implements BarnesHutTSne {
 		if (parameterObject.cancelled())
 			return null;
 
+		// Scale the data if we're supposed to
+		if (parameterObject.logNormalize()) {
+			Xin = MatrixOps.log(Xin, true);
+		}
+
+		if (parameterObject.centerAndScale()) {
+			Xin = MatrixOps.centerAndScale(Xin);
+		}
+		System.gc();
+
 		if(parameterObject.usePca() && D > parameterObject.getInitialDims() && parameterObject.getInitialDims() > 0) {
 			PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis();
 			Xin = pca.pca(Xin, parameterObject.getInitialDims());

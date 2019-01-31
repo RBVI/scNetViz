@@ -77,7 +77,18 @@ public class TPMTab extends JPanel implements TaskObserver {
 		if (obsTask instanceof FileCategoryTask) {
 			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
-		} 
+		} else if (obsTask instanceof tSNETask) {
+			double[][] tSNEResults = ((tSNETask)obsTask).getResults();
+			experiment.setTSNE(tSNEResults);
+			int geneRow = experimentTable.getSelectedRow();
+			String title = null;
+			if (geneRow >= 0) {
+				String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+				geneRow = experimentTable.convertRowIndexToModel(geneRow);
+				title = accession+" Gene "+experimentTable.getModel().getValueAt(geneRow, 0);
+			}
+			ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
+		}
 	}
 	
 	private void init() {
@@ -102,10 +113,14 @@ public class TPMTab extends JPanel implements TaskObserver {
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
       tsne.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
+					String title = null;
 					int geneRow = experimentTable.getSelectedRow();
-					if (geneRow >= 0)
+					if (geneRow >= 0) {
+						String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 						geneRow = experimentTable.convertRowIndexToModel(geneRow);
-					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow);
+						title = accession+" Expression for "+experimentTable.getModel().getValueAt(geneRow, 0);
+					}
+					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
 				}
 			});
 			buttonsPanelRight.add(tsne);

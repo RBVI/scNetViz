@@ -97,7 +97,8 @@ public class ViewUtils {
 	}
 
 	public static void showtSNE(final ScNVManager manager, final Experiment exp, 
-	                            final Category category, final int catRow, final int geneRow) {
+	                            final Category category, final int catRow, 
+	                            final int geneRow, final String title) {
 		double[][] tSNEresults = exp.getTSNE();
 
 		if (tSNEresults == null) {
@@ -112,12 +113,17 @@ public class ViewUtils {
 					if (obsTask instanceof tSNETask) {
 						double[][] tSNEResults = ((tSNETask)obsTask).getResults();
 						exp.setTSNE(tSNEResults);
-						showtSNE(manager, exp, category, catRow, geneRow);
+						showtSNE(manager, exp, category, catRow, geneRow, title);
 					}
 				}
 			});
 			return;
 		}
+
+		String accession = (String)exp.getMetadata().get(Metadata.ACCESSION);
+		String ttl = title;
+		if (ttl == null)
+			ttl = "tSNE Plot for "+accession;
 
 		if (category == null) {
 			// See if a gene is selected and provide a color trace if it is
@@ -129,10 +135,8 @@ public class ViewUtils {
 				zValues = "{\"trace\": "+
 								CyPlotUtils.valuesToJSON((DoubleMatrix)exp.getMatrix(), geneRow)+"}";
 
-			String accession = (String)exp.getMetadata().get(Metadata.ACCESSION);
-			String title = "tSNE Plot for "+accession;
 			CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, zValues, 
-			                              title, "t-SNE 1", "t-SNE 2", accession);
+			                              ttl, "t-SNE 1", "t-SNE 2", accession);
 		} else {
 			String names;
 			String xValues;
@@ -155,8 +159,6 @@ public class ViewUtils {
 				yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
 			}
 
-			String accession = (String)exp.getMetadata().get(Metadata.ACCESSION);
-			String title = "tSNE Plot for "+accession;
 			CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, null, 
 			                              title, "t-SNE 1", "t-SNE 2", accession);
 		}

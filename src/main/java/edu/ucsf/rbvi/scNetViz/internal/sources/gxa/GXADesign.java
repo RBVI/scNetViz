@@ -87,6 +87,11 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 	public Matrix getMatrix() { return this;}
 
 	@Override
+	public String[][] getStringMatrix(boolean transpose, boolean excludeControls) { 
+		return getStringMatrix(transpose);
+	}
+
+	@Override
 	public String[][] getStringMatrix(boolean transpose) { 
 		if (transpose && transposed)
 			transpose = false;

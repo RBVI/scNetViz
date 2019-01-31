@@ -17,8 +17,9 @@ import edu.ucsf.rbvi.scNetViz.internal.api.StringMatrix;
 
 public class CSVWriter {
 	public static void writeCSV(File file, Matrix matrix, String delimiter) {
+		BufferedWriter output = null;
 		try {
-			BufferedWriter output = new BufferedWriter(new FileWriter(file));
+			output = new BufferedWriter(new FileWriter(file));
 			List<String> rowLabels = matrix.getRowLabels();
 			// Get the column labels
 			List<String> colLabels = matrix.getColLabels();
@@ -42,8 +43,8 @@ public class CSVWriter {
 					writeStringRow(output, rowLabels.get(row), (StringMatrix)matrix, row, delimiter);
 				}
 			}
-		
-			// Write it all out
+
+			output.close();
 		} catch (Exception fnf) {
 			fnf.printStackTrace();
 		}

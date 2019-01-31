@@ -7,6 +7,7 @@ import org.cytoscape.work.util.BoundedDouble;
 public class tSNEContext implements TSneConfiguration {
 	public boolean cancelled = false;
 
+	/*
 	@Tunable(description="Initial Dimensions", 
 	         longDescription="The number of dimensions to reduce the data set to before running "+
 	                         "tSNE.  If the dimensionality of the data exceeds this number, "+
@@ -15,7 +16,8 @@ public class tSNEContext implements TSneConfiguration {
 	                         "pca is not called.",
 	         exampleStringValue="30",
 	         groups={"t-SNE Parameters"}, gravity=66, format="#0")
-	public int dimensions=20;
+	*/
+	public int dimensions=-1;
 
 	@Tunable(description="Perplexity", 
 	         longDescription="Perplexity is the balance between the local and global aspects of the data.",
@@ -29,20 +31,42 @@ public class tSNEContext implements TSneConfiguration {
 	         groups={"t-SNE Parameters"}, gravity=68)
 	public int iterations=2000;
 
+	/*
 	@Tunable(description="Use Barnes-Hut approximation", 
 	         longDescription="The Barnes-Hut approximation is a way to reduce the computational complexity "+
 	                         "of an algorithm by replacing a group of distant nodes with a single node at the "+
 	                         "center of mass of all of those nodes",
 	         exampleStringValue="false",
 	         groups={"t-SNE Parameters"}, gravity=69)
+	*/
 	public boolean useBarnesHut=true;
 
+	/*
 	@Tunable(description="Theta value for Barnes-Hut", 
 	         longDescription="The threshold value to activate Barnes-Hut.  This value reflects the accuracy "+
 	                         "of the simulation.  If theta=0 then the approximation is never used",
-	         exampleStringValue="0.9",
+	         exampleStringValue="0.5",
 	         dependsOn="useBarnesHut=true", groups={"t-SNE Parameters"}, gravity=70)
 	public BoundedDouble theta=new BoundedDouble(0.0, 0.9, 2.0, false, false);
+	*/
+	@Tunable(description="Theta value for Barnes-Hut", 
+	         longDescription="The threshold value to activate Barnes-Hut.  This value reflects the accuracy "+
+	                         "of the simulation.  If theta=0 then the approximation is never used",
+	         exampleStringValue="0.5",
+	         groups={"t-SNE Parameters"}, gravity=70)
+	public BoundedDouble theta=new BoundedDouble(0.0, 0.9, 2.0, false, false);
+
+	@Tunable(description="Log normalize the data", 
+	         longDescription="Normalize the data by taking the log of each data point",
+	         exampleStringValue="true",
+	         groups={"t-SNE Parameters"}, gravity=76)
+	public boolean logNormalize=true;
+
+	@Tunable(description="Center and scale the data", 
+	         longDescription="Center and scale the data before calculating the tSNE",
+	         exampleStringValue="true",
+	         groups={"t-SNE Parameters"}, gravity=76)
+	public boolean centerAndScale=true;
 
 	public tSNEContext(){}
 
@@ -133,4 +157,10 @@ public class tSNEContext implements TSneConfiguration {
 
 	@Override
 	public void setUsePca(boolean use_pca) {}
+
+	@Override
+	public boolean centerAndScale() { return centerAndScale; }
+
+	@Override
+	public boolean logNormalize() { return logNormalize; }
 }

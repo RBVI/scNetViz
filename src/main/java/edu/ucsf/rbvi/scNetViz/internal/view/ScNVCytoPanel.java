@@ -74,6 +74,7 @@ public class ScNVCytoPanel extends JPanel
 	private List<Category> categories;
 	private Map<Category, List<String>> categoryLabelMap;
 	private String accession;
+	private String currentCategoryColumn;
 
 	private CyNetwork network;
 	private Experiment experiment;
@@ -103,13 +104,14 @@ public class ScNVCytoPanel extends JPanel
 		if (this.experiment == null)
 			throw new RuntimeException("Experiment is null!");
 
-		this.accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
-		this.categories = experiment.getCategories();
+		accession = this.experiment.getMetadata().get(Metadata.ACCESSION).toString();
+		categories = this.experiment.getCategories();
 
 		categoryLabelMap = new HashMap<>();
 		for (Category cat: categories) {
 			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
 		}
+		currentCategoryColumn = ModelUtils.getName(network, network);
 
 		IconManager iconManager = manager.getService(IconManager.class);
 		iconFont = iconManager.getIconFont(17.0f);
@@ -144,6 +146,11 @@ public class ScNVCytoPanel extends JPanel
 		network = scne.getNetwork();
 		experiment = ModelUtils.getExperimentFromNetwork(manager, network);
 		if (experiment == null) return;
+		setExperiment(experiment);
+	}
+
+	public void setExperiment(Experiment experiment) {
+		this.experiment = experiment;
 		accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 		categories = experiment.getCategories();
 
@@ -152,6 +159,7 @@ public class ScNVCytoPanel extends JPanel
 			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
 		}
 		experimentLabel.updateText(experiment);
+		currentCategoryColumn = ModelUtils.getName(network, network);
 	}
 
 	@Override
@@ -369,7 +377,7 @@ public class ScNVCytoPanel extends JPanel
 
 					args.clear();
 					// Hide the glass effect
-					manager.executeCommand("string", "hide glass", args, null, true);
+					manager.executeCommand("string", "show glass", args, null, true);
 
 					args.clear();
 					// Hide the glass effect
@@ -385,6 +393,7 @@ public class ScNVCytoPanel extends JPanel
 			case "catTable":
 			case "DETable":
 				{
+					// System.out.println("Experiment = "+experiment);
 					ShowExperimentTableTask t = new ShowExperimentTableTask(manager, experiment, command);
 					manager.executeTasks(new TaskIterator(t));
 				}
@@ -393,8 +402,12 @@ public class ScNVCytoPanel extends JPanel
 			case "tSNEPlot":
 				{
 					List<CyNode> selectedNodes = ModelUtils.getSelectedNodes(network);
-					int geneRow  = ModelUtils.getRowFromNode(experiment, network, selectedNodes);
-					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow);
+					int geneRow = ModelUtils.getRowFromNode(experiment, network, selectedNodes);
+					String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+					String title = "tSNE Plot for "+accession;
+					if (selectedNodes != null && selectedNodes.size() > 0)
+						title = accession+" Expression for "+ModelUtils.getGeneNameFromNode(network, selectedNodes.get(0));
+					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
 					// Set flag that tSNE is up?
 					tSNEShown = true;
 				}
@@ -419,7 +432,7 @@ public class ScNVCytoPanel extends JPanel
 
 					// Use a separate task for this since we've got some options...
 					HeatMapTask task = new HeatMapTask(manager, currentCategory, geneNames, dataMap, categoryNames, 
-					                                   positiveOnly, selectedNodes.size());
+					                                   positiveOnly, selectedNodes.size(), currentCategoryColumn);
 					manager.executeTasks(new TaskIterator(task));
 				}
 				break;

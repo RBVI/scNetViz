@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.utils.MatrixUtils;
 
 public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerMatrix {
 	public static String HEADER = "%%MatrixMarket";
@@ -135,6 +137,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 	private List<String[]> rowTable;
 	private List<String[]> colTable;
+	private BitSet controls;
 
 	public MatrixMarket(final ScNVManager manager) {
 		this(manager, null, null);
@@ -161,6 +164,19 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 	public MTXSYMMETRY getSymmetry() {
 		return sym;
+	}
+
+	public BitSet findControls() {
+		if (controls == null)
+			controls = MatrixUtils.findControls(rowLabels, MatrixUtils.CONTROL_PREFIX);
+		return controls;
+	}
+
+	public boolean isControl(int row) {
+		if (controls == null)
+			controls = MatrixUtils.findControls(rowLabels, MatrixUtils.CONTROL_PREFIX);
+
+		return controls.get(row);
 	}
 
 	@Override
@@ -279,10 +295,19 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	}
 
 	public int[][] getIntegerMatrix(int missing) {
-		return getIntegerMatrix(missing, false);
+		return getIntegerMatrix(missing, false, false);
 	}
 
 	public int[][] getIntegerMatrix(int missing, boolean transpose) {
+		return getIntegerMatrix(missing, transpose, false);
+	}
+
+	public int[][] getIntegerMatrix(int missing, boolean transpose, boolean excludeControls) {
+		BitSet excludeRows = null;
+		if (excludeControls) {
+			excludeRows = findControls();
+		}
+
 		// Are we tranposing or not?
 		if (transpose && transposed)
 			transpose = false;
@@ -291,45 +316,56 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 		if (format == MTXFORMAT.ARRAY) {
 			if (type == MTXTYPE.INTEGER)
-				if (!transpose)
+				if (!transpose && !excludeControls)
 					return intMatrix;
 				else {
-					int[][] newArray = getIntegerMatrix(transpose);
+					int[][] newArray = getIntegerMatrix(transpose, excludeRows);
 
+					int newRow = 0;
 					for (int row = 0; row < nRows; row++) {
+						if (excludeRows != null && excludeRows.get(row))
+							continue;
 						for (int col = 0; col < nCols; col++) {
 							if (transposed)
-								newArray[col][row] = (int)Math.round(doubleMatrix[col][row]);
+								newArray[col][newRow++] = intMatrix[col][row];
 							else
-								newArray[row][col] = (int)Math.round(doubleMatrix[row][col]);
+								newArray[newRow++][col] = intMatrix[row][col];
 						}
 					}
 					return newArray;
 				}
 
 			if (type == MTXTYPE.REAL) {
-				int[][] newArray = getIntegerMatrix(transpose);
+				int[][] newArray = getIntegerMatrix(transpose, excludeRows);
 
+				int newRow = 0;
 				for (int row = 0; row < nRows; row++) {
+					if (excludeRows != null && excludeRows.get(row))
+						continue;
 					for (int col = 0; col < nCols; col++) {
 						if (transposed)
-							newArray[col][row] = (int)Math.round(doubleMatrix[col][row]);
+							newArray[col][newRow++] = (int)Math.round(doubleMatrix[col][row]);
 						else
-							newArray[row][col] = (int)Math.round(doubleMatrix[row][col]);
+							newArray[newRow++][col] = (int)Math.round(doubleMatrix[row][col]);
 					}
 				}
 				return newArray;
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
-			int[][] newArray = getIntegerMatrix(transpose);
+			int[][] newArray = getIntegerMatrix(transpose, excludeRows);
 
 			int maxFill = getNRows();
+			if (excludeRows != null) maxFill = maxFill-excludeRows.cardinality();
 			for (int row = 0; row < maxFill; row++) {
 				Arrays.fill(newArray[row], missing);
 			}
+			int newRow = 0;
 			for (int index = 0; index < nonZeros; index++) {
 				int row = intMatrix[index][0];
+				if (excludeRows != null && excludeRows.get(row))
+					continue;
 				int col = intMatrix[index][1];
+				row = newRow++;
 				if (transposed) { int rtmp = row; row = col; col = rtmp; }
 				if (type == MTXTYPE.INTEGER)
 					newArray[row][col] = intMatrix[index][2];
@@ -387,6 +423,14 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	}
 
 	public double[][] getDoubleMatrix(double missing, boolean transpose) {
+		return getDoubleMatrix(missing, transpose, false);
+	}
+
+	public double[][] getDoubleMatrix(double missing, boolean transpose, boolean excludeControls) {
+		BitSet excludeRows = null;
+		if (excludeControls) {
+			excludeRows = findControls();
+		}
 		// Are we tranposing or not?
 		if (transpose && transposed)
 			transpose = false;
@@ -396,15 +440,20 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		//
 		if (format == MTXFORMAT.ARRAY) {
 			if (type == MTXTYPE.REAL) {
-				// FIXME: handle transposed
-				if (!transpose)
+				if (!transpose && !excludeControls) {
 					return doubleMatrix;
-				else {
-					double[][] newArray = getDoubleMatrix(transpose);
+				} else {
+					double[][] newArray = getDoubleMatrix(transpose, excludeRows);
 
+					int newRow = 0;
 					for (int row = 0; row < nRows; row++) {
+						if (excludeRows != null && excludeRows.get(row))
+							continue;
 						for (int col = 0; col < nCols; col++) {
-							newArray[col][row] = (double)intMatrix[col][row];
+							if (transpose)
+								newArray[col][newRow++] = (double)intMatrix[col][row];
+							else
+								newArray[newRow++][col] = (double)intMatrix[col][row];
 						}
 					}
 					return newArray;
@@ -412,34 +461,57 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			}
 
 			if (type == MTXTYPE.INTEGER) {
-				double[][] newArray = getDoubleMatrix(transpose);
+				double[][] newArray = getDoubleMatrix(transpose, excludeRows);
 
+				int newRow = 0;
 				for (int row = 0; row < nRows; row++) {
+					if (excludeRows != null && excludeRows.get(row))
+						continue;
 					for (int col = 0; col < nCols; col++) {
 						if (transpose)
-							newArray[col][row] = (double)intMatrix[col][row];
+							newArray[col][newRow++] = (double)intMatrix[col][row];
 						else
-							newArray[row][col] = (double)intMatrix[row][col];
+							newArray[newRow++][col] = (double)intMatrix[col][row];
 					}
 				}
 				return newArray;
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
-			double[][] newArray = getDoubleMatrix(transpose);
+			double[][] newArray = getDoubleMatrix(transpose, excludeRows);
+
+			// System.out.println("newArray.length = "+newArray.length+", newArray[0].length = "+newArray[0].length);
+			// System.out.println("nRows = "+getNRows()+", nCols = "+getNCols());
+			// if (excludeRows != null)
+			// 	System.out.println("nExclude = "+excludeRows.cardinality());
 
 			int maxFill = getNRows();
+			if (excludeRows != null) maxFill = maxFill-excludeRows.cardinality();
 			if (transpose) maxFill = getNCols();
 			for (int row = 0; row < maxFill; row++) {
 				Arrays.fill(newArray[row], missing);
 			}
+			int skippedRows = 0;
 			for (int index = 0; index < nonZeros; index++) {
 				int row = intMatrix[index][0];
+				// System.out.println("Row = "+row);
+				if (excludeRows != null && excludeRows.get(row)) {
+					skippedRows++;
+					continue;
+				} else if (excludeRows != null) {
+					if (row < skippedRows) // we've wrapped!
+						skippedRows = 0; // reset
+					else
+						row = row - skippedRows;
+				}
 				int col = intMatrix[index][1];
+				// System.out.println("Row = "+row+", Col = "+col);
 				if (transpose) { int rtmp = row; row = col; col = rtmp; }
 				if (type == MTXTYPE.INTEGER)
 					newArray[row][col] = (double)intMatrix[index][2];
-				else if (type == MTXTYPE.REAL)
+				else if (type == MTXTYPE.REAL) {
+					// System.out.println("row = "+row+", col = "+col);
 					newArray[row][col] = doubleMatrix[index][0];
+				}
 			}
 			return newArray;
 		}
@@ -625,17 +697,23 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		return index2;
 	}
 
-	private double[][] getDoubleMatrix(boolean transpose) {
+	private double[][] getDoubleMatrix(boolean transpose, BitSet excludeRows) {
+		int excludeSize = 0;
+		if (excludeRows != null)
+			excludeSize = excludeRows.cardinality();
 		if (transpose)
-			return new double[nCols][nRows];
+			return new double[nCols][nRows-excludeSize];
 		else
-			return new double[nRows][nCols];
+			return new double[nRows-excludeSize][nCols];
 	}
 
-	private int[][] getIntegerMatrix(boolean transpose) {
+	private int[][] getIntegerMatrix(boolean transpose, BitSet excludeRows) {
+		int excludeSize = 0;
+		if (excludeRows != null)
+			excludeSize = excludeRows.cardinality();
 		if (transpose)
-			return new int[nCols][nRows];
+			return new int[nCols][nRows-excludeSize];
 		else
-			return new int[nRows][nCols];
+			return new int[nRows-excludeSize][nCols];
 	}
 }

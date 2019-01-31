@@ -281,11 +281,21 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
       tsne.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					Category cat = experiment.getDefaultCategory();
+					String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+					String title = null;
+					Category cat = currentCategory;
 					int catRow = -1;
-					if (cat != null)
+					if (cat != null) {
+						title = "tSNE Plot for "+accession+" Category "+cat.toString();
 						catRow = cat.getSelectedRow();
-					ViewUtils.showtSNE(manager, experiment, cat, catRow, -1);
+						if (catRow < 0)
+							catRow = cat.getDefaultRow();
+						if (catRow >= 0) {
+							List<String> rowLabels = cat.getMatrix().getRowLabels();
+							title += " ("+rowLabels.get(catRow)+")";
+						}
+					}
+					ViewUtils.showtSNE(manager, experiment, cat, catRow, -1, title);
 				}
 			});
 

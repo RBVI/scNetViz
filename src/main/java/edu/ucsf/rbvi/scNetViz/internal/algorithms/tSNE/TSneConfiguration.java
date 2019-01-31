@@ -43,4 +43,8 @@ public interface TSneConfiguration {
 	int getNrRows();
 
 	boolean cancelled();
+
+	boolean centerAndScale();
+
+	boolean logNormalize();
 }

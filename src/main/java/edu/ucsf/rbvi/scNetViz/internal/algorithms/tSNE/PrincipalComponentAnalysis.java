@@ -120,6 +120,8 @@ public class PrincipalComponentAnalysis {
 
         this.numComponents = numComponents;
 
+				// System.out.println("Computing mean");
+
         // compute the mean of all the samples
         for( int i = 0; i < A.getNumRows(); i++ ) {
             for( int j = 0; j < mean.length; j++ ) {
@@ -130,6 +132,8 @@ public class PrincipalComponentAnalysis {
             mean[j] /= A.getNumRows();
         }
 
+				// System.out.println("Subtracting mean");
+
         // subtract the mean from the original data
         for( int i = 0; i < A.getNumRows(); i++ ) {
             for( int j = 0; j < mean.length; j++ ) {
@@ -137,17 +141,25 @@ public class PrincipalComponentAnalysis {
             }
         }
 
+				// System.out.println("Performing SVD");
+
         // Compute SVD and save time by not computing U
         SingularValueDecomposition_F64<DMatrixRMaj> svd =
                 DecompositionFactory_DDRM.svd(A.numRows, A.numCols, false, true, false);
         if( !svd.decompose(A) )
             throw new RuntimeException("SVD failed");
 
+				// System.out.println("Done");
+
         V_t = svd.getV(null,true);
         DMatrixRMaj W = svd.getW(null);
 
+				// System.out.println("sorting");
+
         // Singular values are in an arbitrary order initially
         SingularOps_DDRM.descendingOrder(null,false,W,V_t,true);
+
+				// System.out.println("reshaping");
 
         // strip off unneeded components and find the basis
         V_t.reshape(numComponents,mean.length,true);
@@ -263,18 +275,23 @@ public class PrincipalComponentAnalysis {
     }
     
     public double [][] pca(double [][]matrix, int no_dims) {
-		double [][] trafoed = new double[matrix.length][matrix[0].length];
-		setup(matrix.length, matrix[0].length);
-		for (int i = 0; i < matrix.length; i++) {
-			addSample(matrix[i]);
-		}
-		computeBasis(no_dims);
-		for (int i = 0; i < matrix.length; i++) {
-			trafoed[i] = sampleToEigenSpace(matrix[i], i);
-			for (int j = 0; j < trafoed[i].length; j++) {
-				trafoed[i][j] *= -1;
+			double [][] trafoed = new double[matrix.length][matrix[0].length];
+			// System.out.println("setup");
+			setup(matrix.length, matrix[0].length);
+			// System.out.println("adding samples");
+			for (int i = 0; i < matrix.length; i++) {
+				addSample(matrix[i]);
 			}
-		}
-		return trafoed;
+			// System.out.println("computing basis");
+			computeBasis(no_dims);
+			// System.out.println("Converting to eigenspace");
+			for (int i = 0; i < matrix.length; i++) {
+				trafoed[i] = sampleToEigenSpace(matrix[i], i);
+				for (int j = 0; j < trafoed[i].length; j++) {
+					trafoed[i][j] *= -1;
+				}
+			}
+			// System.out.println("done");
+			return trafoed;
     }
 }

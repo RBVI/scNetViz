@@ -47,7 +47,7 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 		context.cancelled = false;
 
 		// Get the transposed matrix
-		context.setXin(matrix.getDoubleMatrix(0.0, true));
+		context.setXin(matrix.getDoubleMatrix(0.0, true, true));
 		
 		TSne tsne;
 		if (context.useBarnesHut) {

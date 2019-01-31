@@ -53,6 +53,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import java.math.BigDecimal;
+
 import org.ejml.data.DMatrixRMaj;
 
 import org.cytoscape.work.TaskMonitor;
@@ -68,6 +70,7 @@ import org.cytoscape.work.TaskMonitor;
 public class FastTSne implements TSne {
 	MatrixOps mo = new MatrixOps();
 	protected volatile boolean abort = false;
+	static int DIGITS = 13;
 	TaskMonitor monitor;
 	TSneConfiguration config;
 
@@ -96,13 +99,24 @@ public class FastTSne implements TSne {
 		boolean use_pca   = config.usePca();
 		this.monitor      = monitor;
 		this.config       = config;
-		
+
 		String IMPLEMENTATION_NAME = this.getClass().getSimpleName();
 		// System.out.println("X:Shape is = " + X.length + " x " + X[0].length);
 		monitor.showMessage(TaskMonitor.Level.INFO, "Running " + IMPLEMENTATION_NAME + ".");
 		long end = System.currentTimeMillis();
 		long start = System.currentTimeMillis();
 		long total = System.currentTimeMillis();
+
+		// Scale the data if we're supposed to
+		if (config.logNormalize()) {
+			X = MatrixOps.log(X, true);
+		}
+
+		if (config.centerAndScale()) {
+			X = MatrixOps.centerAndScale(X);
+		}
+		System.gc();
+
 		// Initialize variables
 		if(use_pca && X[0].length > initial_dims && initial_dims > 0) {
 			monitor.showMessage(TaskMonitor.Level.INFO, "Using PCA to reduce dimensions");
@@ -133,9 +147,12 @@ public class FastTSne implements TSne {
 
 		if (config.cancelled())
 			return null;
+
+		writeMatrix("X", X);
 		
 		// Compute P-values
 		DMatrixRMaj P        = new DMatrixRMaj(x2p(X, 1e-5, perplexity).P); // P = n x n
+		writeMatrix("P1", P);
 
 		// OK, now free up X
 		X = null;
@@ -151,7 +168,8 @@ public class FastTSne implements TSne {
 		
 		transpose(P,Ptr);
 		addEquals(P,Ptr);
-		divide(P ,elementSum(P));
+		writeMatrix("P2", P);
+		divide(P ,round(elementSum(P),DIGITS));
 		replaceNaN(P,Double.MIN_VALUE);
 		scale(4.0,P);					// early exaggeration
 		maximize(P, 1e-12);
@@ -194,7 +212,7 @@ public class FastTSne implements TSne {
 			divide(1.0,Ysqlmul);
 			num.set(Ysqlmul);
 			assignAtIndex(num, range(n), range(n), 0);
-			divide(num , elementSum(num), Q);
+			divide(num , round(elementSum(num), DIGITS), Q);
 
 			maximize(Q, 1e-12);
 			// writeMatrix("Q", Q);
@@ -253,7 +271,7 @@ public class FastTSne implements TSne {
 				replaceNaN(logdivide,Double.MIN_VALUE);
 				elementMult(logdivide,P);
 				replaceNaN(logdivide,Double.MIN_VALUE);
-				double C = elementSum(logdivide);
+				double C = round(elementSum(logdivide), DIGITS);
 				end = System.currentTimeMillis();
 				 monitor.showMessage(TaskMonitor.Level.INFO,
 				 				String.format("Iteration %d: error is %f (100 iterations in %4.2f seconds)\n", iter, C, (end - start) / 1000.0));
@@ -279,11 +297,18 @@ public class FastTSne implements TSne {
 		return extractDoubleArray(Y);
 	}
 	
-	public R Hbeta (double [][] D, double beta){
-    	DMatrixRMaj P  = new DMatrixRMaj(D);
-    	scale(-beta,P);
-    	elementExp(P,P);
+	public R Hbeta (double [][] D, double beta, int index){
+		DMatrixRMaj P  = new DMatrixRMaj(D);
+		if (index == 0)
+			writeMatrix("P"+index, P);
+		scale(-beta,P);
+		if (index == 0)
+			writeMatrix("HbetaP-scaled-"+index, P);
+		elementExp(P,P);
+		if (index == 0)
+			writeMatrix("HbetaP-"+index, P);
 		double sumP = elementSum(P);   // sumP confirmed scalar
+			System.out.println("sumP = "+sumP);
 		DMatrixRMaj Dd  = new DMatrixRMaj(D);
 		elementMult(Dd, P);
 		double H = Math.log(sumP) + beta * elementSum(Dd) / sumP;
@@ -297,10 +322,14 @@ public class FastTSne implements TSne {
 	public R x2p(double [][] X,double tol, double perplexity){
 		int n               = X.length;
 		double [][] sum_X   = sum(square(X), 1);
+		writeMatrix("sum_X", sum_X);
 		double [][] times   = scalarMult(times(X, mo.transpose(X)), -2);
+		writeMatrix("times", times);
 		double [][] prodSum = addColumnVector(mo.transpose(times), sum_X);
+		writeMatrix("prodSum", prodSum);
 		double [][] D       = MatrixOps.addRowVector(prodSum, mo.transpose(sum_X));
 		// D seems correct at this point compared to Python version
+		writeMatrix("D", D);
 		double [][] P       = fillMatrix(n,n,0.0);
 		double [] beta      = fillMatrix(n,n,1.0)[0];
 		double logU         = Math.log(perplexity);
@@ -313,8 +342,10 @@ public class FastTSne implements TSne {
 			double betamin = Double.NEGATIVE_INFINITY;
 			double betamax = Double.POSITIVE_INFINITY;
 			double [][] Di = getValuesFromRow(D, i,concatenate(range(0,i),range(i+1,n)));
+			if (i == 0)
+				writeMatrix("Di", Di);
 
-			R hbeta = Hbeta(Di, beta[i]);
+			R hbeta = Hbeta(Di, beta[i], i);
 			double H = hbeta.H;
 			double [][] thisP = hbeta.P;
 
@@ -336,7 +367,7 @@ public class FastTSne implements TSne {
 						beta[i] = ( beta[i] + betamin) / 2;
 				}
 
-				hbeta = Hbeta(Di, beta[i]);
+				hbeta = Hbeta(Di, beta[i], i);
 				H = hbeta.H;
 				thisP = hbeta.P;
 				Hdiff = H - logU;
@@ -360,7 +391,6 @@ public class FastTSne implements TSne {
 		abort = true;
 	}
 
-	/*
 	public static void writeMatrix(String fileName, double[][] matrix) {
 		String filePath = "/tmp/" + fileName;
 		try{
@@ -458,6 +488,13 @@ public class FastTSne implements TSne {
     return sb.toString();
 
 	}
-	*/
+
+	public double round(double value, int numberOfDigitsAfterDecimalPoint) {
+		System.out.println("value = "+value);
+		BigDecimal bigDecimal = new BigDecimal(value);
+		bigDecimal = bigDecimal.setScale(numberOfDigitsAfterDecimalPoint, BigDecimal.ROUND_HALF_UP);
+		return bigDecimal.doubleValue();
+	}
+
 
 }

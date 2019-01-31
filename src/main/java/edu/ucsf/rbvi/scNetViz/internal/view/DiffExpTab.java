@@ -310,7 +310,7 @@ public class DiffExpTab extends JPanel {
 					}
 					// Use a separate task for this since we've got some options...
 					HeatMapTask task = new HeatMapTask(manager, currentCategory, diffExp.getRowLabels(), 
-					                                   dataMap, columns, posOnly, -1);
+					                                   dataMap, columns, posOnly, -1, null);
 					manager.executeTasks(new TaskIterator(task));
 				}
 			});

@@ -18,8 +18,8 @@ public class CyPlotUtils {
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("data", data);
 		argMap.put("editor", "false");
-		argMap.put("xlabel",xlabel);
-		argMap.put("ylabel",ylabel);
+		argMap.put("xLabel",xlabel);
+		argMap.put("yLabel",ylabel);
 		argMap.put("title",title);
 		argMap.put("names",names);
 		argMap.put("groups",groups);
@@ -41,7 +41,7 @@ public class CyPlotUtils {
 		argMap.put("yLabel",ylabel);
 		if (zValues != null) {
 			argMap.put("zValues",zValues);
-			argMap.put("colorscale","Blues");
+			argMap.put("colorscale","Viridis");
 			argMap.put("editor","true");
 		} else {
 			argMap.put("editor","false");
@@ -49,6 +49,7 @@ public class CyPlotUtils {
 		argMap.put("title",title);
 		argMap.put("names",names);
 		argMap.put("id",accession);
+		argMap.put("scaleLabel", "TPM");
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" cells=%s");
 		manager.executeCommand("cyplot", "scatter", argMap);
 	}
