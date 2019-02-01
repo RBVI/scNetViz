@@ -82,8 +82,7 @@ public class GXAListEntriesTask extends AbstractTask implements ObservableTask {
 			for (Metadata meta: metadata) {
 				builder.append(((GXAMetadata)meta).toJSON()+",");
 			}
-			builder.append("]");
-			return builder.toString();
+			return builder.substring(0, builder.length()-1)+"]";
 		}
 	}
 

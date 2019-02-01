@@ -20,12 +20,28 @@ package edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE;
  */
 
 
+/*
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.dense.row.SingularOps_DDRM;
+*/
+
+import org.ojalgo.OjAlgoUtils;
+import org.ojalgo.matrix.decomposition.DecompositionStore;
+import org.ojalgo.matrix.decomposition.Eigenvalue;
+import org.ojalgo.matrix.decomposition.SingularValue;
+import org.ojalgo.function.aggregator.Aggregator;
+import org.ojalgo.function.aggregator.AggregatorFunction;
+import org.ojalgo.matrix.store.MatrixStore;
+import org.ojalgo.matrix.store.PhysicalStore;
+import org.ojalgo.matrix.store.PrimitiveDenseStore;
+import org.ojalgo.matrix.store.RawStore;
+import org.ojalgo.scalar.PrimitiveScalar;
+import org.ojalgo.scalar.Scalar;
+
 
 /**
  * <p>
@@ -57,20 +73,22 @@ import org.ejml.dense.row.SingularOps_DDRM;
  */
 public class PrincipalComponentAnalysis {
 
+		protected final PhysicalStore.Factory<Double, PrimitiveDenseStore> storeFactory;
     // principal component subspace is stored in the rows
-    private DMatrixRMaj V_t;
+    private MatrixStore<Double> V_t;
 
     // how many principal components are used
     private int numComponents;
 
     // where the data is stored
-    private DMatrixRMaj A = new DMatrixRMaj(1,1);
+    private PhysicalStore<Double> A;
     private int sampleIndex;
 
     // mean values of each element across all the samples
     double mean[];
 
     public PrincipalComponentAnalysis() {
+			storeFactory = PrimitiveDenseStore.FACTORY;
     }
 
     /**
@@ -81,7 +99,7 @@ public class PrincipalComponentAnalysis {
      */
     public void setup( int numSamples , int sampleSize ) {
         mean = new double[ sampleSize ];
-        A.reshape(numSamples,sampleSize,false);
+        A = storeFactory.makeZero(numSamples, sampleSize);
         sampleIndex = 0;
         numComponents = -1;
     }
@@ -93,9 +111,9 @@ public class PrincipalComponentAnalysis {
      * @param sampleData Sample from original raw data.
      */
     public void addSample( double[] sampleData ) {
-        if( A.getNumCols() != sampleData.length )
+        if( A.countColumns() != sampleData.length )
             throw new IllegalArgumentException("Unexpected sample size");
-        if( sampleIndex >= A.getNumRows() )
+        if( sampleIndex >= A.countRows() )
             throw new IllegalArgumentException("Too many samples");
 
         for( int i = 0; i < sampleData.length; i++ ) {
@@ -111,9 +129,9 @@ public class PrincipalComponentAnalysis {
      * smaller than the number of elements in the input vector.
      */
     public void computeBasis( int numComponents ) {
-        if( numComponents > A.getNumCols() )
+        if( numComponents > A.countColumns() )
             throw new IllegalArgumentException("More components requested that the data's length.");
-        if( sampleIndex != A.getNumRows() )
+        if( sampleIndex != A.countRows() )
             throw new IllegalArgumentException("Not all the data has been added");
         if( numComponents > sampleIndex )
             throw new IllegalArgumentException("More data needed to compute the desired number of components");
@@ -122,47 +140,38 @@ public class PrincipalComponentAnalysis {
 
 				// System.out.println("Computing mean");
 
-        // compute the mean of all the samples
-        for( int i = 0; i < A.getNumRows(); i++ ) {
-            for( int j = 0; j < mean.length; j++ ) {
-                mean[j] += A.get(i,j);
-            }
-        }
-        for( int j = 0; j < mean.length; j++ ) {
-            mean[j] /= A.getNumRows();
-        }
+				System.out.println("Centralizing");
+        // Centralize the rows
+        for( int row = 0; row < A.countRows(); row++ ) {
+						final AggregatorFunction<Double> tmpVisitor = MySUM.get().reset();
+						A.visitRow(row, 0L, tmpVisitor);
+						mean[row] = tmpVisitor.doubleValue()/A.countColumns();
 
-				// System.out.println("Subtracting mean");
-
-        // subtract the mean from the original data
-        for( int i = 0; i < A.getNumRows(); i++ ) {
-            for( int j = 0; j < mean.length; j++ ) {
-                A.set(i,j,A.get(i,j)-mean[j]);
+						for (int col = 0; col < A.countColumns(); col++) {
+							double cell = A.get(row, col);
+							A.set(row, col, cell - mean[row]);
             }
         }
 
-				// System.out.println("Performing SVD");
+				System.out.println("Computing SVD");
+				final SingularValue<Double> singularValue = SingularValue.make(A);
+        singularValue.compute(A);
+				// System.out.println("isOrdered = "+singularValue.isOrdered());
 
-        // Compute SVD and save time by not computing U
-        SingularValueDecomposition_F64<DMatrixRMaj> svd =
-                DecompositionFactory_DDRM.svd(A.numRows, A.numCols, false, true, false);
-        if( !svd.decompose(A) )
-            throw new RuntimeException("SVD failed");
-
-				// System.out.println("Done");
-
-        V_t = svd.getV(null,true);
-        DMatrixRMaj W = svd.getW(null);
+        V_t = singularValue.getQ2().transpose();
+        // MatrixStore<Double> W = singularValue.getD();
 
 				// System.out.println("sorting");
 
         // Singular values are in an arbitrary order initially
-        SingularOps_DDRM.descendingOrder(null,false,W,V_t,true);
+        // SingularOps_DDRM.descendingOrder(null,false,W,V_t,true);
 
 				// System.out.println("reshaping");
 
         // strip off unneeded components and find the basis
-        V_t.reshape(numComponents,mean.length,true);
+        // V_t.reshape(numComponents,mean.length,true);
+				System.out.println("Limiting");
+				V_t = V_t.logical().limits(numComponents, mean.length).get();
     }
 
     /**
@@ -170,7 +179,7 @@ public class PrincipalComponentAnalysis {
      *
      * @param which Which component's vector is to be returned.
      * @return Vector from the PCA basis.
-     */
+     *
     public double[] getBasisVector( int which ) {
         if( which < 0 || which >= numComponents )
             throw new IllegalArgumentException("Invalid component");
@@ -180,6 +189,7 @@ public class PrincipalComponentAnalysis {
 
         return v.data;
     }
+		*/
 
     /**
      * Converts a vector from sample space into eigen space.
@@ -188,22 +198,29 @@ public class PrincipalComponentAnalysis {
      * @return Eigen space projection.
      */
     public double[] sampleToEigenSpace( double[] sampleData, int row ) {
-        if( sampleData.length != A.getNumCols() )
+        if( sampleData.length != A.countColumns() )
             throw new IllegalArgumentException("Unexpected sample length");
-        DMatrixRMaj mean = DMatrixRMaj.wrap(A.getNumCols(),1,this.mean);
 
-        DMatrixRMaj s = new DMatrixRMaj(A.getNumCols(),1,true,sampleData);
-        DMatrixRMaj r = new DMatrixRMaj(numComponents,1);
+				MatrixStore<Double> mean = new RawStore(this.mean, 1);
+        // DMatrixRMaj mean = DMatrixRMaj.wrap(A.getNumCols(),1,this.mean);
 
-        CommonOps_DDRM.subtract(s, mean, s);
+				MatrixStore<Double> s = new RawStore(sampleData, 1).copy();
+        // DMatrixRMaj s = new DMatrixRMaj(A.getNumCols(),1,true,sampleData);
+
+				// MatrixStore<Double> r = storeFactory.makeZero(numComponents, 1);
+        // DMatrixRMaj r = new DMatrixRMaj(numComponents,1);
+
+        // CommonOps_DDRM.subtract(s, mean, s);
+				s = s.subtract(mean);
 
 				// FastTSne.writeMatrix("s-"+row,s);
 
-        CommonOps_DDRM.mult(V_t,s,r);
+        // CommonOps_DDRM.mult(V_t,s,r);
+				MatrixStore<Double> r = V_t.multiply(s);
 				// FastTSne.writeMatrix("V_t-"+row,V_t);
 				// FastTSne.writeMatrix("r-"+row,r);
 
-        return r.data;
+        return r.toRawCopy1D();
     }
 
     /**
@@ -211,7 +228,7 @@ public class PrincipalComponentAnalysis {
      *
      * @param eigenData Eigen space data.
      * @return Sample space projection.
-     */
+     *
     public double[] eigenToSampleSpace( double[] eigenData ) {
         if( eigenData.length != numComponents )
             throw new IllegalArgumentException("Unexpected sample length");
@@ -226,6 +243,7 @@ public class PrincipalComponentAnalysis {
 
         return s.data;
     }
+		*/
 
 
     /**
@@ -240,7 +258,7 @@ public class PrincipalComponentAnalysis {
      * 
      * @param sampleA The sample whose membership status is being considered.
      * @return Its membership error.
-     */
+     *
     public double errorMembership( double[] sampleA ) {
         double[] eig = sampleToEigenSpace(sampleA, 0);
         double[] reproj = eigenToSampleSpace(eig);
@@ -254,6 +272,7 @@ public class PrincipalComponentAnalysis {
 
         return Math.sqrt(total);
     }
+		*/
 
     /**
      * Computes the dot product of each basis vector against the sample.  Can be used as a measure
@@ -261,7 +280,7 @@ public class PrincipalComponentAnalysis {
      *
      * @param sample Sample of original data.
      * @return Higher value indicates it is more likely to be a member of input dataset.
-     */
+     *
     public double response( double[] sample ) {
         if( sample.length != A.numCols )
             throw new IllegalArgumentException("Expected input vector to be in sample space");
@@ -273,25 +292,66 @@ public class PrincipalComponentAnalysis {
 
         return NormOps_DDRM.normF(dots);
     }
+		*/
     
     public double [][] pca(double [][]matrix, int no_dims) {
 			double [][] trafoed = new double[matrix.length][matrix[0].length];
-			// System.out.println("setup");
+			System.out.println("setup");
 			setup(matrix.length, matrix[0].length);
-			// System.out.println("adding samples");
+			System.out.println("adding samples");
 			for (int i = 0; i < matrix.length; i++) {
 				addSample(matrix[i]);
 			}
-			// System.out.println("computing basis");
+			System.out.println("computing basis");
 			computeBasis(no_dims);
-			// System.out.println("Converting to eigenspace");
+			System.out.println("Converting to eigenspace");
 			for (int i = 0; i < matrix.length; i++) {
 				trafoed[i] = sampleToEigenSpace(matrix[i], i);
 				for (int j = 0; j < trafoed[i].length; j++) {
 					trafoed[i][j] *= -1;
 				}
 			}
-			// System.out.println("done");
+			System.out.println("done");
 			return trafoed;
     }
+
+		public static final ThreadLocal<AggregatorFunction<Double>> MySUM = new ThreadLocal<AggregatorFunction<Double>>() {
+
+    @Override
+    protected AggregatorFunction<Double> initialValue() {
+      return new AggregatorFunction<Double>() {
+
+        private double sum = 0.0;
+
+        public void invoke(final Double anArg) {
+          if (anArg != null) invoke(anArg.doubleValue());
+        }
+        public void invoke(final double anArg) {
+          if (!Double.isNaN(anArg))
+            sum += anArg;
+        }
+
+        public double doubleValue() { return sum; }
+        public Scalar<Double> toScalar() {
+          return PrimitiveScalar.of(this.doubleValue());
+        }
+        public AggregatorFunction<Double> reset() { sum = 0.0; return this; }
+        public void merge(final Double result) {
+          this.invoke(result.doubleValue());
+        }
+        public Double merge(final Double result1, final Double result2) {
+          return result1 + result2;
+        }
+        /*
+        public Double getNumber() {
+          return Double.valueOf(this.doubleValue());
+        }
+        */
+        public Double get() {
+          return Double.valueOf(this.doubleValue());
+        }
+      };
+    }
+  };
+
 }

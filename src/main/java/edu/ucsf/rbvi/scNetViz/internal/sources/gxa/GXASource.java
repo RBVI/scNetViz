@@ -30,6 +30,7 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.view.GXAEntryFrame;
 import static org.cytoscape.work.ServiceProperties.COMMAND;
 import static org.cytoscape.work.ServiceProperties.COMMAND_DESCRIPTION;
 import static org.cytoscape.work.ServiceProperties.COMMAND_NAMESPACE;
+import static org.cytoscape.work.ServiceProperties.COMMAND_SUPPORTS_JSON;
 import static org.cytoscape.work.ServiceProperties.ID;
 import static org.cytoscape.work.ServiceProperties.IN_MENU_BAR;
 import static org.cytoscape.work.ServiceProperties.IN_TOOL_BAR;
@@ -81,6 +82,7 @@ public class GXASource implements Source {
 			props.put(COMMAND_DESCRIPTION, "List all Gene Expression Atlas (GXA) entries available");
 			props.put(COMMAND_NAMESPACE, "scnetviz");
 			props.put(COMMAND, "list gxa entries");
+			props.put(COMMAND_SUPPORTS_JSON, "true");
 			scNVManager.registerService(new GXAListEntriesTaskFactory(manager, this), TaskFactory.class, props);
 		}
 		
@@ -89,6 +91,7 @@ public class GXASource implements Source {
 			props.put(COMMAND_NAMESPACE, "scnetviz");
 			props.put(COMMAND_DESCRIPTION, "Load an experiment from the EBI Gene Expression Atlas");
 			props.put(COMMAND, "load gxa experiment");
+			props.put(COMMAND_SUPPORTS_JSON, "true");
 			scNVManager.registerService(new GXALoadExperimentTaskFactory(manager, this), TaskFactory.class, props);
 		}
 

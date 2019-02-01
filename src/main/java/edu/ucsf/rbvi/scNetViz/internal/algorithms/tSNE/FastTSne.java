@@ -184,8 +184,8 @@ public class FastTSne implements TSne {
 		DMatrixRMaj num   = new DMatrixRMaj(Y.numRows, Y.numRows);
 		DMatrixRMaj Q     = new DMatrixRMaj(P.numRows,P.numCols);
 
-		System.out.println("Created sum_Y: ("+
-		                   ""+sum_Y.numRows+","+sum_Y.numCols+")");
+		//System.out.println("Created sum_Y: ("+
+		//                   ""+sum_Y.numRows+","+sum_Y.numCols+")");
 		
 		double progress = 0.0;
 		for (int iter = 0; iter < max_iter && !abort; iter++) {
@@ -308,7 +308,7 @@ public class FastTSne implements TSne {
 		if (index == 0)
 			writeMatrix("HbetaP-"+index, P);
 		double sumP = elementSum(P);   // sumP confirmed scalar
-			System.out.println("sumP = "+sumP);
+			//System.out.println("sumP = "+sumP);
 		DMatrixRMaj Dd  = new DMatrixRMaj(D);
 		elementMult(Dd, P);
 		double H = Math.log(sumP) + beta * elementSum(Dd) / sumP;
@@ -490,7 +490,7 @@ public class FastTSne implements TSne {
 	}
 
 	public double round(double value, int numberOfDigitsAfterDecimalPoint) {
-		System.out.println("value = "+value);
+		//System.out.println("value = "+value);
 		BigDecimal bigDecimal = new BigDecimal(value);
 		bigDecimal = bigDecimal.setScale(numberOfDigitsAfterDecimalPoint, BigDecimal.ROUND_HALF_UP);
 		return bigDecimal.doubleValue();

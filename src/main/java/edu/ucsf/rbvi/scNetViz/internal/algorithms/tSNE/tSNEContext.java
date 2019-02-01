@@ -7,7 +7,6 @@ import org.cytoscape.work.util.BoundedDouble;
 public class tSNEContext implements TSneConfiguration {
 	public boolean cancelled = false;
 
-	/*
 	@Tunable(description="Initial Dimensions", 
 	         longDescription="The number of dimensions to reduce the data set to before running "+
 	                         "tSNE.  If the dimensionality of the data exceeds this number, "+
@@ -16,7 +15,6 @@ public class tSNEContext implements TSneConfiguration {
 	                         "pca is not called.",
 	         exampleStringValue="30",
 	         groups={"t-SNE Parameters"}, gravity=66, format="#0")
-	*/
 	public int dimensions=-1;
 
 	@Tunable(description="Perplexity", 
@@ -31,14 +29,12 @@ public class tSNEContext implements TSneConfiguration {
 	         groups={"t-SNE Parameters"}, gravity=68)
 	public int iterations=2000;
 
-	/*
 	@Tunable(description="Use Barnes-Hut approximation", 
 	         longDescription="The Barnes-Hut approximation is a way to reduce the computational complexity "+
 	                         "of an algorithm by replacing a group of distant nodes with a single node at the "+
 	                         "center of mass of all of those nodes",
 	         exampleStringValue="false",
 	         groups={"t-SNE Parameters"}, gravity=69)
-	*/
 	public boolean useBarnesHut=true;
 
 	/*
@@ -152,7 +148,7 @@ public class tSNEContext implements TSneConfiguration {
 
 	@Override
 	public boolean usePca() {
-		return false;
+		return true;
 	}
 
 	@Override
