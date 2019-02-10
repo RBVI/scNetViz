@@ -18,7 +18,7 @@ public class tSNEContext implements TSneConfiguration {
 	                         "pca is not called.",
 	         exampleStringValue="30",
 	         groups={"t-SNE Parameters"}, gravity=66, format="#0")
-	public int dimensions=-1;
+	public int dimensions=20;
 
 	@Tunable(description="Perplexity", 
 	         longDescription="Perplexity is the balance between the local and global aspects of the data.",
@@ -48,6 +48,7 @@ public class tSNEContext implements TSneConfiguration {
 	         dependsOn="useBarnesHut=true", groups={"t-SNE Parameters"}, gravity=70)
 	public BoundedDouble theta=new BoundedDouble(0.0, 0.9, 2.0, false, false);
 	*/
+
 	@Tunable(description="Theta value for Barnes-Hut", 
 	         longDescription="The threshold value to activate Barnes-Hut.  This value reflects the accuracy "+
 	                         "of the simulation.  If theta=0 then the approximation is never used",
@@ -65,7 +66,7 @@ public class tSNEContext implements TSneConfiguration {
 	         longDescription="Center and scale the data before calculating the tSNE",
 	         exampleStringValue="true",
 	         groups={"t-SNE Parameters"}, gravity=76)
-	public boolean centerAndScale=true;
+	public boolean centerAndScale=false;
 
 	public tSNEContext(){}
 
