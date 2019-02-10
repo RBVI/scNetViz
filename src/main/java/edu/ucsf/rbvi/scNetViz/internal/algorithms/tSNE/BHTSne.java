@@ -91,18 +91,6 @@ public class BHTSne implements BarnesHutTSne {
 		if (parameterObject.cancelled())
 			return null;
 
-		// Scale the data if we're supposed to
-		// if (parameterObject.logNormalize()) {
-		// 	Xin = MatrixOps.log(Xin, true);
-		// }
-
-		// if (parameterObject.centerAndScale()) {
-		// 	Xin = MatrixOps.centerAndScale(Xin);
-		// }
-
-		// if (parameterObject.findVariableGenes()) {
-		// 	Xin = MatrixOps.findVariableGenes(Xin);
-		// }
 		System.gc();
 
 		if(parameterObject.usePca() && D > parameterObject.getInitialDims() && parameterObject.getInitialDims() > 0) {
@@ -110,6 +98,7 @@ public class BHTSne implements BarnesHutTSne {
 			Xin = pca.pca(Xin, parameterObject.getInitialDims());
 			D = parameterObject.getInitialDims();
 			monitor.showMessage(TaskMonitor.Level.INFO,"X:Shape after PCA is = " + Xin.length + " x " + Xin[0].length);
+			/*
 			for (int row = 0; row < Xin.length; row++) {
 				System.out.print("[");
 				for (int col = 0; col < Xin[0].length; col++) {
@@ -117,6 +106,7 @@ public class BHTSne implements BarnesHutTSne {
 				}
 				System.out.println("]");
 			}
+			*/
 		}
 
 		if (parameterObject.cancelled())

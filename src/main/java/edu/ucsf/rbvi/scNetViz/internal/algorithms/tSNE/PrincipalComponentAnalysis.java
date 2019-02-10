@@ -111,10 +111,12 @@ public class PrincipalComponentAnalysis {
      * @param sampleData Sample from original raw data.
      */
     public void addSample( double[] sampleData ) {
-        if( A.countColumns() != sampleData.length )
+        if( A.countColumns() != sampleData.length ) {
             throw new IllegalArgumentException("Unexpected sample size");
-        if( sampleIndex >= A.countRows() )
+				}
+        if( sampleIndex >= A.countRows() ) {
             throw new IllegalArgumentException("Too many samples");
+				}
 
         for( int i = 0; i < sampleData.length; i++ ) {
             A.set(sampleIndex,i,sampleData[i]);
@@ -142,14 +144,14 @@ public class PrincipalComponentAnalysis {
 
 				// System.out.println("Centralizing");
         // Centralize the rows
-        for( int row = 0; row < A.countRows(); row++ ) {
+        for( int column = 0; column < A.countColumns(); column++ ) {
 						final AggregatorFunction<Double> tmpVisitor = MySUM.get().reset();
-						A.visitRow(row, 0L, tmpVisitor);
-						mean[row] = tmpVisitor.doubleValue()/A.countColumns();
+						A.visitColumn(column, 0L, tmpVisitor);
+						mean[column] = tmpVisitor.doubleValue()/A.countRows();
 
-						for (int col = 0; col < A.countColumns(); col++) {
-							double cell = A.get(row, col);
-							A.set(row, col, cell - mean[row]);
+						for (int row = 0; row < A.countRows(); row++) {
+							double cell = A.get(row, column);
+							A.set(row, column, cell - mean[column]);
             }
         }
 
@@ -201,7 +203,7 @@ public class PrincipalComponentAnalysis {
         if( sampleData.length != A.countColumns() )
             throw new IllegalArgumentException("Unexpected sample length");
 
-				MatrixStore<Double> mean = new RawStore(this.mean, 1);
+				MatrixStore<Double> meanMat = new RawStore(this.mean, 1);
         // DMatrixRMaj mean = DMatrixRMaj.wrap(A.getNumCols(),1,this.mean);
 
 				MatrixStore<Double> s = new RawStore(sampleData, 1).copy();
@@ -211,7 +213,7 @@ public class PrincipalComponentAnalysis {
         // DMatrixRMaj r = new DMatrixRMaj(numComponents,1);
 
         // CommonOps_DDRM.subtract(s, mean, s);
-				s = s.subtract(mean);
+				s = s.subtract(meanMat);
 
 				// FastTSne.writeMatrix("s-"+row,s);
 
@@ -306,11 +308,15 @@ public class PrincipalComponentAnalysis {
 			// System.out.println("computing basis");
 			computeBasis(no_dims);
 			// System.out.println("Converting to eigenspace");
+			try {
 			for (int i = 0; i < matrix.length; i++) {
 				trafoed[i] = sampleToEigenSpace(matrix[i], i);
 				for (int j = 0; j < trafoed[i].length; j++) {
 					trafoed[i][j] *= -1;
 				}
+			}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 			// System.out.println("done");
 			return trafoed;

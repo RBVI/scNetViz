@@ -78,6 +78,8 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 		// get sparse primitive matrix instead?
 		double[][] Xin = matrix.getDoubleMatrix(0.0, false, true);
 		// MatrixOps.debug("/tmp/originalMatrix", MatrixOps.doubleArrayToPrintString(matrix.getRowLabels(), Xin, false));
+
+		long start = System.currentTimeMillis();
 		
 		Xin = MatrixOps.reduceMatrix(Xin, rowLabels, colLabels, 1, 1);
 		// System.out.println("New size = "+Xin.length+"X"+Xin[0].length);
@@ -119,13 +121,21 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 		context.setRowLabels(rowLabels);
 		context.setColumnLabels(colLabels);
 
+		monitor.showMessage(TaskMonitor.Level.INFO, "Setup complete in "+(System.currentTimeMillis()-start)/1000+" seconds");
+
 		TSne tsne;
-		if (context.useBarnesHut) {
-			monitor.setTitle("Running t-Distributed Stochastic Neighbor (tSNE) using Barnes-Hut approximation");
-			tsne = new ParallelBHTsne();
-		} else {
-			monitor.setTitle("Running t-Distributed Stochastic Neighbor (tSNE)");
-			tsne = new FastTSne();
+		try {
+			if (context.useBarnesHut) {
+				monitor.setTitle("Running t-Distributed Stochastic Neighbor (tSNE) using Barnes-Hut approximation");
+				tsne = new ParallelBHTsne();
+			} else {
+				monitor.setTitle("Running t-Distributed Stochastic Neighbor (tSNE)");
+				tsne = new FastTSne();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			monitor.showMessage(TaskMonitor.Level.ERROR, "Error calculating tSNE: "+e.getMessage());
+			return;
 		}
 
 		tsneResult = tsne.tsne(context, monitor);
@@ -133,6 +143,7 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 			monitor.setStatusMessage("Cancelled by user");
 			return;
 		}
+		monitor.showMessage(TaskMonitor.Level.INFO, "tSNE complete in "+(System.currentTimeMillis()-start)/1000+" seconds");
 	}
 
 	public void cancel() {

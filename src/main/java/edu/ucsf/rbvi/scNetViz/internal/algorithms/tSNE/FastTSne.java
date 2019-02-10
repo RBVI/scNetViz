@@ -107,14 +107,6 @@ public class FastTSne implements TSne {
 		long start = System.currentTimeMillis();
 		long total = System.currentTimeMillis();
 
-		// Scale the data if we're supposed to
-		// if (config.logNormalize()) {
-		// 	X = MatrixOps.log(X, true);
-		// }
-
-		// if (config.centerAndScale()) {
-		// 	X = MatrixOps.centerAndScale(X);
-		// }
 		System.gc();
 
 		// Initialize variables
@@ -123,7 +115,6 @@ public class FastTSne implements TSne {
 			PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis();
 			X = pca.pca(X, initial_dims);
 			monitor.showMessage(TaskMonitor.Level.INFO, "X:Shape after PCA is = " + X.length + " x " + X[0].length);
-
 		}
 
 		// Since the original X is done, we should be able to
@@ -151,6 +142,7 @@ public class FastTSne implements TSne {
 		// writeMatrix("X", X);
 		
 		// Compute P-values
+		// System.out.println("Calculating P values");
 		DMatrixRMaj P;
 		try {
 			P		= new DMatrixRMaj(x2p(X, 1e-5, perplexity).P); // P = n x n
@@ -160,9 +152,11 @@ public class FastTSne implements TSne {
 				return null;
 			}
 		} catch (RuntimeException e) {
+				e.printStackTrace();
 				monitor.showMessage(TaskMonitor.Level.ERROR, "tSNE failed to converge: "+e.getMessage());
 				return null;
 		}
+		// System.out.println("...done");
 
 		// OK, now free up X
 		X = null;
