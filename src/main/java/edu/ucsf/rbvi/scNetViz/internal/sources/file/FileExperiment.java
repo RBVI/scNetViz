@@ -61,6 +61,7 @@ public class FileExperiment implements Experiment {
 		this.fileExperiment = this;
 		this.source = source;
 		this.fileMetadata = metadata;
+		this.accession = metadata.get(Metadata.ACCESSION).toString();
 		categories = new ArrayList<Category>();
 	}
 
@@ -154,7 +155,7 @@ public class FileExperiment implements Experiment {
 			}
 		} catch (Exception e) {}
 		scNVManager.addExperiment(accession, this);
-		 System.out.println("mtx has "+mtx.getNRows()+" rows and "+mtx.getNCols()+" columns");
+		System.out.println("mtx has "+mtx.getNRows()+" rows and "+mtx.getNCols()+" columns");
 	}
 
 	public String toString() {

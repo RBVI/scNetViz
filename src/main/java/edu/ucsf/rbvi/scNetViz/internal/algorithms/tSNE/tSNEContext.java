@@ -1,11 +1,14 @@
 package edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE;
 
+import java.util.List;
+
 import org.cytoscape.work.Tunable;
 import org.cytoscape.work.util.BoundedDouble;
 
-
 public class tSNEContext implements TSneConfiguration {
 	public boolean cancelled = false;
+	List<String> rowLabels = null;
+	List<String> columnLabels = null;
 
 	@Tunable(description="Initial Dimensions", 
 	         longDescription="The number of dimensions to reduce the data set to before running "+
@@ -75,7 +78,7 @@ public class tSNEContext implements TSneConfiguration {
 		Xin = xin;
 	}
 
-	int outputDims = 2;
+	int outputDims = 3;
 	public int getOutputDims() {
 		return outputDims;
 	}
@@ -159,4 +162,16 @@ public class tSNEContext implements TSneConfiguration {
 
 	@Override
 	public boolean logNormalize() { return logNormalize; }
+
+	@Override
+	public List<String> getRowLabels() { return rowLabels; }
+
+	@Override
+	public void setRowLabels(List<String> labels) { this.rowLabels = labels; }
+
+	@Override
+	public List<String> getColumnLabels() { return columnLabels; }
+
+	@Override
+	public void setColumnLabels(List<String> labels) { this.columnLabels = labels; }
 }

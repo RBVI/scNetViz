@@ -1,5 +1,7 @@
 package edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE;
 
+import java.util.List;
+
 public class TSneConfig implements TSneConfiguration {
 	protected double[][] xin;
 	protected int outputDims;
@@ -12,6 +14,8 @@ public class TSneConfig implements TSneConfiguration {
 	protected boolean print_error;
 	protected boolean scale;
 	protected boolean logNormalize;
+	protected List<String> rowLabels = null;
+	protected List<String> columnLabels = null;
 
 	public TSneConfig(double[][] xin, int outputDims, int initial_dims, double perplexity, int max_iter,
 			boolean use_pca, double theta, boolean silent, boolean print_error, boolean scale, boolean logNormalize) {
@@ -200,4 +204,15 @@ public class TSneConfig implements TSneConfiguration {
 	public boolean centerAndScale() { return scale; }
 
 	public void setCenterAndScale(boolean scale) { this.scale = scale; }
+
+	@Override
+	public List<String> getRowLabels() { return rowLabels; }
+
+	public void setRowLabels(List<String> labels) { this.rowLabels = labels; }
+
+	@Override
+	public List<String> getColumnLabels() { return columnLabels; }
+
+	public void setColumnLabels(List<String> labels) { this.columnLabels = labels; }
+
 }

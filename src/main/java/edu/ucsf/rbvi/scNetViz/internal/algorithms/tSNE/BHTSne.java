@@ -92,13 +92,17 @@ public class BHTSne implements BarnesHutTSne {
 			return null;
 
 		// Scale the data if we're supposed to
-		if (parameterObject.logNormalize()) {
-			Xin = MatrixOps.log(Xin, true);
-		}
+		// if (parameterObject.logNormalize()) {
+		// 	Xin = MatrixOps.log(Xin, true);
+		// }
 
-		if (parameterObject.centerAndScale()) {
-			Xin = MatrixOps.centerAndScale(Xin);
-		}
+		// if (parameterObject.centerAndScale()) {
+		// 	Xin = MatrixOps.centerAndScale(Xin);
+		// }
+
+		// if (parameterObject.findVariableGenes()) {
+		// 	Xin = MatrixOps.findVariableGenes(Xin);
+		// }
 		System.gc();
 
 		if(parameterObject.usePca() && D > parameterObject.getInitialDims() && parameterObject.getInitialDims() > 0) {
@@ -106,6 +110,13 @@ public class BHTSne implements BarnesHutTSne {
 			Xin = pca.pca(Xin, parameterObject.getInitialDims());
 			D = parameterObject.getInitialDims();
 			monitor.showMessage(TaskMonitor.Level.INFO,"X:Shape after PCA is = " + Xin.length + " x " + Xin[0].length);
+			for (int row = 0; row < Xin.length; row++) {
+				System.out.print("[");
+				for (int col = 0; col < Xin[0].length; col++) {
+					System.out.print(Xin[row][col]+",");
+				}
+				System.out.println("]");
+			}
 		}
 
 		if (parameterObject.cancelled())
@@ -234,12 +245,15 @@ public class BHTSne implements BarnesHutTSne {
 			progress = (double)iter/(double)parameterObject.getMaxIter();
 			monitor.setProgress(progress);
 
+			// System.out.println("computeGradient");
 			if(exact) computeExactGradient(P, Y, N, no_dims, dY);
 			// Compute (approximate) gradient
 			else computeGradient(P, row_P, col_P, val_P, Y, N, no_dims, dY, parameterObject.getTheta());
 
+			// System.out.println("updateGradient");
 			updateGradient(N, no_dims, Y, momentum, eta, dY, uY, gains);
 
+			// System.out.println("zero-mean");
 			// Make solution zero-mean
 			zeroMean(Y, N, no_dims);
 

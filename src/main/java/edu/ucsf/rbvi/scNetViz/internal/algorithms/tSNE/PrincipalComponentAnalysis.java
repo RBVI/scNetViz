@@ -140,7 +140,7 @@ public class PrincipalComponentAnalysis {
 
 				// System.out.println("Computing mean");
 
-				System.out.println("Centralizing");
+				// System.out.println("Centralizing");
         // Centralize the rows
         for( int row = 0; row < A.countRows(); row++ ) {
 						final AggregatorFunction<Double> tmpVisitor = MySUM.get().reset();
@@ -153,7 +153,7 @@ public class PrincipalComponentAnalysis {
             }
         }
 
-				System.out.println("Computing SVD");
+				// System.out.println("Computing SVD");
 				final SingularValue<Double> singularValue = SingularValue.make(A);
         singularValue.compute(A);
 				// System.out.println("isOrdered = "+singularValue.isOrdered());
@@ -170,7 +170,7 @@ public class PrincipalComponentAnalysis {
 
         // strip off unneeded components and find the basis
         // V_t.reshape(numComponents,mean.length,true);
-				System.out.println("Limiting");
+				// System.out.println("Limiting");
 				V_t = V_t.logical().limits(numComponents, mean.length).get();
     }
 
@@ -294,24 +294,25 @@ public class PrincipalComponentAnalysis {
     }
 		*/
     
+		// TODO: wrap all of this in a matrix rather than a 2-dimensional array
     public double [][] pca(double [][]matrix, int no_dims) {
 			double [][] trafoed = new double[matrix.length][matrix[0].length];
-			System.out.println("setup");
+			// System.out.println("setup");
 			setup(matrix.length, matrix[0].length);
-			System.out.println("adding samples");
+			// System.out.println("adding samples");
 			for (int i = 0; i < matrix.length; i++) {
 				addSample(matrix[i]);
 			}
-			System.out.println("computing basis");
+			// System.out.println("computing basis");
 			computeBasis(no_dims);
-			System.out.println("Converting to eigenspace");
+			// System.out.println("Converting to eigenspace");
 			for (int i = 0; i < matrix.length; i++) {
 				trafoed[i] = sampleToEigenSpace(matrix[i], i);
 				for (int j = 0; j < trafoed[i].length; j++) {
 					trafoed[i][j] *= -1;
 				}
 			}
-			System.out.println("done");
+			// System.out.println("done");
 			return trafoed;
     }
 

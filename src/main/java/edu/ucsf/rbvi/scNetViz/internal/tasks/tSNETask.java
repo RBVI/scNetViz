@@ -1,17 +1,26 @@
 package edu.ucsf.rbvi.scNetViz.internal.tasks;
 
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
+
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ContainsTunables;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.TaskMonitor;
+import org.cytoscape.work.Tunable;
+import org.cytoscape.work.util.ListSingleSelection;
 
 import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.BHTSne;
 import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.FastTSne;
+import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.MatrixOps;
 import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.ParallelBHTsne;
 import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.TSne;
 import edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE.tSNEContext;
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 
 public class tSNETask extends AbstractTask implements ObservableTask {
@@ -19,14 +28,27 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 	public static String NAME = "t-Distributed Stochastic Neighbor";
 	public final static String GROUP_ATTRIBUTE = "__tSNE.SUID";
 
+	@Tunable (description="Experiment to show")
+	public ListSingleSelection<String> accession = null;
+
 	@ContainsTunables
 	public tSNEContext context = null;
 	private DoubleMatrix matrix; 
 	private double[][] tsneResult;
+	final ScNVManager manager;
 		
+	public tSNETask(final ScNVManager manager) {
+		this.manager = manager;
+		this.context = new tSNEContext();
+		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
+		accession = new ListSingleSelection<>(new ArrayList<String>(manager.getExperimentAccessions()));
+		matrix = null;
+	}
+
 	public tSNETask(DoubleMatrix matrix) {
 		this.context = new tSNEContext();
 		this.matrix = matrix;
+		manager = null;
 	}
 
 	public String getShortName() { return SHORTNAME; }
@@ -38,17 +60,65 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 		monitor.setTitle(NAME);
 		monitor.setStatusMessage("Running " + NAME);
 		context.cancelled = false;
+		MatrixOps matrixOps = new MatrixOps();
 		
-		if (matrix == null) {
+		if (matrix == null && accession == null) {
 			monitor.showMessage(TaskMonitor.Level.ERROR, "Matrix is null");
 			return;
+		} else if (matrix == null) {
+			Experiment experiment = manager.getExperiment(accession.getSelectedValue());
+			matrix = (DoubleMatrix)experiment.getMatrix();
 		}
-		
+
 		context.cancelled = false;
 
-		// Get the transposed matrix
-		context.setXin(matrix.getDoubleMatrix(0.0, true, true));
+		// System.out.println("Getting matrix");
+		List<String> rowLabels = new ArrayList<String>(matrix.getRowLabels());
+		List<String> colLabels = new ArrayList<String>(matrix.getColLabels());
+		// get sparse primitive matrix instead?
+		double[][] Xin = matrix.getDoubleMatrix(0.0, false, true);
+		// MatrixOps.debug("/tmp/originalMatrix", MatrixOps.doubleArrayToPrintString(matrix.getRowLabels(), Xin, false));
 		
+		Xin = MatrixOps.reduceMatrix(Xin, rowLabels, colLabels, 1, 1);
+		// System.out.println("New size = "+Xin.length+"X"+Xin[0].length);
+		// MatrixOps.debug("/tmp/reducedMatrix", MatrixOps.doubleArrayToPrintString(rowLabels, Xin, false));
+
+		// Scale the data if we're supposed to
+		if (context.logNormalize()) {
+			// System.out.println("Normalizing matrix");
+			Xin = MatrixOps.logNormalize(Xin, 10000);
+			// MatrixOps.debug("/tmp/normalizedMatrix", MatrixOps.doubleArrayToPrintString(rowLabels, Xin, false));
+		}
+
+		if (context.centerAndScale()) {
+			// System.out.println("Scaling matrix");
+			Xin = MatrixOps.centerAndScale(Xin);
+			// MatrixOps.debug("/tmp/scaledMatrix", MatrixOps.doubleArrayToPrintString(rowLabels, Xin, false));
+		}
+
+		// if (context.findVariableGenes()) {
+		// System.out.println("Getting variable genes");
+		BitSet variableGenes = new BitSet(Xin.length);
+		Xin = MatrixOps.findVariableGenes(Xin, 0.0125, 3, 0.5, 20, variableGenes, rowLabels);
+		// System.out.println("Xin["+Xin.length+"]["+Xin[0].length+"]");
+		/*
+		for (int row = 0; row < Xin.length; row++) {
+			if (variableGenes.get(row)) {
+				System.out.println("Variable gene = "+rowLabels.get(row));
+			}
+		}
+		*/
+		// }
+
+		// Get the transposed matrix
+		// Write the transposed matrix out
+		Xin = matrixOps.transpose(Xin);
+		// MatrixOps.debug("/tmp/transposedMatrix", MatrixOps.doubleArrayToPrintString(colLabels, Xin, false));
+		context.setXin(Xin);
+
+		context.setRowLabels(rowLabels);
+		context.setColumnLabels(colLabels);
+
 		TSne tsne;
 		if (context.useBarnesHut) {
 			monitor.setTitle("Running t-Distributed Stochastic Neighbor (tSNE) using Barnes-Hut approximation");
