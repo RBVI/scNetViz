@@ -107,14 +107,6 @@ public class FastTSne implements TSne {
 		long start = System.currentTimeMillis();
 		long total = System.currentTimeMillis();
 
-		// Scale the data if we're supposed to
-		if (config.logNormalize()) {
-			X = MatrixOps.log(X, true);
-		}
-
-		if (config.centerAndScale()) {
-			X = MatrixOps.centerAndScale(X);
-		}
 		System.gc();
 
 		// Initialize variables
@@ -123,7 +115,6 @@ public class FastTSne implements TSne {
 			PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis();
 			X = pca.pca(X, initial_dims);
 			monitor.showMessage(TaskMonitor.Level.INFO, "X:Shape after PCA is = " + X.length + " x " + X[0].length);
-
 		}
 
 		// Since the original X is done, we should be able to
@@ -148,11 +139,24 @@ public class FastTSne implements TSne {
 		if (config.cancelled())
 			return null;
 
-		writeMatrix("X", X);
+		// writeMatrix("X", X);
 		
 		// Compute P-values
-		DMatrixRMaj P        = new DMatrixRMaj(x2p(X, 1e-5, perplexity).P); // P = n x n
-		writeMatrix("P1", P);
+		// System.out.println("Calculating P values");
+		DMatrixRMaj P;
+		try {
+			P		= new DMatrixRMaj(x2p(X, 1e-5, perplexity).P); // P = n x n
+			// writeMatrix("P1", P);
+			if (P == null) {
+				monitor.showMessage(TaskMonitor.Level.ERROR, "tSNE failed to converge");
+				return null;
+			}
+		} catch (RuntimeException e) {
+				e.printStackTrace();
+				monitor.showMessage(TaskMonitor.Level.ERROR, "tSNE failed to converge: "+e.getMessage());
+				return null;
+		}
+		// System.out.println("...done");
 
 		// OK, now free up X
 		X = null;
@@ -168,9 +172,9 @@ public class FastTSne implements TSne {
 		
 		transpose(P,Ptr);
 		addEquals(P,Ptr);
-		writeMatrix("P2", P);
-		divide(P ,round(elementSum(P),DIGITS));
+		// writeMatrix("P2", P);
 		replaceNaN(P,Double.MIN_VALUE);
+		divide(P ,round(elementSum(P),DIGITS));
 		scale(4.0,P);					// early exaggeration
 		maximize(P, 1e-12);
 
@@ -184,8 +188,8 @@ public class FastTSne implements TSne {
 		DMatrixRMaj num   = new DMatrixRMaj(Y.numRows, Y.numRows);
 		DMatrixRMaj Q     = new DMatrixRMaj(P.numRows,P.numCols);
 
-		System.out.println("Created sum_Y: ("+
-		                   ""+sum_Y.numRows+","+sum_Y.numCols+")");
+		//System.out.println("Created sum_Y: ("+
+		//                   ""+sum_Y.numRows+","+sum_Y.numCols+")");
 		
 		double progress = 0.0;
 		for (int iter = 0; iter < max_iter && !abort; iter++) {
@@ -299,19 +303,26 @@ public class FastTSne implements TSne {
 	
 	public R Hbeta (double [][] D, double beta, int index){
 		DMatrixRMaj P  = new DMatrixRMaj(D);
-		if (index == 0)
-			writeMatrix("P"+index, P);
+		// if (index == 0)
+		// 	writeMatrix("P"+index, P);
 		scale(-beta,P);
-		if (index == 0)
-			writeMatrix("HbetaP-scaled-"+index, P);
+		// if (index == 0)
+		// 	writeMatrix("HbetaP-scaled-"+index, P);
 		elementExp(P,P);
-		if (index == 0)
-			writeMatrix("HbetaP-"+index, P);
+
+		// if (index == 0)
+		//	writeMatrix("HbetaP-"+index, P);
 		double sumP = elementSum(P);   // sumP confirmed scalar
-			System.out.println("sumP = "+sumP);
+		if (sumP == 0) {
+			// System.out.println("sumP = 0!");
+			// writeMatrix("Px"+index, P);
+			throw new RuntimeException("sumP = 0, index = "+index);
+		}
+		//System.out.println("sumP = "+sumP);
 		DMatrixRMaj Dd  = new DMatrixRMaj(D);
 		elementMult(Dd, P);
 		double H = Math.log(sumP) + beta * elementSum(Dd) / sumP;
+		// System.out.println("index = "+index+", H = "+H+", sumP = "+sumP+", beta = "+beta);
 		scale(1/sumP,P);
 		R r = new R();
 		r.H = H;
@@ -321,15 +332,22 @@ public class FastTSne implements TSne {
 
 	public R x2p(double [][] X,double tol, double perplexity){
 		int n               = X.length;
+		// writeMatrix("X", X);
+		// Python: sum_X = np.sum(np.square(X), 1)
 		double [][] sum_X   = sum(square(X), 1);
-		writeMatrix("sum_X", sum_X);
+		// writeMatrix("sum_X", sum_X);
+		// Python: times = -2 * np.dot(X, X.T)
 		double [][] times   = scalarMult(times(X, mo.transpose(X)), -2);
-		writeMatrix("times", times);
-		double [][] prodSum = addColumnVector(mo.transpose(times), sum_X);
-		writeMatrix("prodSum", prodSum);
-		double [][] D       = MatrixOps.addRowVector(prodSum, mo.transpose(sum_X));
+		// writeMatrix("times", times);
+
+		// Python: prodSum = np.add(times, sum_X)
+		double [][] prodSum = addColumnVector(times, sum_X);
+
+		// writeMatrix("prodSum", mo.transpose(prodSum));
+		double [][] D       = addColumnVector(mo.transpose(prodSum), sum_X);
 		// D seems correct at this point compared to Python version
-		writeMatrix("D", D);
+		// writeMatrix("D", D);
+
 		double [][] P       = fillMatrix(n,n,0.0);
 		double [] beta      = fillMatrix(n,n,1.0)[0];
 		double logU         = Math.log(perplexity);
@@ -342,10 +360,15 @@ public class FastTSne implements TSne {
 			double betamin = Double.NEGATIVE_INFINITY;
 			double betamax = Double.POSITIVE_INFINITY;
 			double [][] Di = getValuesFromRow(D, i,concatenate(range(0,i),range(i+1,n)));
-			if (i == 0)
-				writeMatrix("Di", Di);
 
-			R hbeta = Hbeta(Di, beta[i], i);
+			R hbeta;
+			try {
+			 	hbeta	= Hbeta(Di, beta[i], i);
+			} catch (Exception e) { 
+				// writeMatrix("Di-"+i, Di);
+				// e.printStackTrace(); 
+				throw e;
+			}
 			double H = hbeta.H;
 			double [][] thisP = hbeta.P;
 
@@ -373,7 +396,9 @@ public class FastTSne implements TSne {
 				Hdiff = H - logU;
 				tries = tries + 1;
 			}
+			// writeMatrix("thisP-"+i, thisP);
 			assignValuesToRow(P, i,concatenate(range(0,i),range(i+1,n)),thisP[0]);
+			// writeMatrix("Ph-"+i, P);
 		}
 
 		R r = new R();
@@ -490,7 +515,7 @@ public class FastTSne implements TSne {
 	}
 
 	public double round(double value, int numberOfDigitsAfterDecimalPoint) {
-		System.out.println("value = "+value);
+		// System.out.println("value = "+value);
 		BigDecimal bigDecimal = new BigDecimal(value);
 		bigDecimal = bigDecimal.setScale(numberOfDigitsAfterDecimalPoint, BigDecimal.ROUND_HALF_UP);
 		return bigDecimal.doubleValue();

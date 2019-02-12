@@ -1,13 +1,15 @@
 package edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE;
 
+import java.util.List;
+
 import org.cytoscape.work.Tunable;
 import org.cytoscape.work.util.BoundedDouble;
 
-
 public class tSNEContext implements TSneConfiguration {
 	public boolean cancelled = false;
+	List<String> rowLabels = null;
+	List<String> columnLabels = null;
 
-	/*
 	@Tunable(description="Initial Dimensions", 
 	         longDescription="The number of dimensions to reduce the data set to before running "+
 	                         "tSNE.  If the dimensionality of the data exceeds this number, "+
@@ -16,8 +18,7 @@ public class tSNEContext implements TSneConfiguration {
 	                         "pca is not called.",
 	         exampleStringValue="30",
 	         groups={"t-SNE Parameters"}, gravity=66, format="#0")
-	*/
-	public int dimensions=-1;
+	public int dimensions=20;
 
 	@Tunable(description="Perplexity", 
 	         longDescription="Perplexity is the balance between the local and global aspects of the data.",
@@ -31,14 +32,12 @@ public class tSNEContext implements TSneConfiguration {
 	         groups={"t-SNE Parameters"}, gravity=68)
 	public int iterations=2000;
 
-	/*
 	@Tunable(description="Use Barnes-Hut approximation", 
 	         longDescription="The Barnes-Hut approximation is a way to reduce the computational complexity "+
 	                         "of an algorithm by replacing a group of distant nodes with a single node at the "+
 	                         "center of mass of all of those nodes",
 	         exampleStringValue="false",
 	         groups={"t-SNE Parameters"}, gravity=69)
-	*/
 	public boolean useBarnesHut=true;
 
 	/*
@@ -49,6 +48,7 @@ public class tSNEContext implements TSneConfiguration {
 	         dependsOn="useBarnesHut=true", groups={"t-SNE Parameters"}, gravity=70)
 	public BoundedDouble theta=new BoundedDouble(0.0, 0.9, 2.0, false, false);
 	*/
+
 	@Tunable(description="Theta value for Barnes-Hut", 
 	         longDescription="The threshold value to activate Barnes-Hut.  This value reflects the accuracy "+
 	                         "of the simulation.  If theta=0 then the approximation is never used",
@@ -66,7 +66,7 @@ public class tSNEContext implements TSneConfiguration {
 	         longDescription="Center and scale the data before calculating the tSNE",
 	         exampleStringValue="true",
 	         groups={"t-SNE Parameters"}, gravity=76)
-	public boolean centerAndScale=true;
+	public boolean centerAndScale=false;
 
 	public tSNEContext(){}
 
@@ -79,7 +79,7 @@ public class tSNEContext implements TSneConfiguration {
 		Xin = xin;
 	}
 
-	int outputDims = 2;
+	int outputDims = 3;
 	public int getOutputDims() {
 		return outputDims;
 	}
@@ -152,7 +152,7 @@ public class tSNEContext implements TSneConfiguration {
 
 	@Override
 	public boolean usePca() {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -163,4 +163,16 @@ public class tSNEContext implements TSneConfiguration {
 
 	@Override
 	public boolean logNormalize() { return logNormalize; }
+
+	@Override
+	public List<String> getRowLabels() { return rowLabels; }
+
+	@Override
+	public void setRowLabels(List<String> labels) { this.rowLabels = labels; }
+
+	@Override
+	public List<String> getColumnLabels() { return columnLabels; }
+
+	@Override
+	public void setColumnLabels(List<String> labels) { this.columnLabels = labels; }
 }

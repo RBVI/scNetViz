@@ -436,7 +436,6 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			transpose = false;
 		else
 			transpose = transpose | transposed;
-
 		//
 		if (format == MTXFORMAT.ARRAY) {
 			if (type == MTXTYPE.REAL) {
@@ -479,29 +478,24 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		} else if (format == MTXFORMAT.COORDINATE) {
 			double[][] newArray = getDoubleMatrix(transpose, excludeRows);
 
-			// System.out.println("newArray.length = "+newArray.length+", newArray[0].length = "+newArray[0].length);
-			// System.out.println("nRows = "+getNRows()+", nCols = "+getNCols());
-			// if (excludeRows != null)
-			// 	System.out.println("nExclude = "+excludeRows.cardinality());
-
 			int maxFill = getNRows();
-			if (excludeRows != null) maxFill = maxFill-excludeRows.cardinality();
-			if (transpose) maxFill = getNCols();
-			for (int row = 0; row < maxFill; row++) {
+			for (int row = 0; row < newArray.length; row++) {
 				Arrays.fill(newArray[row], missing);
 			}
 			int skippedRows = 0;
+			int lastRow = 0;
 			for (int index = 0; index < nonZeros; index++) {
 				int row = intMatrix[index][0];
-				// System.out.println("Row = "+row);
+				if (row < lastRow) {
+					// We've wrapped
+					skippedRows = 0;
+				}
+				lastRow = row;
 				if (excludeRows != null && excludeRows.get(row)) {
 					skippedRows++;
 					continue;
 				} else if (excludeRows != null) {
-					if (row < skippedRows) // we've wrapped!
-						skippedRows = 0; // reset
-					else
-						row = row - skippedRows;
+					row = row - skippedRows;
 				}
 				int col = intMatrix[index][1];
 				// System.out.println("Row = "+row+", Col = "+col);
@@ -509,7 +503,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				if (type == MTXTYPE.INTEGER)
 					newArray[row][col] = (double)intMatrix[index][2];
 				else if (type == MTXTYPE.REAL) {
-					// System.out.println("row = "+row+", col = "+col);
+					// System.out.println("newArray["+row+"]["+col+"] = "+doubleMatrix[index][0]+", skippedRows = "+skippedRows);
 					newArray[row][col] = doubleMatrix[index][0];
 				}
 			}

@@ -1,7 +1,11 @@
 package edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ForkJoinPool;
@@ -28,6 +32,22 @@ public class MatrixOps {
 		return res;
 	}
 
+	public static String arrToStr(List<String> labels, int [] arr) {
+		StringBuilder builder = new StringBuilder();
+		for (int j = 0; j < arr.length; j++) {
+			builder.append(labels.get(j)+": "+arr[j]+"\n");
+		}
+		return builder.toString();
+	}
+
+	public static String arrToStr(List<String> labels, double [] arr) {
+		StringBuilder builder = new StringBuilder();
+		for (int j = 0; j < arr.length; j++) {
+			builder.append(labels.get(j)+": "+formatDouble(arr[j])+"\n");
+		}
+		return builder.toString();
+	}
+
 	public static String arrToStr(double [] arr) {
 		return arrToStr(arr, DEFAULT_TITLE, Integer.MAX_VALUE);
 	}
@@ -47,6 +67,33 @@ public class MatrixOps {
 			res += formatDouble(arr[j]) + ", ";
 		}
 		return res;
+	}
+
+	public static String doubleArrayToPrintString(List<String> labels, double[][] m, boolean transpose) {
+		StringBuffer str = new StringBuffer(m.length * m[0].length);
+
+		if (transpose) {
+			str.append("Dim:" + m[0].length + " x " + m.length + "\n");
+			for (int col = 0; col < m[0].length; col++) {
+				str.append(labels.get(col)+": ");
+				for (int row = 0; row < m.length; row++) {
+					String formatted = formatDouble(m[row][col]);
+					str.append(formatted+",");
+				}
+				str.append("\n");
+			}
+		} else {
+			str.append("Dim:" + m.length + " x " + m[0].length + "\n");
+			for (int row = 0; row < m.length; row++) {
+				str.append(labels.get(row)+": ");
+				for (int col = 0; col < m[0].length; col++) {
+					String formatted = formatDouble(m[row][col]);
+					str.append(formatted+",");
+				}
+				str.append("\n");
+			}
+		}
+		return str.toString();
 	}
 
 	public static String doubleArrayToPrintString(double[][] m) {
@@ -217,17 +264,17 @@ public class MatrixOps {
 	 */
 	public static double [][] centerAndScale(double [][] matrix) {
 		double [][] res = new double[matrix.length][matrix[0].length]; 
-		double [] means = colMeans(matrix);
+		double [] means = rowMeans(matrix);
 		for (int i = 0; i < res.length; i++) {
 			for (int j = 0; j < res[i].length; j++) {
-				res[i][j] = (matrix[i][j]-means[j]); 
+				res[i][j] = (matrix[i][j]-means[i]); 
 			}
 		}
 		
-		double [] std = colStddev(res);
+		double [] std = rowStddev(res);
 		for (int i = 0; i < res.length; i++) {
 			for (int j = 0; j < res[i].length; j++) {
-				res[i][j] = res[i][j] / (std[j] == 0 ? 1 : std[j]); 
+				res[i][j] = res[i][j] / (std[i] == 0 ? 1 : std[i]); 
 			}
 		}
 
@@ -525,6 +572,258 @@ public class MatrixOps {
 
 	public static double rnorm() {
 		return ThreadLocalRandom.current().nextGaussian();
+	}
+
+	/**
+	 * A re-implementation of the Seurat LogNormalize:
+	 *   "Normalize count data per cell and transform to log scale"
+	 *
+	 * The actual approach is to get the sum of each row, then for each value
+	 * replace the value with the log(1+(value/rowSum)*scaleFactor)
+	 * 
+	 * NOTE: this has been validated against seurat's LogNormalize routine
+	 */
+	// TODO: convert to use streams and/or ojAlgo
+	public static double[][] logNormalize(double[][] matrix, double scaleFactor) {
+		double [] colSums = new double[matrix[0].length];
+
+		/*
+		for (int row = 0; row < matrix.length; row++) {
+			rowSums[row] = 0.0;
+			for (int col = 0; col < matrix[0].length; col++) {
+				rowSums[row] += matrix[row][col];
+			}
+		}
+		*/
+		for (int col = 0; col < matrix[0].length; col++) {
+			colSums[col] = 0.0;
+			for (int row = 0; row < matrix.length; row++) {
+				colSums[col] += matrix[row][col];
+			}
+		}
+
+		for (int row = 0; row < matrix.length; row++) {
+			for (int col = 0; col < matrix[0].length; col++) {
+				if (matrix[row][col] != 0.0)
+					matrix[row][col] = Math.log1p(matrix[row][col] / colSums[col] * scaleFactor);
+			}
+		}
+		return matrix;
+	}
+
+	/**
+	 * Reduce the matrix requiring a minimum number of detected genes in a row and the minimum number
+	 * of genes detected in a column.  This is done by default as part of the "CreateSeuratObject" in
+	 * seurat.
+	 */
+	public static double[][] reduceMatrix(double[][] matrix, List<String> rowLabels, List<String> colLabels, 
+	                                      int minGenes, int minAssays) {
+		int rowCount[] = new int[matrix.length];
+		Arrays.fill(rowCount, 0);
+		int colCount[] = new int[matrix[0].length];
+		Arrays.fill(colCount, 0);
+
+		int newRows = 0;
+		int newCols = 0;
+		for (int row = 0; row < matrix.length; row++) {
+			for (int col = 0; col < matrix[0].length; col++) {
+				if (matrix[row][col] > 0.0) {
+					rowCount[row]++;
+					if (rowCount[row] == minGenes) {
+						newRows++;
+					}
+
+					colCount[col]++;
+					if (colCount[col] == minAssays)
+						newCols++;
+				}
+			}
+		}
+
+		double[][] newMatrix = new double[newRows][newCols];
+		List<String> newRowLabels = new ArrayList<String>(newRows);
+		List<String> newColLabels = new ArrayList<String>(newCols);
+		int newRow = 0;
+		for (int row = 0; row < matrix.length; row++) {
+			if (rowCount[row] < minGenes) continue;
+			newRowLabels.add(rowLabels.get(row));
+
+			int newCol = 0;
+			for (int col = 0; col < matrix[0].length; col++) {
+				if (colCount[col] < minAssays) continue;
+				newMatrix[newRow][newCol++] = matrix[row][col];
+
+				// We only want to do this the first time
+				if (newRow == 0)
+					newColLabels.add(colLabels.get(col));
+			}
+
+			newRow++;
+		}
+
+		rowLabels.clear();
+		rowLabels.addAll(newRowLabels);
+		colLabels.clear();
+		colLabels.addAll(newColLabels);
+		return newMatrix;
+	}
+
+	public static double[][] findVariableGenes(double[][] matrix, double xLowCutoff, double xHighCutoff, double yCutoff, 
+	                                           int maxBins, BitSet bits, List<String> geneLabels) {
+		int rows = matrix.length;
+		int cols = matrix[0].length;
+
+		// debug("/tmp/inputMatrix", doubleArrayToPrintString(geneLabels, matrix, false));
+
+		double[] means = new double[rows];
+		double[] vmr = new double[rows];
+
+		// Calculate our means;
+		for (int row = 0; row < rows; row++) {
+			means[row] = 0.0;
+			for (int col = 0; col < cols; col++) {
+				means[row] += Math.exp(matrix[row][col])-1;
+			}
+			means[row] = means[row] / cols;
+
+
+			vmr[row] = 0.0;
+			int nnZero = 0; // Count of non-zero values
+			for (int col = 0; col < cols; col++) {
+				if (matrix[row][col] > 0.0) {
+					double v = Math.exp(matrix[row][col])-1;
+					vmr[row] += Math.pow(v-means[row],2);
+					nnZero++;
+				}
+			}
+			vmr[row] = (vmr[row] + (cols - nnZero) * Math.pow(means[row], 2)) / (cols - 1);
+			if (means[row] == 0.0)
+				vmr[row] = 0.0;
+			else
+				vmr[row] = Math.log(vmr[row] / means[row]);
+
+			// Convert back to log space
+			means[row] = Math.log1p(means[row]);
+		}
+
+		// debug("/tmp/means", arrToStr(geneLabels, means));
+		// debug("/tmp/vmr", arrToStr(geneLabels, vmr));
+		
+		double[] bins = cut(means, maxBins);
+
+		// debug("/tmp/bins", arrToStr(bins));
+
+		int[] binCount = new int[bins.length];
+		for (int bin = 0; bin < bins.length; bin++) binCount[bin] = 0;
+
+		int[] indices = indexBins(means, bins, binCount);
+		// debug("/tmp/indices", arrToStr(geneLabels, indices));
+
+		double[][] meanSdY = tapply(vmr, indices, binCount, maxBins);
+		double[] dispersionScaled = new double[rows];
+		// System.out.println("Calculating scaled dispersion");
+		for (int row = 0; row < rows; row++) {
+			dispersionScaled[row] = 
+				(vmr[row] - meanSdY[indices[row]][0]) / meanSdY[indices[row]][1];
+		}
+
+		// debug("/tmp/dispersion", arrToStr(geneLabels, dispersionScaled));
+
+		// System.out.println("Looking for variable genes");
+
+		// OK, now we have means and dispersion calculated on a per/bin basis
+		// For each row, see if it passes our cutoffs
+		// BitSet bits = new BitSet(cols);
+		for (int row = 0; row < rows; row++) {
+			if ((means[row] > xLowCutoff && means[row] < xHighCutoff) &&
+		      dispersionScaled[row] > yCutoff)
+				bits.set(row);
+		}
+		double[][] newMat = new double[bits.cardinality()][cols];
+		int newRow = 0;
+		for (int row = 0; row < rows; row++) {
+			if (bits.get(row)) {
+				for (int col = 0; col < cols; col++) {
+					newMat[newRow][col] = matrix[row][col];
+				}
+				newRow++;
+			}
+		}
+
+		return newMat;
+	}
+
+	/**
+	 * Return the bins to equally cut the range of values
+	 * into.  Returns bins+1 values to get the starting and
+	 * ending bins;
+	 */
+	static double[] cut(double[] values, int bins) {
+		double minValue = Double.MAX_VALUE;
+		double maxValue = Double.MIN_VALUE;
+		for (double v: values) {
+			if (v < minValue) minValue = v;
+			if (v > maxValue) maxValue = v;
+		}
+		double range = maxValue - minValue;
+		double steps = range/bins;
+		double[] b = new double[bins+1];
+		b[0] = minValue - range*.001;
+		for (int i = 1; i <= bins; i++) {
+			b[i] = minValue+i*steps;
+		}
+		return b;
+	}
+
+	/**
+	 * Assign values to a bin.
+	 */
+	static int[] indexBins(double[] values, double[] bins, int[] binCount) {
+		int [] indices = new int[values.length];
+		for (int i = 0; i < values.length; i++) {
+			for (int b = 0; b < bins.length-1; b++) {
+				if (values[i] <= bins[b+1] && values[i] > bins[b]) {
+					indices[i] = b;
+					binCount[b]++;
+					break;
+				}
+			}
+		}
+		return indices;
+	}
+
+	/**
+	 * Simplistic version of the R tapply function.  Applies the proscribed
+	 * method to all of the values within the bin
+	 */
+	static double[][] tapply(double[] data, int[] bins, int[] binCount, int nBins) {
+		double[][] binnedResults = new double[nBins][2];
+
+		// Calculate the means
+		for (int d = 0; d < data.length; d++) {
+			// if d is NaN, continue
+			if (Double.isInfinite(data[d]) || Double.isNaN(data[d])) continue;
+			binnedResults[bins[d]][0] += data[d]/binCount[bins[d]];
+		}
+
+		for (int d = 0; d < data.length; d++) {
+			if (Double.isInfinite(data[d]) || Double.isNaN(data[d])) continue;
+			binnedResults[bins[d]][1] += Math.pow(data[d]-binnedResults[bins[d]][0], 2)/(binCount[bins[d]]-1);
+		}
+
+		for (int b = 0; b < nBins; b++) {
+			binnedResults[b][1] = Math.sqrt(binnedResults[b][1]);
+		}
+
+		/*
+		for (int b = 0; b < nBins; b++) {
+			System.out.println("Mean["+b+"] = "+binnedResults[b][0]);
+			System.out.println("Sd["+b+"] = "+binnedResults[b][1]);
+		}
+		*/
+
+		return binnedResults;
+
 	}
 
 	/**
@@ -1223,6 +1522,33 @@ public class MatrixOps {
 			var[i] = Math.sqrt(var[i]);
 		return var;
 	}
+	
+	public static double[] rowStddev(double[][] v) {
+		double[] var = rowVariance(v);
+		for (int i = 0; i < var.length; i++)
+			var[i] = Math.sqrt(var[i]);
+		return var;
+	}
+
+	public static double[] rowVariance(double[][] v) {
+		int rows = v.length;
+		int cols = v[0].length;
+		double[] var = new double[rows];
+		int degrees = (cols - 1);
+		double c;
+		double s;
+		for (int row = 0; row < rows; row++) {
+			c = 0;
+			s = 0;
+			for (int col = 0; col < cols; col++)
+				s += v[row][col];
+			s = s / cols;
+			for (int col = 0; col < cols; col++)
+				c += (v[row][col] - s) * (v[row][col] - s);
+			var[row] = c / degrees;
+		}
+		return var;
+	}
 
 	public static double[] variance(double[][] v) {
 		int m = v.length;
@@ -1242,6 +1568,22 @@ public class MatrixOps {
 			var[j] = c / degrees;
 		}
 		return var;
+	}
+
+	/**
+	 * @param matrix
+	 * @return a new vector with the column means of matrix
+	 */
+	public static double[] rowMeans(double[][] matrix) {
+		int rows = matrix.length;
+		int cols = matrix[0].length;
+		double[] mean = new double[rows];
+		for (int i = 0; i < rows; i++)
+			for (int j = 0; j < cols; j++)
+				mean[i] += matrix[i][j];
+		for (int i = 0; i < rows; i++)
+			mean[i] /= (double) cols;
+		return mean;
 	}
 
 	/**
@@ -1577,5 +1919,15 @@ public class MatrixOps {
 		return point;
 	}
 
+
+	public static void debug(String file, String message) {
+		try {
+		FileOutputStream out = new FileOutputStream(file);
+		out.write(message.getBytes());
+		out.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 }

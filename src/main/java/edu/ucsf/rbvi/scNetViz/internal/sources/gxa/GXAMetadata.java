@@ -45,15 +45,15 @@ public class GXAMetadata extends HashMap<String, Object> implements Metadata {
 		String json = "{";
 		for (String key: keySet()) {
 			Object v = get(key);
-			json += key+":";
+			json += "\""+key+"\":";
 			if (v instanceof List) {
 				json += "[";
 				for (Object lv: (List)v) {
-					json += "'"+lv.toString()+"'"+",";
+					json += "\""+lv.toString()+"\""+",";
 				}
 				json = json.substring(0, json.length()-1)+"],";
 			} else {
-				json+="'"+v.toString()+"',";
+				json+="\""+v.toString()+"\",";
 			}
 		}
 		return json.substring(0, json.length()-1)+"}";

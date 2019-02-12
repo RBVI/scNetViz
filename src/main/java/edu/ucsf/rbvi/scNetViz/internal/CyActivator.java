@@ -52,6 +52,7 @@ import edu.ucsf.rbvi.scNetViz.internal.tasks.SelectTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowResultsPanelTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETaskFactory;
 
 public class CyActivator extends AbstractCyActivator {
 
@@ -105,6 +106,18 @@ public class CyActivator extends AbstractCyActivator {
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
 			scNVManager.registerService(calcDE, TaskFactory.class, props);
+		}
+		
+		{
+			tSNETaskFactory calcTSNE = new tSNETaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "calculate tSNE");
+			props.setProperty(COMMAND_DESCRIPTION, "Calculate the tSNE embedding");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(calcTSNE, TaskFactory.class, props);
 		}
 		
 		{

@@ -1,5 +1,7 @@
 package edu.ucsf.rbvi.scNetViz.internal.algorithms.tSNE;
 
+import java.util.List;
+
 public interface TSneConfiguration {
 
 	double[][] getXin();
@@ -47,4 +49,12 @@ public interface TSneConfiguration {
 	boolean centerAndScale();
 
 	boolean logNormalize();
+
+	void setRowLabels(List<String> labels);
+
+	List<String> getRowLabels();
+
+	void setColumnLabels(List<String> labels);
+
+	List<String> getColumnLabels();
 }
