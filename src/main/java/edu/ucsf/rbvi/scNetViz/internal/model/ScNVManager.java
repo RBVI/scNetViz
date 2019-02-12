@@ -76,7 +76,12 @@ public class ScNVManager {
 		if (experimentMap.containsKey(accession)) {
 			Experiment exp = experimentMap.get(accession);
 			experimentMap.remove(accession);
-			frameMap.remove(exp);
+			if (frameMap.containsKey(exp)) {
+				frameMap.get(exp).dispose();
+				frameMap.remove(exp);
+			}
+
+			//TODO: what about results panel?
 		}
 	}
 

@@ -3,6 +3,7 @@ package edu.ucsf.rbvi.scNetViz.internal.view;
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -13,8 +14,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +43,7 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactor
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
+import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 
 public class TPMTab extends JPanel implements TaskObserver {
 	final ScNVManager manager;
@@ -63,9 +68,14 @@ public class TPMTab extends JPanel implements TaskObserver {
 		// Get the unsorted row labels
 		List<String> rowLabels = experiment.getMatrix().getRowLabels();
 		for (String gene: geneList) {
+			// System.out.println("Selecting gene: "+gene);
 			int index = rowLabels.indexOf(gene);
+			index = experimentTable.convertRowIndexToView(index);
 			experimentTable.getSelectionModel().addSelectionInterval(index, index);
+			experimentTable.scrollRectToVisible(new Rectangle(experimentTable.getCellRect(index, 0, true)));
 		}
+		String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+		ModelUtils.selectNodes(manager, accession, geneList);
 	}
 
 	@Override
@@ -163,6 +173,18 @@ public class TPMTab extends JPanel implements TaskObserver {
 
 		experimentTable = new ExperimentTable(manager, tableModel);
 		experimentTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		experimentTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent event) {
+				int[] rows = experimentTable.getSelectedRows();
+				if (rows.length == 0) return;
+				List<String> geneList = new ArrayList<>();
+				for (int row: rows) {
+					geneList.add(experimentTable.getValueAt(row, 0).toString());
+				}
+				String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+				ModelUtils.selectNodes(manager, accession, geneList);
+			}
+		});
 
 		JScrollPane scrollPane = new JScrollPane(experimentTable);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);

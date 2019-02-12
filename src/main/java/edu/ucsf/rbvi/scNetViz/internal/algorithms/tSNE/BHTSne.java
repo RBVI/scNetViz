@@ -50,6 +50,11 @@ public class BHTSne implements BarnesHutTSne {
 	@Override
 	public double[][] tsne(TSneConfiguration config, TaskMonitor monitor) {
 		this.monitor = monitor;
+
+		String IMPLEMENTATION_NAME = this.getClass().getSimpleName();
+		// System.out.println("X:Shape is = " + X.length + " x " + X[0].length);
+		monitor.showMessage(TaskMonitor.Level.INFO, "Running " + IMPLEMENTATION_NAME + ".");
+
 		return run(config);
 	}
 
@@ -93,7 +98,9 @@ public class BHTSne implements BarnesHutTSne {
 
 		System.gc();
 
-		if(parameterObject.usePca() && D > parameterObject.getInitialDims() && parameterObject.getInitialDims() > 0) {
+		if(parameterObject.usePca() && Xin[0].length > parameterObject.getInitialDims() && parameterObject.getInitialDims() > 0) {
+			monitor.showMessage(TaskMonitor.Level.INFO, "Using PCA to reduce dimensions");
+
 			PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis();
 			Xin = pca.pca(Xin, parameterObject.getInitialDims());
 			D = parameterObject.getInitialDims();

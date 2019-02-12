@@ -80,6 +80,11 @@ public class GXAListEntriesTask extends AbstractTask implements ObservableTask {
 			StringBuilder builder = new StringBuilder();
 			builder.append("[");
 			for (Metadata meta: metadata) {
+				if (species != null &&
+						!species.equalsIgnoreCase(meta.get(Metadata.SPECIES).toString()))
+					continue;
+				if (Integer.parseInt(meta.get(GXAMetadata.ASSAYS).toString()) < assays)
+					continue;
 				builder.append(((GXAMetadata)meta).toJSON()+",");
 			}
 			return builder.substring(0, builder.length()-1)+"]";

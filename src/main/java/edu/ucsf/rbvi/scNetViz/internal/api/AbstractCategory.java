@@ -118,6 +118,10 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		Arrays.fill(totalCount, 0);
 
 		for (Object key: catMap.keySet()) {
+			// Skip over the unused categories -- they probably didn't pass QC
+			if (key.toString().equals(Category.UNUSED_CAT))
+				continue;
+
 			calculateMeans(key, dMat, iMat, mtx.getNRows(), totalCount);
 		}
 		countMap.put("Total", totalCount); // Remember the total counts for each gene
@@ -232,9 +236,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()-1);
 		List<Callable <Map <Object, Map <String, double[]>>>> processes = new ArrayList<>();
 		for (Object cat: means.keySet()) {
-			if (!cat.equals(Category.UNUSED_CAT))
-				processes.add(new GetLogGER(category, cat, dDRthreshold, log2FCCutoff));
-				// logGER.put(cat, getLogGER(category, cat, dDRthreshold, log2FCCutoff));
+			processes.add(new GetLogGER(category, cat, dDRthreshold, log2FCCutoff));
 		}
 
 		try {

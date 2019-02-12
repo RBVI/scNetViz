@@ -233,10 +233,48 @@ public class ModelUtils {
 		return selectedNodes;
 	}
 
+	/**
+	 * This version of selectNodes is specifically to be used when genes are
+	 * selected in a table or on a chart
+	 */
+	public static void selectNodes(ScNVManager manager, String accession, List<String> geneList) {
+		List<CyNetwork> networks = getNetworksForAccession(manager, accession);
+		Map<String, Object> args = new HashMap<>();
+		for (CyNetwork net: networks) {
+			args.clear();
+			args.put("network", "SUID:"+net.getSUID());
+			args.put("nodeList", listToString("query term:", geneList));
+			manager.executeCommand("network", "select", args, true);
+		}
+	}
+
 	public static void selectNodes(CyNetwork network, List<CyNode> selectedNodes) {
 		for (CyNode node: selectedNodes) {
 			network.getRow(node).set(CyNetwork.SELECTED, true);
 		}
+	}
+
+	public static List<CyNetwork> getNetworksForAccession(ScNVManager manager, String accession) {
+		CyNetworkManager netManager = manager.getService(CyNetworkManager.class);
+		List<CyNetwork> nets = new ArrayList<>();
+
+		for (CyNetwork net: netManager.getNetworkSet()) {
+			if (net.getDefaultNetworkTable().getColumn(NAMESPACE, EXPERIMENT_ACCESSION) != null) {
+				String acc = net.getRow(net).get(NAMESPACE, EXPERIMENT_ACCESSION, String.class);
+				if (acc.equals(accession))
+					nets.add(net);
+
+			}
+		}
+		return nets;
+	}
+
+	public static String listToString(String prefix, List<String> list) {
+		StringBuilder str = new StringBuilder();
+		for (String s:list) {
+			str.append(prefix+s+",");
+		}
+		return str.substring(0, str.length()-1);
 	}
 
 	@SuppressWarnings("unchecked")
