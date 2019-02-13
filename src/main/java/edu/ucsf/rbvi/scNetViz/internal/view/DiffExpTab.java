@@ -117,8 +117,7 @@ public class DiffExpTab extends JPanel {
 				for (List<String> lbl: categoryLabelMap.values())
 					labels.addAll(lbl);
 
-				int selectedRow = currentCategory.getSelectedRow();
-				String selectedLabel = categoryLabelMap.get(currentCategory).get(selectedRow);
+				String selectedLabel = categoryLabelMap.get(currentCategory).get(diffExp.getCategoryRow());
 
 				JComboBox<String> categoryBox = 
 					new JComboBox<String>(labels.toArray(new String[1]));

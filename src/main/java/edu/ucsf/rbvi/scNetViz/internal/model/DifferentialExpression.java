@@ -125,6 +125,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 
 	public Experiment getExperiment() { return experiment; }
 
+	public int getCategoryRow() { return categoryRow; }
+
 	public SortableTableModel getTableModel() {
 		if (tableModel == null) {
 			tableModel = new DiffExpTableModel(this, category, categoryRow);

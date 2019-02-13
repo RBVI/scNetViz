@@ -13,6 +13,8 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings;
+import edu.ucsf.rbvi.scNetViz.internal.view.DiffExpTab;
+import edu.ucsf.rbvi.scNetViz.internal.view.ExperimentFrame;
 
 // Tunable to choose experiment?
 
@@ -34,9 +36,10 @@ public class CalculateDECommandTask extends AbstractTask implements ObservableTa
 	public ListSingleSelection<Category> getCategory() {
 		if (accession == null) return null;
 		List<Category> categories = accession.getSelectedValue().getCategories();
-		if (categories != null)
+		if (categories != null) {
 			category = new ListSingleSelection<>(categories);
-		else
+			category.setSelectedValue(accession.getSelectedValue().getDefaultCategory());
+		} else
 			category = null;
 		return category;
 	}
@@ -76,8 +79,25 @@ public class CalculateDECommandTask extends AbstractTask implements ObservableTa
 
 	public void run(TaskMonitor monitor) {
 		monitor.setTitle("Calculating Differential Expression");
-		Category cat = category.getSelectedValue();
+		Category cat;
+		Experiment exp;
 
+		if (manager.getExperiments().size() == 0) {
+			monitor.showMessage(TaskMonitor.Level.ERROR, "No experiments loaded");
+			throw new RuntimeException("No experiments loaded");
+		}
+
+		exp = accession.getSelectedValue();
+
+		if (category == null) {
+			cat = exp.getDefaultCategory();
+			if (cat == null) {
+				monitor.showMessage(TaskMonitor.Level.ERROR, "No category specified and no default is defined");
+				throw new RuntimeException("No category specified and no default is defined");
+			}
+		} else
+			cat = category.getSelectedValue();
+			
 		if (categoryRow == -1) {
 			categoryRow = cat.getSelectedRow();
 			if (categoryRow < 0)
@@ -92,15 +112,19 @@ public class CalculateDECommandTask extends AbstractTask implements ObservableTa
 			System.out.println("minPctCutoff = "+minPctCutoff);
 			System.out.println("logGERCutoff = "+logGERCutoff);
 			*/
-			diffExp = new DifferentialExpression(manager, category.getSelectedValue(), 
+			diffExp = new DifferentialExpression(manager, cat, 
 			                                     categoryRow, minPctCutoff/100, logGERCutoff);
-			category.getSelectedValue().getExperiment().setDiffExp(diffExp);
+			// System.out.println("diffExp = "+diffExp);
+			exp.setDiffExp(diffExp);
+			ExperimentFrame frame = manager.getExperimentFrame(exp);
+			DiffExpTab diffETab = new DiffExpTab(manager, exp, frame, cat, diffExp);
+			frame.addDiffExpContent("Diff Exp", diffETab);
 			monitor.showMessage(TaskMonitor.Level.INFO, 
 			                    "Calculations complete");
-		} catch (Exception exp) {
-			exp.printStackTrace();
+		} catch (Exception ex) {
+			ex.printStackTrace();
 			monitor.showMessage(TaskMonitor.Level.ERROR, 
-			                    "Unable complete differential expression calculation: "+exp.getMessage());
+			                    "Unable complete differential expression calculation: "+ex.getMessage());
 		}
 	}
 
