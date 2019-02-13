@@ -11,6 +11,7 @@ import java.util.Set;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.command.AvailableCommands;
 import org.cytoscape.command.CommandExecutorTaskFactory;
 import org.cytoscape.property.CyProperty;
@@ -26,6 +27,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.ExperimentFrame;
+import edu.ucsf.rbvi.scNetViz.internal.view.ScNVCytoPanel;
 
 public class ScNVManager {
 
@@ -39,6 +41,7 @@ public class ScNVManager {
 	final Map<Experiment, ExperimentFrame> frameMap;
 	final CyServiceRegistrar registrar; 
 	final ScNVSettings settings;
+	private ScNVCytoPanel cytoPanel;
 
 	public ScNVManager(final CyServiceRegistrar registrar) {
 		experimentMap = new HashMap<>();
@@ -82,6 +85,12 @@ public class ScNVManager {
 			}
 
 			//TODO: what about results panel?
+			if (cytoPanel != null) {
+				if (cytoPanel.getExperiment().equals(exp)) {
+					unregisterService(cytoPanel, CytoPanelComponent.class);
+					cytoPanel = null;
+				}
+			}
 		}
 	}
 
@@ -125,6 +134,12 @@ public class ScNVManager {
 	public void setSetting(ScNVSettings.SETTING setting, String value) {
 		settings.setSetting(setting, value);
 	}
+
+	public void setCytoPanel(ScNVCytoPanel panel) {
+		this.cytoPanel = panel;
+	}
+
+	public ScNVCytoPanel getCytoPanel() { return this.cytoPanel; }
 
 	public void executeCommand(String namespace, String command, Map<String, Object> args, boolean synchronous) {
 		executeCommand(namespace, command, args, null, synchronous);

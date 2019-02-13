@@ -18,29 +18,30 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
-public class GetExperimentTask extends AbstractTask implements ObservableTask {
+public class DeleteExperimentTask extends AbstractTask implements ObservableTask {
 	final ScNVManager manager;
-	Experiment experiment = null;
+	String experiment = null;
 
-	@Tunable (description="Experiment to show")
+	@Tunable (description="Experiment to delete")
 	public ListSingleSelection<String> accession = null;
 
-	public GetExperimentTask(final ScNVManager manager) {
+	public DeleteExperimentTask(final ScNVManager manager) {
 		super();
 		this.manager = manager;
 		accession = new ListSingleSelection<>(new ArrayList<>(manager.getExperimentAccessions()));
 	}
 
 	public void run(TaskMonitor monitor) {
-		experiment = manager.getExperiment(accession.getSelectedValue());
+		experiment = accession.getSelectedValue();
+		manager.deleteExperiment(experiment);
 	}
 
 	@ProvidesTitle
-	public String title() { return "GetExperiments"; }
+	public String title() { return "Deleete Experiments"; }
 
 	@Override
 	public List<Class<?>> getResultClasses() {
-		return Arrays.asList(String.class, JSONResult.class, Experiment.class);
+		return Arrays.asList(String.class, JSONResult.class);
 	}
 
 	@Override
@@ -49,23 +50,11 @@ public class GetExperimentTask extends AbstractTask implements ObservableTask {
 			return (R)experiment;
 		else if (type.equals(JSONResult.class)) {
 			JSONResult res = () -> {
-				return experiment.toJSON();
+				return "{}";
 			};
 			return (R)res;
 		} else {
-			StringBuilder builder = new StringBuilder();
-			builder.append("source: "+experiment.getSource().toString()+"\n");
-			builder.append("accession: "+experiment.getMetadata().get(Metadata.ACCESSION).toString()+"\n");
-			builder.append("species: "+experiment.getSpecies().toString()+"\n");
-			builder.append("description: "+experiment.getMetadata().get(Metadata.DESCRIPTION).toString()+"\n");
-			builder.append("rows: "+experiment.getMatrix().getNRows()+"\n");
-			builder.append("columns: "+experiment.getMatrix().getNCols()+"\n");
-			List<Category> categories = experiment.getCategories();
-			builder.append("categories: ");
-			for (Category cat: categories) {
-				builder.append("    "+cat.toString()+"\n");
-			}
-			return (R)builder.toString();
+			return (R)("Removed experiment: "+experiment);
 		}
 	}
 }

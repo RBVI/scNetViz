@@ -31,6 +31,8 @@ import static org.cytoscape.work.ServiceProperties.COMMAND;
 import static org.cytoscape.work.ServiceProperties.COMMAND_DESCRIPTION;
 import static org.cytoscape.work.ServiceProperties.COMMAND_NAMESPACE;
 import static org.cytoscape.work.ServiceProperties.COMMAND_SUPPORTS_JSON;
+import static org.cytoscape.work.ServiceProperties.COMMAND_EXAMPLE_JSON;
+
 import static org.cytoscape.work.ServiceProperties.ID;
 import static org.cytoscape.work.ServiceProperties.IN_MENU_BAR;
 import static org.cytoscape.work.ServiceProperties.IN_TOOL_BAR;
@@ -79,10 +81,12 @@ public class GXASource implements Source {
 		// Register our commands
 		{
 			Properties props = new Properties();
-			props.put(COMMAND_DESCRIPTION, "List all Gene Expression Atlas (GXA) entries available");
-			props.put(COMMAND_NAMESPACE, "scnetviz");
-			props.put(COMMAND, "list gxa entries");
-			props.put(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_DESCRIPTION, "List all Gene Expression Atlas (GXA) entries available");
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "list gxa entries");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+
 			scNVManager.registerService(new GXAListEntriesTaskFactory(manager, this), TaskFactory.class, props);
 		}
 		

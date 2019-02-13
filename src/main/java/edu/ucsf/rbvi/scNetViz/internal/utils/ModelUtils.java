@@ -135,6 +135,9 @@ public class ModelUtils {
 	}
 
 	public static Experiment getExperimentFromNetwork(ScNVManager manager, CyNetwork network) {
+		if (network.getRow(network) == null && network.getDefaultNetworkTable().getColumn(NAMESPACE, EXPERIMENT_ACCESSION) == null)
+			return null;
+
 		String accession = network.getRow(network).get(NAMESPACE, EXPERIMENT_ACCESSION, String.class);
 		Experiment exp = manager.getExperiment(accession);
 		return exp;

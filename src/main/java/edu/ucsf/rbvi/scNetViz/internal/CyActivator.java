@@ -43,6 +43,7 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDECommandTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.DeleteExperimentTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCategoryTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportDiffExpTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportExperimentTaskFactory;
@@ -106,6 +107,22 @@ public class CyActivator extends AbstractCyActivator {
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
 			scNVManager.registerService(calcDE, TaskFactory.class, props);
+		}
+		
+		{
+			DeleteExperimentTaskFactory deleteExp = new DeleteExperimentTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(TITLE, "Remove Experiment");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz");
+			props.setProperty(IN_TOOL_BAR, "FALSE");
+			props.setProperty(IN_MENU_BAR, "TRUE");
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "delete experiment");
+			props.setProperty(COMMAND_DESCRIPTION, "Remove an experiment");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(deleteExp, TaskFactory.class, props);
 		}
 		
 		{
