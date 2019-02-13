@@ -211,12 +211,10 @@ public class GXAEntryFrame extends JFrame {
 		@Override
 		public void run(TaskMonitor taskMonitor) {
 			taskMonitor.setTitle("Loading Single Cell Expression Atlas experiment "+accession);
-			GXAExperiment experiment = (GXAExperiment)gxaSource.getExperiment(accession, taskMonitor);
+			GXAExperiment experiment = (GXAExperiment)gxaSource.getExperiment(accession, taskMonitor, true);
 			if (experiment != null)
 				scNVManager.addExperiment(accession,experiment);
 			gxaSource.showEntriesTable(false);
-			experiment.fetchClusters(taskMonitor);
-			experiment.fetchDesign(taskMonitor);
 
 			// Now, depending on the setting of our checkbox, either show
 			// the experiments table or process the data

@@ -126,23 +126,33 @@ public class GXASource implements Source {
 		return new ArrayList<>(metadataMap.values());
 	}
 
+	@Override
 	public Experiment getExperiment(String accession) {
-		return getExperiment(metadataMap.get(accession), null);
+		return getExperiment(metadataMap.get(accession), null, false);
 	}
 
-	public Experiment getExperiment(Metadata metadata) {
-		return getExperiment(metadata, null);
+	public Experiment getExperiment(String accession, boolean showTable) {
+		return getExperiment(metadataMap.get(accession), null, showTable);
 	}
 
-	public Experiment getExperiment(String accession, TaskMonitor monitor) {
-		return getExperiment(metadataMap.get(accession), monitor);
+	public Experiment getExperiment(Metadata metadata, boolean showTable) {
+		return getExperiment(metadata, null, showTable);
 	}
 
-	public Experiment getExperiment(Metadata metadata, TaskMonitor monitor) {
+	public Experiment getExperiment(String accession, TaskMonitor monitor, boolean showTable) {
+		return getExperiment(metadataMap.get(accession), monitor, showTable);
+	}
+
+	public Experiment getExperiment(Metadata metadata, TaskMonitor monitor, boolean showTable) {
 		GXAExperiment exp = new GXAExperiment(scNVManager, this, (GXAMetadata)metadata);
 		exp.fetchMTX (monitor);
-		exp.fetchClusters();
-		exp.fetchDesign();
+		if (showTable) {
+			exp.fetchClusters(monitor);
+			exp.fetchDesign(monitor);
+		} else {
+			exp.fetchClusters();
+			exp.fetchDesign();
+		}
 		return exp;
 	}
 
