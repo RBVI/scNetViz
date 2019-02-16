@@ -107,6 +107,8 @@ public class ScNVCytoPanel extends JPanel
 		accession = this.experiment.getMetadata().get(Metadata.ACCESSION).toString();
 		categories = this.experiment.getCategories();
 
+		manager.setCytoPanel(this);
+
 		categoryLabelMap = new HashMap<>();
 		for (Category cat: categories) {
 			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
@@ -147,6 +149,10 @@ public class ScNVCytoPanel extends JPanel
 		experiment = ModelUtils.getExperimentFromNetwork(manager, network);
 		if (experiment == null) return;
 		setExperiment(experiment);
+	}
+
+	public Experiment getExperiment() {
+		return experiment;
 	}
 
 	public void setExperiment(Experiment experiment) {

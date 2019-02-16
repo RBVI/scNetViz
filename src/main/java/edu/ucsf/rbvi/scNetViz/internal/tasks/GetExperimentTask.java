@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.tasks;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.SwingUtilities;
@@ -22,16 +23,16 @@ public class GetExperimentTask extends AbstractTask implements ObservableTask {
 	Experiment experiment = null;
 
 	@Tunable (description="Experiment to show")
-	public ListSingleSelection<Experiment> accession = null;
+	public ListSingleSelection<String> accession = null;
 
 	public GetExperimentTask(final ScNVManager manager) {
 		super();
 		this.manager = manager;
-		accession = new ListSingleSelection<>(manager.getExperiments());
+		accession = new ListSingleSelection<>(new ArrayList<>(manager.getExperimentAccessions()));
 	}
 
 	public void run(TaskMonitor monitor) {
-		experiment = accession.getSelectedValue();
+		experiment = manager.getExperiment(accession.getSelectedValue());
 	}
 
 	@ProvidesTitle

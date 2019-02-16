@@ -31,6 +31,8 @@ import static org.cytoscape.work.ServiceProperties.COMMAND;
 import static org.cytoscape.work.ServiceProperties.COMMAND_DESCRIPTION;
 import static org.cytoscape.work.ServiceProperties.COMMAND_NAMESPACE;
 import static org.cytoscape.work.ServiceProperties.COMMAND_SUPPORTS_JSON;
+import static org.cytoscape.work.ServiceProperties.COMMAND_EXAMPLE_JSON;
+
 import static org.cytoscape.work.ServiceProperties.ID;
 import static org.cytoscape.work.ServiceProperties.IN_MENU_BAR;
 import static org.cytoscape.work.ServiceProperties.IN_TOOL_BAR;
@@ -79,10 +81,12 @@ public class GXASource implements Source {
 		// Register our commands
 		{
 			Properties props = new Properties();
-			props.put(COMMAND_DESCRIPTION, "List all Gene Expression Atlas (GXA) entries available");
-			props.put(COMMAND_NAMESPACE, "scnetviz");
-			props.put(COMMAND, "list gxa entries");
-			props.put(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_DESCRIPTION, "List all Gene Expression Atlas (GXA) entries available");
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "list gxa entries");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+
 			scNVManager.registerService(new GXAListEntriesTaskFactory(manager, this), TaskFactory.class, props);
 		}
 		
@@ -122,23 +126,33 @@ public class GXASource implements Source {
 		return new ArrayList<>(metadataMap.values());
 	}
 
+	@Override
 	public Experiment getExperiment(String accession) {
-		return getExperiment(metadataMap.get(accession), null);
+		return getExperiment(metadataMap.get(accession), null, false);
 	}
 
-	public Experiment getExperiment(Metadata metadata) {
-		return getExperiment(metadata, null);
+	public Experiment getExperiment(String accession, boolean showTable) {
+		return getExperiment(metadataMap.get(accession), null, showTable);
 	}
 
-	public Experiment getExperiment(String accession, TaskMonitor monitor) {
-		return getExperiment(metadataMap.get(accession), monitor);
+	public Experiment getExperiment(Metadata metadata, boolean showTable) {
+		return getExperiment(metadata, null, showTable);
 	}
 
-	public Experiment getExperiment(Metadata metadata, TaskMonitor monitor) {
+	public Experiment getExperiment(String accession, TaskMonitor monitor, boolean showTable) {
+		return getExperiment(metadataMap.get(accession), monitor, showTable);
+	}
+
+	public Experiment getExperiment(Metadata metadata, TaskMonitor monitor, boolean showTable) {
 		GXAExperiment exp = new GXAExperiment(scNVManager, this, (GXAMetadata)metadata);
 		exp.fetchMTX (monitor);
-		exp.fetchClusters();
-		exp.fetchDesign();
+		if (showTable) {
+			exp.fetchClusters(monitor);
+			exp.fetchDesign(monitor);
+		} else {
+			exp.fetchClusters();
+			exp.fetchDesign();
+		}
 		return exp;
 	}
 

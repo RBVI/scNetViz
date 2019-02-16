@@ -19,10 +19,13 @@ public class GXAListEntriesTask extends AbstractTask implements ObservableTask {
 	final ScNVManager scManager;
 	final GXASource gxaSource;
 
-	@Tunable(description="Species to include in list")
-	public String species;
+	@Tunable(description="Species to include in list", context="nogui", required=false,
+	         longDescription="Species name.  This should be the actual "+
+                           "taxonomic name (e.g. homo sapiens, not human)",
+           exampleStringValue="homo sapiens")
+	public String species = null;
 
-	@Tunable(description="Minimum number of assays to include")
+	@Tunable(description="Minimum number of assays to include", context="nogui", required=false)
 	public int assays = 0;
 
 	public GXAListEntriesTask(final ScNVManager scManager, final GXASource gxaSource) {
@@ -80,6 +83,11 @@ public class GXAListEntriesTask extends AbstractTask implements ObservableTask {
 			StringBuilder builder = new StringBuilder();
 			builder.append("[");
 			for (Metadata meta: metadata) {
+				if (species != null &&
+						!species.equalsIgnoreCase(meta.get(Metadata.SPECIES).toString()))
+					continue;
+				if (Integer.parseInt(meta.get(GXAMetadata.ASSAYS).toString()) < assays)
+					continue;
 				builder.append(((GXAMetadata)meta).toJSON()+",");
 			}
 			return builder.substring(0, builder.length()-1)+"]";

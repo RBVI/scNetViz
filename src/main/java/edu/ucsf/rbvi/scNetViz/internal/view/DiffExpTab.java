@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -28,6 +29,8 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.BevelBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 
 import org.cytoscape.work.TaskIterator;
@@ -43,6 +46,7 @@ import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.HeatMapTask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
+import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 
 public class DiffExpTab extends JPanel {
 	final ScNVManager manager;
@@ -86,8 +90,12 @@ public class DiffExpTab extends JPanel {
 		List<String> rowLabels = experiment.getMatrix().getRowLabels();
 		for (String gene: geneList) {
 			int index = rowLabels.indexOf(gene);
+			index = diffExpTable.convertRowIndexToView(index);
 			diffExpTable.getSelectionModel().addSelectionInterval(index, index);
+			diffExpTable.scrollRectToVisible(new Rectangle(diffExpTable.getCellRect(index, 0, true)));
 		}
+		String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+		ModelUtils.selectNodes(manager, accession, geneList);
 	}
 
 	private void init() {
@@ -109,8 +117,7 @@ public class DiffExpTab extends JPanel {
 				for (List<String> lbl: categoryLabelMap.values())
 					labels.addAll(lbl);
 
-				int selectedRow = currentCategory.getSelectedRow();
-				String selectedLabel = categoryLabelMap.get(currentCategory).get(selectedRow);
+				String selectedLabel = categoryLabelMap.get(currentCategory).get(diffExp.getCategoryRow());
 
 				JComboBox<String> categoryBox = 
 					new JComboBox<String>(labels.toArray(new String[1]));
@@ -277,7 +284,9 @@ public class DiffExpTab extends JPanel {
 						boolean posOnly = Boolean.parseBoolean(manager.getSetting(SETTING.POSITIVE_ONLY));
 
 						createNetwork.setEnabled(false);
+
 						// TODO: Add max genes somewhere
+						// TODO: Get the result of the network creation to support selection
 						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, pv, log2FCCutoff, topNGenes,
 						                                               posOnly, maxGenes);
 						manager.executeTasks(new TaskIterator(task));
@@ -360,6 +369,18 @@ public class DiffExpTab extends JPanel {
 
 		diffExpTable = new SimpleTable(manager, tableModel);
 		diffExpTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		diffExpTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent event) {
+				int[] rows = diffExpTable.getSelectedRows();
+				if (rows.length == 0) return;
+				List<String> geneList = new ArrayList<>();
+				for (int row: rows) {
+					geneList.add(diffExpTable.getValueAt(row, 0).toString());
+				}
+				String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+				ModelUtils.selectNodes(manager, accession, geneList);
+			}
+		});
 
 		JScrollPane diffExpPane = new JScrollPane(diffExpTable);
 		diffExpPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);

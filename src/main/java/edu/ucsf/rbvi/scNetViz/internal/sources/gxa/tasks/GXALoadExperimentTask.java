@@ -38,7 +38,7 @@ public class GXALoadExperimentTask extends AbstractTask {
 		}
 		taskMonitor.setTitle("Loading Single Cell Expression Atlas Experiment: "+accession);
 		List<Metadata> metadata = gxaSource.getMetadata();
-		Experiment experiment = gxaSource.getExperiment(accession, taskMonitor);
+		Experiment experiment = gxaSource.getExperiment(accession, taskMonitor, showTable);
 
 		if (showTable) {
 			insertTasksAfterCurrentTask(new ShowExperimentTableTask(scManager, experiment));

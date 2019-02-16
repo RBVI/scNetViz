@@ -76,6 +76,11 @@ public class ExperimentFrame extends JFrame {
 		titles[2] = title;
 		JPanel panel = (JPanel)tabbedPane.getComponentAt(2);
 		panel.removeAll();
+		if (content == null) {
+			tabbedPane.setEnabledAt(2, false);
+			diffExpTab = null;
+			return;
+		}
 		panel.add(content, BorderLayout.CENTER);
 		tabbedPane.setEnabledAt(2, true);
 		tabbedPane.setSelectedIndex(2);

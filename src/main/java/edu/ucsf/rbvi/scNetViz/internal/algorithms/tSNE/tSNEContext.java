@@ -18,7 +18,7 @@ public class tSNEContext implements TSneConfiguration {
 	                         "pca is not called.",
 	         exampleStringValue="30",
 	         groups={"t-SNE Parameters"}, gravity=66, format="#0")
-	public int dimensions=20;
+	public int dimensions=10;
 
 	@Tunable(description="Perplexity", 
 	         longDescription="Perplexity is the balance between the local and global aspects of the data.",
@@ -28,9 +28,9 @@ public class tSNEContext implements TSneConfiguration {
 
 	@Tunable(description="Number of Iterations", 
 	         longDescription="The number of iterations of the algorithm to perform",
-	         exampleStringValue="2000",
+	         exampleStringValue="5000",
 	         groups={"t-SNE Parameters"}, gravity=68)
-	public int iterations=2000;
+	public int iterations=5000;
 
 	@Tunable(description="Use Barnes-Hut approximation", 
 	         longDescription="The Barnes-Hut approximation is a way to reduce the computational complexity "+
@@ -52,9 +52,9 @@ public class tSNEContext implements TSneConfiguration {
 	@Tunable(description="Theta value for Barnes-Hut", 
 	         longDescription="The threshold value to activate Barnes-Hut.  This value reflects the accuracy "+
 	                         "of the simulation.  If theta=0 then the approximation is never used",
-	         exampleStringValue="0.5",
+	         exampleStringValue="0.001",
 	         groups={"t-SNE Parameters"}, gravity=70)
-	public BoundedDouble theta=new BoundedDouble(0.0, 0.9, 2.0, false, false);
+	public BoundedDouble theta=new BoundedDouble(0.0, 0.001, 2.0, false, false);
 
 	@Tunable(description="Log normalize the data", 
 	         longDescription="Normalize the data by taking the log of each data point",

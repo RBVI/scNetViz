@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -92,13 +93,28 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		// Clear the selection list
 		catTable.clearSelection();
 		catTable.setColumnSelectionAllowed(true);
+		catTable.setRowSelectionAllowed(false);
 
 		// Get the unsorted row labels
-		List<String> colLabels = experiment.getMatrix().getColLabels();
-		for (String assay: assayList) {
-			int index = colLabels.indexOf(assay);
-			catTable.setColumnSelectionInterval(index, index);
+		List<String> colLabels = currentCategory.getMatrix().getColLabels();
+
+		/*
+		System.out.println("ColLabels = ");
+		for (String lbl: colLabels) {
+			System.out.println(lbl);
 		}
+		*/
+
+		for (String assay: assayList) {
+			// System.out.println("Selecting assay: "+assay);
+			int index = colLabels.indexOf(assay);
+			index = catTable.convertColumnIndexToView(index);
+			catTable.setColumnSelectionInterval(index, index);
+			catTable.scrollRectToVisible(new Rectangle(catTable.getCellRect(0, index, true)));
+		}
+
+		catTable.setColumnSelectionAllowed(false);
+		catTable.setRowSelectionAllowed(true);
 	}
 
 
@@ -291,6 +307,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 						if (catRow < 0)
 							catRow = cat.getDefaultRow();
 						if (catRow >= 0) {
+							System.out.println("cat row = "+catRow);
+							System.out.println("Current category = "+cat);
 							List<String> rowLabels = cat.getMatrix().getRowLabels();
 							title += " ("+rowLabels.get(catRow)+")";
 						}
