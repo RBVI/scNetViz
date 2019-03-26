@@ -325,7 +325,7 @@ public class ModelUtils {
 	public static VisualStyle getVisualStyle(ScNVManager manager, String name) {
 		VisualMappingManager vizMapManager = manager.getService(VisualMappingManager.class);
 		for (VisualStyle style: vizMapManager.getAllVisualStyles()) {
-			if (name.equals(style.getTitle()))
+			if (style.getTitle().startsWith(name))
 				return style;
 		}
 		return null;
