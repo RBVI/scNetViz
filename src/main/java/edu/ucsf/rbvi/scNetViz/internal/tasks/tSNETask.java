@@ -59,9 +59,9 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 	public void run(TaskMonitor monitor) {
 		monitor.setTitle(NAME);
 		monitor.setStatusMessage("Running " + NAME);
-		context.cancelled = false;
 		MatrixOps matrixOps = new MatrixOps();
-		
+		context.cancelled = false;
+
 		if (matrix == null && accession == null) {
 			monitor.showMessage(TaskMonitor.Level.ERROR, "Matrix is null");
 			return;
@@ -70,7 +70,6 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 			matrix = (DoubleMatrix)experiment.getMatrix();
 		}
 
-		context.cancelled = false;
 
 		// System.out.println("Getting matrix");
 		List<String> rowLabels = new ArrayList<String>(matrix.getRowLabels());
@@ -84,6 +83,8 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 		Xin = MatrixOps.reduceMatrix(Xin, rowLabels, colLabels, 1, 1);
 		// System.out.println("New size = "+Xin.length+"X"+Xin[0].length);
 		// MatrixOps.debug("/tmp/reducedMatrix", MatrixOps.doubleArrayToPrintString(rowLabels, Xin, false));
+		
+		if (context.cancelled) return;
 
 		// Scale the data if we're supposed to
 		if (context.logNormalize()) {
@@ -92,11 +93,15 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 			// MatrixOps.debug("/tmp/normalizedMatrix", MatrixOps.doubleArrayToPrintString(rowLabels, Xin, false));
 		}
 
+		if (context.cancelled) return;
+
 		if (context.centerAndScale()) {
 			// System.out.println("Scaling matrix");
 			Xin = MatrixOps.centerAndScale(Xin);
 			// MatrixOps.debug("/tmp/scaledMatrix", MatrixOps.doubleArrayToPrintString(rowLabels, Xin, false));
 		}
+
+		if (context.cancelled) return;
 
 		// if (context.findVariableGenes()) {
 		// System.out.println("Getting variable genes");
@@ -112,11 +117,15 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 		*/
 		// }
 
+		if (context.cancelled) return;
+
 		// Get the transposed matrix
 		// Write the transposed matrix out
 		Xin = matrixOps.transpose(Xin);
 		// MatrixOps.debug("/tmp/transposedMatrix", MatrixOps.doubleArrayToPrintString(colLabels, Xin, false));
 		context.setXin(Xin);
+
+		if (context.cancelled) return;
 
 		context.setRowLabels(rowLabels);
 		context.setColumnLabels(colLabels);
@@ -138,6 +147,8 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 			return;
 		}
 
+		if (context.cancelled) return;
+
 		tsneResult = tsne.tsne(context, monitor);
 		if (tsneResult == null && context.cancelled) {
 			monitor.setStatusMessage("Cancelled by user");
@@ -148,6 +159,7 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 
 	public void cancel() {
 		context.cancelled = true;
+		System.out.println("Cancelling task");
 	}
 
 	public double[][] getResults() { return tsneResult; }

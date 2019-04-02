@@ -77,6 +77,8 @@ public class GXAEntryFrame extends JFrame {
 				gxaSource.loadGXAEntries(null);
 			}
 
+			// TOP panel == "Search experiments"
+
 			// Left panel == "Select an experiment"
 			// Right panel == settings
 			// Middle panel == two buttons

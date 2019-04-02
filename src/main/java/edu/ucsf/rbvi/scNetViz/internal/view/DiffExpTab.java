@@ -287,6 +287,7 @@ public class DiffExpTab extends JPanel {
 
 						// TODO: Add max genes somewhere
 						// TODO: Get the result of the network creation to support selection
+						posOnly = positiveOnly.isSelected();
 						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, pv, log2FCCutoff, topNGenes,
 						                                               posOnly, maxGenes);
 						manager.executeTasks(new TaskIterator(task));

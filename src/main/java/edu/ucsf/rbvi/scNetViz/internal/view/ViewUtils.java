@@ -102,6 +102,7 @@ public class ViewUtils {
 		double[][] tSNEresults = exp.getTSNE();
 
 		if (tSNEresults == null) {
+			System.out.println("Creating tSNE task");
 			Task tSNETask = new tSNETask((DoubleMatrix)exp.getMatrix());
 			manager.executeTasks(new TaskIterator(tSNETask), new TaskObserver() {
 				@Override
@@ -110,8 +111,10 @@ public class ViewUtils {
 
 				@Override
 				public void taskFinished(ObservableTask obsTask) {
+					System.out.println("task finished");
 					if (obsTask instanceof tSNETask) {
 						double[][] tSNEResults = ((tSNETask)obsTask).getResults();
+						if (tSNEResults == null) return;
 						exp.setTSNE(tSNEResults);
 						showtSNE(manager, exp, category, catRow, geneRow, title);
 					}

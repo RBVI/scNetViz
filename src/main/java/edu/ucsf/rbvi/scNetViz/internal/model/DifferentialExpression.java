@@ -170,6 +170,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		double[] logGER = logGERMap.get(cat).get("logFC");
 		double[] pValues = logGERMap.get(cat).get("pValue");
 		// double[] fdr = fdrMap.get(cat);
+		//
+		System.out.println("getGeneList: nGenes = "+nGenes+", maxGenes = "+maxGenes+", positiveOnly = "+positiveOnly);
 
 		if (nGenes > 0) {
 			return getTopGenes(null, pValues, nGenes);

@@ -37,7 +37,7 @@ public class GXAEntryTable extends JTable {
 	final GXASource gxaSource;
 	List<Metadata> entries;
 
-	static String[] columnNames = {"Loaded", "Experiment", "Assays", "Comparisons", "Organisms", "Experimental Variables"};
+	static String[] columnNames = {"Loaded", "Experiment", "Cells", "Comparisons", "Organisms", "Experimental Variables"};
 
 	static Color alternateColor = new Color(234,255,234);
 

@@ -12,7 +12,7 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
 public class GXAEntryTableModel extends AbstractTableModel {
 	List<Metadata> entries = null;
 
-	static String[] columnNames = {"Accession", "Loaded", "Experiment", "Assays", "Comparisons", "Organisms", "Experimental Variables"};
+	static String[] columnNames = {"Accession", "Loaded", "Experiment", "Cells", "Comparisons", "Organisms", "Experimental Variables"};
 
 	public GXAEntryTableModel (List<Metadata> entries) {
 		super();

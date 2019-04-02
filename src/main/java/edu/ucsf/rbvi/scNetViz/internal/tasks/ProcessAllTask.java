@@ -19,7 +19,7 @@ public class ProcessAllTask extends AbstractTask implements TaskObserver {
 	final ScNVManager manager;
 	Experiment experiment = null;
 	// int maxGenes = 100000;
-	int maxGenes = 500;
+	int maxGenes = 50;
 
 	public ProcessAllTask(final ScNVManager manager) {
 		super();
