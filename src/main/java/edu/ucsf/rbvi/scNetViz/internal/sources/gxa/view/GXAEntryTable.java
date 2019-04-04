@@ -58,7 +58,7 @@ public class GXAEntryTable extends JTable {
 		header.setDefaultRenderer(new HeaderRenderer(this));
 		header.setFont(new Font("SansSerif", Font.BOLD, 10));
 
-		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		// Figure out the row heights
 		for (int i = 0; i < entries.size(); i++) {
@@ -99,13 +99,24 @@ public class GXAEntryTable extends JTable {
 	public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
 		Component returnComp = super.prepareRenderer(renderer, row, column);
 
+		returnComp.setFont(new Font("SansSerif", Font.PLAIN, 10));
 		if (!returnComp.getBackground().equals(getSelectionBackground())) {
 			Color bg = (row % 2 == 0 ? alternateColor : Color.WHITE);
 			returnComp.setBackground(bg);
-			returnComp.setFont(new Font("SansSerif", Font.PLAIN, 10));
 			bg = null;
 		}
+		if (column == 2) {
+			// Set the tooltip for this column
+			String ttText = createToolTip(getModel().getValueAt(row, column).toString());
+			((JLabel)returnComp).setToolTipText(ttText);
+		} else {
+			((JLabel)returnComp).setToolTipText(null);
+		}
 		return returnComp;
+	}
+
+	private String createToolTip(String tt) {
+		return "<html><body><div style=\"width:300px\">"+tt+"</div></body></html>";
 	}
 
 

@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.sources.gxa.view;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
@@ -73,6 +74,41 @@ public class GXAEntryTableModel extends AbstractTableModel {
 				return nlList(entry.get(GXAMetadata.FACTORS));
 		}
 		return null;
+	}
+
+	public List<Integer> search(String searchText) {
+		String lcString = searchText.toLowerCase();
+		List<Integer> results = new ArrayList<>();
+		for (int i = 0; i < entries.size(); i++) {
+			Metadata entry = entries.get(i);
+			if (contains(entry, GXAMetadata.ACCESSION, searchText) ||
+			    contains(entry, GXAMetadata.DESCRIPTION, searchText) ||
+					contains(entry, GXAMetadata.SPECIES, searchText))
+				results.add(i);
+		}
+		return results;
+	}
+
+	public List<Integer> searchRegex(String searchText) {
+		// Search all accessions, organisms, and descriptions
+		List<Integer> results = new ArrayList<>();
+		for (int i = 0; i < entries.size(); i++) {
+			Metadata entry = entries.get(i);
+			if (matches(entry, GXAMetadata.ACCESSION, searchText) ||
+			    matches(entry, GXAMetadata.DESCRIPTION, searchText) ||
+					matches(entry, GXAMetadata.SPECIES, searchText))
+				results.add(i);
+		}
+		return results;
+	}
+
+	private boolean matches(Metadata entry, String key, String text) {
+		return ((String)entry.get(key)).matches(text);
+	}
+
+	private boolean contains(Metadata entry, String key, String text) {
+		String str = ((String)entry.get(key)).toLowerCase();
+		return str.contains(text);
 	}
 
 	private String nlList(Object list) {

@@ -18,6 +18,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -129,7 +130,7 @@ public class ExperimentFrame extends JFrame {
 		}
 
 		{
-			JLabel experimentLabel = new ExperimentLabel(experiment);
+			JTextPane experimentLabel = new ExperimentLabel(experiment);
 			headerPane.add(Box.createHorizontalGlue());
 			headerPane.add(experimentLabel);
 			headerPane.add(Box.createHorizontalGlue());
