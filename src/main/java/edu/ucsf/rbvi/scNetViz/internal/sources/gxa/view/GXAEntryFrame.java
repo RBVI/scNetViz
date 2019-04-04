@@ -224,16 +224,13 @@ public class GXAEntryFrame extends JFrame {
 	}
 
 	private void loadExperiment(String acc, boolean dontAnalyze) {
-		System.out.println("loadExperiment: "+acc);
 		// Have we already loaded this experiment
 		Experiment exp = scNVManager.getExperiment(acc);
 		if (exp == null) {
-			System.out.println("Exp = null");
 			// No, load it
 			TaskIterator tasks = new TaskIterator(new LoadExperimentTask(acc, dontAnalyze));
 			scNVManager.executeTasks(tasks);
 		} else {
-			System.out.println("Exp = "+exp);
 			TaskIterator tasks = new TaskIterator(new ShowExperimentTableTask(scNVManager, exp));
 			scNVManager.executeTasks(tasks);
 		}

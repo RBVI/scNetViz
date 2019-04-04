@@ -199,7 +199,7 @@ public class ScNVCytoPanel extends JPanel
 		{
 			JPanel pnl = new JPanel();
 			pnl.setLayout(new BoxLayout(pnl, BoxLayout.LINE_AXIS));
-			experimentLabel = new ExperimentLabel(experiment);
+			experimentLabel = new ExperimentLabel(experiment, pnl.getBackground());
 			pnl.add(Box.createRigidArea(new Dimension(2,0)));
 			pnl.add(experimentLabel);
 			labelPanel.add(pnl);

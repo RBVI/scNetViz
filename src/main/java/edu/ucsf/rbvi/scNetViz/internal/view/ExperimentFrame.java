@@ -130,7 +130,7 @@ public class ExperimentFrame extends JFrame {
 		}
 
 		{
-			JTextPane experimentLabel = new ExperimentLabel(experiment);
+			JTextPane experimentLabel = new ExperimentLabel(experiment, headerPane.getBackground());
 			headerPane.add(Box.createHorizontalGlue());
 			headerPane.add(experimentLabel);
 			headerPane.add(Box.createHorizontalGlue());
