@@ -37,11 +37,21 @@ public class CSVReader {
 
 	public static List<String[]> readCSV(TaskMonitor taskMonitor, InputStream stream, String name) throws IOException {
 		LogUtils.log(taskMonitor, TaskMonitor.Level.INFO, "Reading CSV file '"+name.toString()+"'");
+		if (FileUtils.isGzip(name)) {
+			// System.out.println("Creating gzip stream");
+			try {
+			stream = FileUtils.getGzipStream(stream);
+			} catch (Exception e) { e.printStackTrace(); }
+			// System.out.println("- done");
+		}
+		// System.out.println("Creating buffered reader");
 		BufferedReader input = new BufferedReader(new InputStreamReader(stream));
+			// System.out.println("- done");
 		return readCSV(taskMonitor, input);
 	}
 
 	public static List<String[]> readCSV(TaskMonitor taskMonitor, BufferedReader input) throws IOException, FileNotFoundException {
+		System.out.println("readCSV");
 
 		// Read each row
 		List<String[]> rowList = new ArrayList<>();
@@ -53,6 +63,7 @@ public class CSVReader {
 		} while (true);
 
 		LogUtils.log(taskMonitor, TaskMonitor.Level.INFO, "Found "+rowList.size()+" rows with "+rowList.get(0).length+" labels each");
+		System.out.println("readCSV - done");
 		return rowList;
 	}
 
@@ -106,7 +117,8 @@ public class CSVReader {
 				splitString = input.split(delimiter, -1);
 				if (splitString.length == 1) {
 					delimiter = null;
-					throw new RuntimeException("Only tabs and commas are supported delimiters");
+					return splitString;
+					// throw new RuntimeException("Only tabs and commas are supported delimiters");
 				}
 			}
 		}

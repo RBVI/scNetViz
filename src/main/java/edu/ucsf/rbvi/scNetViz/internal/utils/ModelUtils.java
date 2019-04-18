@@ -384,4 +384,13 @@ public class ModelUtils {
 		if (table.getColumn(namespace, column) == null)
 			table.createListColumn(namespace, column, clazz, false);
 	}
+
+	public static boolean isInteger(String v) {
+		try {
+			int a = Integer.parseInt(v.trim());
+			return true;
+		} catch (NumberFormatException e) {
+			return false;
+		}
+	}
 }

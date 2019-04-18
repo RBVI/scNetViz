@@ -24,6 +24,7 @@ import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.utils.FileUtils;
 import edu.ucsf.rbvi.scNetViz.internal.utils.MatrixUtils;
 
 public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerMatrix {
@@ -192,14 +193,24 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void setRowTable(List<String[]> rowTable) {
 		this.rowTable = rowTable;
 		if (rowTable != null)
-			rowLabels = getLabels(rowTable);
+			rowLabels = getLabels(rowTable, rowKey);
+	}
+
+	public void setRowTable(List<String[]> rowTable, int index) {
+		rowKey = index;
+		setRowTable(rowTable);
+	}
+
+	public void setColumnTable(List<String[]> colTable, int index) {
+		columnKey = index;
+		setColumnTable(colTable);
 	}
 
 	public void setColumnTable(List<String[]> colTable) {
 		this.colTable = colTable;
 		if (colTable != null) {
-			// System.out.println("Column tables has "+colTable.size()+" entries");
-			colLabels = getLabels(colTable);
+			System.out.println("Column tables has "+colTable.size()+" entries with key index "+columnKey);
+			colLabels = getLabels(colTable, columnKey);
 		}
 	}
 
@@ -210,15 +221,21 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 	public void readMTX(TaskMonitor taskMonitor, InputStream stream, String mmInputName) throws FileNotFoundException, IOException {
 		this.name = mmInputName;
+		boolean invert = false;
 
-		//System.out.println("Reading "+name);
+		if (FileUtils.isGzip(mmInputName)) {
+			System.out.println("Getting gzip stream");
+			stream = FileUtils.getGzipStream(stream);
+		}
+
+		// System.out.println("Reading "+name);
 
 		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 		// Read the first line
 		String header = reader.readLine();
 		parseHeader(header);
 
-		//System.out.println("Got header");
+		// System.out.println("Got header");
 
 		// Now, read until we find the dimensions
 		comments = new ArrayList<>();
@@ -234,8 +251,8 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		String[] dims = line.split("\\s+");
 		nRows = Integer.parseInt(dims[0]);
 		nCols = Integer.parseInt(dims[1]);
-		//System.out.println("nRows = "+nRows);
-		//System.out.println("nCols = "+nCols);
+		// System.out.println("nRows = "+nRows);
+		// System.out.println("nCols = "+nCols);
 		if (format == MTXFORMAT.ARRAY) {
 			if (type == MTXTYPE.REAL) {
 				doubleMatrix = new double[nRows][nCols];
@@ -261,7 +278,33 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				doubleMatrix = new double[nonZeros][1]; // actual data
 			}
 			for (int index = 0; index < nonZeros; index++) {
-				readCoordinateLine(index, reader);
+				if (invert) {
+					readCoordinateLine(nonZeros-index-1, reader);
+				} else {
+					readCoordinateLine(index, reader);
+				}
+				/*
+				if (index == 1) {
+					System.out.println("intMatrix[0][0] = "+intMatrix[0][0]);
+					System.out.println("intMatrix[1][0] = "+intMatrix[1][0]);
+				}
+				*/
+				if (index == 1 && intMatrix[0][0] > intMatrix[1][0]) {
+					// Ugh.  It's inverted.
+					invert = true;
+					System.out.println("INVERT!");
+					intMatrix[nonZeros-1][0] = intMatrix[0][0];
+					intMatrix[nonZeros-1][1] = intMatrix[0][1];
+					intMatrix[nonZeros-2][0] = intMatrix[1][0];
+					intMatrix[nonZeros-2][1] = intMatrix[1][1];
+					if (type == MTXTYPE.INTEGER) {
+						intMatrix[nonZeros-1][2] = intMatrix[0][2];
+						intMatrix[nonZeros-2][2] = intMatrix[1][2];
+					} else {
+						doubleMatrix[nonZeros-1][0] = doubleMatrix[0][0];
+						doubleMatrix[nonZeros-2][0] = doubleMatrix[1][0];
+					}
+				}
 			}
 		}
 	}
@@ -398,6 +441,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	}
 
 	public double getDoubleValue(int row, int col) {
+		// System.out.println("getDoubleValue("+row+","+col+")");
 		if (transposed) { int rtmp = row; row = col; col = rtmp; }
 		if (format == MTXFORMAT.ARRAY) {
 			if (type == MTXTYPE.REAL)
@@ -407,10 +451,12 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		} else {
 			// MTXFORMAT.COORDINATE
 			int index = findIndex(row, col);
+			// System.out.println("findIndex = "+index);
 			if (index >= 0) {
 				if (type == MTXTYPE.REAL) {
 					return doubleMatrix[index][0];
 				} else if (type == MTXTYPE.INTEGER) {
+					// System.out.println("value for "+row+","+col+"="+(double)intMatrix[index][2]);
 					return (double)intMatrix[index][2];
 				}
 			}
@@ -500,9 +546,10 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				int col = intMatrix[index][1];
 				// System.out.println("Row = "+row+", Col = "+col);
 				if (transpose) { int rtmp = row; row = col; col = rtmp; }
-				if (type == MTXTYPE.INTEGER)
+				if (type == MTXTYPE.INTEGER) {
 					newArray[row][col] = (double)intMatrix[index][2];
-				else if (type == MTXTYPE.REAL) {
+					// System.out.println("newArray["+row+"]["+col+"] = "+intMatrix[index][2]+", skippedRows = "+skippedRows);
+				} else if (type == MTXTYPE.REAL) {
 					// System.out.println("newArray["+row+"]["+col+"] = "+doubleMatrix[index][0]+", skippedRows = "+skippedRows);
 					newArray[row][col] = doubleMatrix[index][0];
 				}
@@ -592,6 +639,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		}
 		if (type == MTXTYPE.INTEGER) {
 			intMatrix[index][2] = Integer.parseInt(vals[2]);
+			// System.out.println("value["+intMatrix[index][0]+"]["+intMatrix[index][1]+"] = "+intMatrix[index][2]);
 		} else if (type == MTXTYPE.REAL) {
 			doubleMatrix[index][0] = Double.parseDouble(vals[2]);
 			// System.out.println("value["+intMatrix[index][0]+"]["+intMatrix[index][1]+"] = "+doubleMatrix[index][0]);

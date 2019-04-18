@@ -99,21 +99,21 @@ public class FileSource implements Source {
 	}
 
 	public Experiment getExperiment(String accession) {
-		return getExperiment(metadataMap.get(accession), null);
+		return getExperiment(metadataMap.get(accession), null, false);
 	}
 
 	public Experiment getExperiment(FileMetadata metadata) {
-		return getExperiment(metadata, null);
+		return getExperiment(metadata, null, false);
 	}
 
-	public Experiment getExperiment(String accession, TaskMonitor monitor) {
-		return getExperiment(metadataMap.get(accession), monitor);
+	public Experiment getExperiment(String accession, TaskMonitor monitor, boolean skipFirst) {
+		return getExperiment(metadataMap.get(accession), monitor, skipFirst);
 	}
 
-	public Experiment getExperiment(FileMetadata metadata, TaskMonitor monitor) {
+	public Experiment getExperiment(FileMetadata metadata, TaskMonitor monitor, boolean skipFirst) {
 		FileExperiment exp = new FileExperiment(scNVManager, this, metadata);
 		if (exp != null) {
-			exp.readMTX(monitor);
+			exp.readMTX(monitor, skipFirst);
 			metadataMap.put((String)metadata.get(Metadata.ACCESSION), metadata);
 		}
 		return exp;

@@ -23,8 +23,11 @@ public class FileExperimentTask extends AbstractTask {
 	          tooltip="Species information is required for network generation")
 	public String species = "Homo sapiens";
 
-	@Tunable (description="Zip file with MTX matrix and headers",params="input=true")
+	@Tunable (description="File or directory with MTX matrix and headers",params="input=true")
 	public File file;
+
+	@Tunable (description="Skip first line of header files")
+	public boolean skipFirst = false;
 
 	@Tunable (description="Show experiment table after loading",context="nogui")
 	public boolean showTable = true;
@@ -41,7 +44,7 @@ public class FileExperimentTask extends AbstractTask {
 		taskMonitor.setStatusMessage("Reading mtx file");
 		FileMetadata metadata = new FileMetadata(file);
 		metadata.put(Metadata.SPECIES, species);
-		Experiment experiment = fileSource.getExperiment(metadata, taskMonitor);
+		Experiment experiment = fileSource.getExperiment(metadata, taskMonitor, skipFirst);
 
 		if (showTable) {
 			// Show the experiment
