@@ -23,6 +23,8 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 
+// TODO: Consider random subsampling?
+// TODO: Expose filter criteria
 public class tSNETask extends AbstractTask implements ObservableTask {
 	public static String SHORTNAME = "tsne";
 	public static String NAME = "t-Distributed Stochastic Neighbor";
@@ -80,7 +82,9 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 
 		long start = System.currentTimeMillis();
 		
+		// TODO: Expose filter criteria
 		Xin = MatrixOps.reduceMatrix(Xin, rowLabels, colLabels, 1, 1);
+
 		// System.out.println("New size = "+Xin.length+"X"+Xin[0].length);
 		// MatrixOps.debug("/tmp/reducedMatrix", MatrixOps.doubleArrayToPrintString(rowLabels, Xin, false));
 		

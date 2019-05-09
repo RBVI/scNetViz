@@ -378,6 +378,10 @@ public class ScNVCytoPanel extends JPanel
 
 					args.clear();
 					// Show the enrichment panel
+					manager.executeCommand("string", "hide enrichment", args, null, true);
+
+					args.clear();
+					// Show the enrichment panel
 					manager.executeCommand("string", "show enrichment", args, null, true);
 
 					args.clear();
