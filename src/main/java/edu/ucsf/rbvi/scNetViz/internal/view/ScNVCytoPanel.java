@@ -20,6 +20,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -198,7 +199,7 @@ public class ScNVCytoPanel extends JPanel
 		{
 			JPanel pnl = new JPanel();
 			pnl.setLayout(new BoxLayout(pnl, BoxLayout.LINE_AXIS));
-			experimentLabel = new ExperimentLabel(experiment);
+			experimentLabel = new ExperimentLabel(experiment, pnl.getBackground());
 			pnl.add(Box.createRigidArea(new Dimension(2,0)));
 			pnl.add(experimentLabel);
 			labelPanel.add(pnl);
@@ -296,7 +297,7 @@ public class ScNVCytoPanel extends JPanel
 			                                      manager.getSetting(SETTING.TOP_GENES));
 			maxGenes = ViewUtils.addLabeledField(comparePanel, "Max genes:", 
 			                                     manager.getSetting(SETTING.MAX_GENES));
-			comparePanel.add(ViewUtils.addJCheckBox(this, "Positive only", "positiveOnly", positiveOnly));
+			comparePanel.add(ViewUtils.addJCheckBox(this, "Positive only", "positiveOnlyComp", positiveOnly));
 			comparePanel.add(ViewUtils.addButton(this, "Create Networks", "createNetworks"));
 			comparePanel.add(Box.createRigidArea(new Dimension(0, 15)));
 			comparePanel.add(ViewUtils.addButton(this, "View DE Table", "DETable"));
@@ -342,6 +343,13 @@ public class ScNVCytoPanel extends JPanel
 	public void actionPerformed(ActionEvent event) {
 		String command = event.getActionCommand();
 		switch (command) {
+			case "positiveOnlyComp":
+				{
+					JCheckBox po = (JCheckBox)event.getSource();
+					positiveOnly = po.isSelected();
+					break;
+				}
+
 			case "entireNetwork":
 			case "positiveOnly":
 			case "negativeOnly":

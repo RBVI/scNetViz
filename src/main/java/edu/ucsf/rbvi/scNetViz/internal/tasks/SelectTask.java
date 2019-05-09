@@ -20,7 +20,7 @@ public class SelectTask extends AbstractTask {
 	@Tunable(description="Genes to select", context="nogui")
 	public String genes = null;
 
-	@Tunable(description="Assays (cells) to select", context="nogui")
+	@Tunable(description="Cells to select", context="nogui")
 	public String cells = null;
 
 	@Tunable(description="Accession of experiment", context="nogui")

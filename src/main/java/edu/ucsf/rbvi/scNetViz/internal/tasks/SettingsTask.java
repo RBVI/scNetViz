@@ -35,7 +35,7 @@ public class SettingsTask extends AbstractTask {
 	@Tunable(description="Maximum Genes", 
 	         tooltip="<html>Limits the number of genes per category to use for network creation</html>",
 	         groups={"Network Creation Settings"})
-	public int maxGenes = 500;
+	public int maxGenes = 50;
 
 	@Tunable(description="Positive only", 
 	         tooltip="<html>Only include genes with a positive Log2FC</html>",

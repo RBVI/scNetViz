@@ -58,7 +58,7 @@ public class FileExperimentTableModel extends SortableTableModel {
 
 	@Override
 	public Object getValueAt(int row, int column) {
-		//System.out.println("getValueAt: "+row+","+column);
+		// System.out.println("getValueAt: "+row+","+column);
 		switch (column) {
 			case 0:
 				return matrixMarket.getRowLabel(row);

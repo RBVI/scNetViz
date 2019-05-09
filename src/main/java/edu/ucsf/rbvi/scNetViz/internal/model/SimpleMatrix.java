@@ -26,6 +26,8 @@ public abstract class SimpleMatrix implements Matrix {
 
 	protected List<String> rowLabels;
 	protected List<String> colLabels;
+	protected int columnKey = LABEL_INDEX;
+	protected int rowKey = LABEL_INDEX;
 
 	protected String name;
 
@@ -91,12 +93,15 @@ public abstract class SimpleMatrix implements Matrix {
 		return label;
 	}
 
-	public static List<String> getLabels(List<String[]> labelTable) {
+	public static List<String> getLabels(List<String[]> labelTable, int index) {
 		List<String> labels = new ArrayList<>(labelTable.size());
 		for (String[] row: labelTable) {
-			labels.add(row[LABEL_INDEX]);
+			labels.add(row[index]);
 		}
 		return labels;
+	}
+	public static List<String> getLabels(List<String[]> labelTable) {
+		return getLabels(labelTable, LABEL_INDEX);
 	}
 
 }

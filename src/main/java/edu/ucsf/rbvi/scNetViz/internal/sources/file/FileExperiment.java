@@ -18,8 +18,12 @@ import javax.swing.table.TableModel;
 
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.GZIPInputStream;
 
 import org.apache.log4j.Logger;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.service.util.CyServiceRegistrar;
@@ -34,6 +38,8 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
+import edu.ucsf.rbvi.scNetViz.internal.utils.FileUtils;
+import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 
 public class FileExperiment implements Experiment {
 	final Logger logger;
@@ -54,6 +60,9 @@ public class FileExperiment implements Experiment {
 	final FileMetadata fileMetadata;
 	DifferentialExpression diffExp = null;
 	FileExperimentTableModel tableModel = null;
+
+	int rowIndexKey = 1;
+	int columnIndexKey = 1;
 
 	public FileExperiment (ScNVManager manager, FileSource source, FileMetadata metadata) {
 		this.scNVManager = manager;
@@ -117,45 +126,105 @@ public class FileExperiment implements Experiment {
 	public DifferentialExpression getDiffExp() { return diffExp; }
 	public void setDiffExp(DifferentialExpression de) { diffExp = de; }
 
-	public void readMTX (final TaskMonitor monitor) {
+	public void readMTX (final TaskMonitor monitor, boolean skipFirst) {
+		// Initialize
+		mtx = null;
+		colTable = null;
+		rowTable = null;
+
 		// Get the URI
 		File mtxFile = (File)fileMetadata.get(FileMetadata.FILE);
 
+		// Three possibilities:
+		// 1) Directory
+		// 2) ZIP file
+		// 3) Tar.gz file
+
 		try {
-			FileInputStream inputStream = new FileInputStream(mtxFile);
-
-			try {
-				ZipInputStream zipStream = new ZipInputStream(inputStream);
-
+			if (mtxFile.isDirectory()) {
+				System.out.println("Directory");
+				for (File f: mtxFile.listFiles()) {
+					readFile(monitor, f, skipFirst);
+				}
+			} else if (FileUtils.isZip(mtxFile.getName())) {
+				System.out.println("Zip file");
+				ZipInputStream zipStream = FileUtils.getZipInputStream(mtxFile);
 				ZipEntry entry;
 				while ((entry = zipStream.getNextEntry()) != null) {
-					String name = entry.getName();
-					// System.out.println("Name = "+name);
-					if (name.endsWith(".mtx_cols")) {
-						colTable = CSVReader.readCSV(monitor, zipStream, name);
-						if (mtx != null) 
-							mtx.setColumnTable(colTable);
-					} else if (name.endsWith(".mtx_rows")) {
-						rowTable = CSVReader.readCSV(monitor, zipStream, name);
-						if (mtx != null) 
-							mtx.setRowTable(rowTable);
-					} else if (name.endsWith(".mtx")) {
-						mtx = new MatrixMarket(scNVManager, null, null);
-						mtx.setRowTable(rowTable);
-						mtx.setColumnTable(colTable);
-						mtx.readMTX(monitor, zipStream, name);
-					}
+					readFile(monitor, entry.getName(), zipStream, skipFirst);
 					zipStream.closeEntry();
 				}
 				zipStream.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-				inputStream.close();
+			} else if (FileUtils.isTar(mtxFile.getName())) {
+				System.out.println("Tar file");
+				TarArchiveInputStream tarStream = FileUtils.getTarInputStream(mtxFile);
+				TarArchiveEntry entry;
+				while ((entry = tarStream.getNextTarEntry()) != null) {
+					System.out.println("Tar entry: "+entry.getName());
+					if (FileUtils.isGzip(entry.getName())) {
+						InputStream stream = FileUtils.getGzipStream(tarStream);
+						readFile(monitor, entry.getName(), stream, skipFirst);
+					} else {
+						readFile(monitor, entry.getName(), tarStream, skipFirst);
+					}
+				}
+				tarStream.close();
 			}
-		} catch (Exception e) {}
+		} catch(IOException e) {}
+
 		scNVManager.addExperiment(accession, this);
 		System.out.println("mtx has "+mtx.getNRows()+" rows and "+mtx.getNCols()+" columns");
+	}
+
+	private void readFile(TaskMonitor monitor, File f, boolean skipFirst) throws IOException {
+		InputStream stream = new FileInputStream(f);
+		// if (FileUtils.isGzip(f.getName())) {
+		// 	stream = FileUtils.getGzipStream(stream);
+		// }
+		readFile(monitor, f.getName(), stream, skipFirst);
+	}
+
+	private void readFile(TaskMonitor monitor, String name, InputStream stream, 
+	                      boolean skipFirst) throws IOException {
+		if (isColumnFile(name)) {
+			// System.out.println("Reading columns from "+name);
+			colTable = CSVReader.readCSV(monitor, stream, name);
+			// System.out.println("colTable has "+colTable.size()+" columns");
+
+			if (skipFirst) {
+				if (colTable.size() > 1)
+					colTable.remove(0);
+				// See if the first line is a header
+				// FileUtils.skipHeader(colTable);
+			}
+
+			columnIndexKey = getColumnIndex(colTable, name);
+			if (mtx != null) {
+				mtx.setColumnTable(colTable, columnIndexKey);
+			}
+		} else if (isRowFile(name)) {
+			rowTable = CSVReader.readCSV(monitor, stream, name);
+			// System.out.println("rowTable has "+rowTable.size()+" rows");
+			if (skipFirst) {
+				if (rowTable.size() > 1)
+					rowTable.remove(0);
+				// See if the first line is a header
+				// FileUtils.skipHeader(rowTable);
+			}
+
+			rowIndexKey = getRowIndex(rowTable, name);
+			if (mtx != null) {
+				mtx.setRowTable(rowTable, rowIndexKey);
+			}
+		} if (isMtxFile(name)) {
+			mtx = new MatrixMarket(scNVManager, null, null);
+			if (rowTable != null)
+				mtx.setRowTable(rowTable, rowIndexKey);
+			if (colTable != null)
+				mtx.setColumnTable(colTable, columnIndexKey);
+
+			mtx.readMTX(monitor, stream, name);
+		}
 	}
 
 	public String toString() {
@@ -165,7 +234,7 @@ public class FileExperiment implements Experiment {
 	public String toHTML() {
 		return fileMetadata.toHTML();
 	}
-	
+
 	public String toJSON() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
@@ -181,6 +250,44 @@ public class FileExperiment implements Experiment {
 			builder.append(cat.toJSON()+",");
 		}
 		return builder.substring(0, builder.length()-1)+"]}";
+	}
+
+	private boolean isColumnFile(String fileName) {
+		String name = FileUtils.baseName(fileName);
+		if (name.endsWith(".mtx_cols") || name.contains("colLabels") || name.startsWith("barcodes")) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean isRowFile(String fileName) {
+		String name = FileUtils.baseName(fileName);
+		if (name.endsWith(".mtx_rows") || name.contains("rowLabels") || name.startsWith("features")) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean isMtxFile(String fileName) {
+		if (fileName.endsWith(".mtx") || fileName.endsWith(".mtx.gz"))
+			return true;
+		return false;
+	}
+
+	private int getColumnIndex(List<String[]> table, String name) {
+		System.out.println("getColumnIndex of "+name);
+		System.out.println("getColumnIndex table size = "+table.size());
+		System.out.println("getColumnIndex table length = "+table.get(0).length);
+		if (table.size() > 0 && table.get(0).length == 1 && name.contains("barcodes"))
+			return 0;
+		return 1;
+	}
+
+	private int getRowIndex(List<String[]> table, String name) {
+		System.out.println("Row Table size = "+table.size());
+		if (table.size() > 0 && name.contains("features"))
+			return 0;
+		return 1;
 	}
 
 }

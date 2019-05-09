@@ -325,7 +325,7 @@ public class ModelUtils {
 	public static VisualStyle getVisualStyle(ScNVManager manager, String name) {
 		VisualMappingManager vizMapManager = manager.getService(VisualMappingManager.class);
 		for (VisualStyle style: vizMapManager.getAllVisualStyles()) {
-			if (name.equals(style.getTitle()))
+			if (style.getTitle().startsWith(name))
 				return style;
 		}
 		return null;
@@ -383,5 +383,14 @@ public class ModelUtils {
 	public static void createListColumnIfNeeded(CyTable table, String namespace, String column, Class<?> clazz) {
 		if (table.getColumn(namespace, column) == null)
 			table.createListColumn(namespace, column, clazz, false);
+	}
+
+	public static boolean isInteger(String v) {
+		try {
+			int a = Integer.parseInt(v.trim());
+			return true;
+		} catch (NumberFormatException e) {
+			return false;
+		}
 	}
 }

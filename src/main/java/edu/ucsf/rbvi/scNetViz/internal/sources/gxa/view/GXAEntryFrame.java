@@ -7,6 +7,8 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 import java.io.File;
 
@@ -25,6 +27,7 @@ import javax.swing.JLabel;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import org.cytoscape.application.swing.CytoPanelComponent2;
@@ -39,6 +42,7 @@ import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAExperiment;
@@ -77,12 +81,43 @@ public class GXAEntryFrame extends JFrame {
 				gxaSource.loadGXAEntries(null);
 			}
 
+
 			// Left panel == "Select an experiment"
-			// Right panel == settings
+			// Right panel == settings & search
 			// Middle panel == two buttons
 			JPanel rightPanel = new JPanel();
 			rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.LINE_AXIS));
 			{
+				JLabel label = new JLabel(IconManager.ICON_SEARCH);
+				label.setFont(iconFont);
+				JTextField search = new JTextField(16);
+				{
+					search.addActionListener(new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							String searchText = search.getText();
+							GXAEntryTableModel model = (GXAEntryTableModel)gxaEntryTable.getModel();
+							gxaEntryTable.clearSelection();
+							List<Integer> matches = model.search(searchText);
+							for (Integer row: matches) {
+								int modelRow = gxaEntryTable.getRowSorter().convertRowIndexToModel(row);
+								gxaEntryTable.getSelectionModel().addSelectionInterval(modelRow, modelRow);
+							}
+							search.setText("");
+						}
+					});
+					search.addFocusListener(new FocusListener() {
+						public void focusGained(FocusEvent e) {
+							search.setText("");
+						}
+						public void focusLost(FocusEvent e) {}
+					});
+				}
+				search.setText("Search");
+				search.setMaximumSize(new Dimension(200,30));
+				rightPanel.add(label);
+				rightPanel.add(search);
+				rightPanel.add(Box.createRigidArea(new Dimension(10,0)));
+
 				JButton settings = new JButton(IconManager.ICON_COG);
 				settings.setFont(iconFont);
 				settings.setBorderPainted(false);
@@ -135,8 +170,7 @@ public class GXAEntryFrame extends JFrame {
 					viewButton.setFont(new Font("SansSerif", Font.BOLD, 10));
 					viewButton.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
-							TaskIterator tasks = new TaskIterator(new LoadExperimentTask(selectedAcc, true));
-							scNVManager.executeTasks(tasks);
+							loadExperiment(selectedAcc, true);
 						}
 					});
 					viewButton.setEnabled(false);
@@ -186,8 +220,20 @@ public class GXAEntryFrame extends JFrame {
 
 	public void loadExperiment(String acc) {
 		boolean dontAnalyze = Boolean.parseBoolean(scNVManager.getSetting(SETTING.DONT_ANALYZE));
-		TaskIterator tasks = new TaskIterator(new LoadExperimentTask(acc, dontAnalyze));
-		scNVManager.executeTasks(tasks);
+		loadExperiment(acc, dontAnalyze);
+	}
+
+	private void loadExperiment(String acc, boolean dontAnalyze) {
+		// Have we already loaded this experiment
+		Experiment exp = scNVManager.getExperiment(acc);
+		if (exp == null) {
+			// No, load it
+			TaskIterator tasks = new TaskIterator(new LoadExperimentTask(acc, dontAnalyze));
+			scNVManager.executeTasks(tasks);
+		} else {
+			TaskIterator tasks = new TaskIterator(new ShowExperimentTableTask(scNVManager, exp));
+			scNVManager.executeTasks(tasks);
+		}
 	}
 
 	// public boolean isLoadOnly() {

@@ -7,14 +7,14 @@ import org.cytoscape.property.CyProperty;
 
 public class ScNVSettings extends AbstractConfigDirPropsReader {
 	public enum SETTING {
-		MAX_GENES("maxGenes", "500"),
+		MAX_GENES("maxGenes", "50"),
 		DE_FC_CUTOFF("deFcCutoff", "0.5"),
 		DE_MIN_PCT_CUTOFF("deMinPctCutoff", "10"),
 		TOP_GENES("topGenes",""),
 		NET_PV_CUTOFF("netPvCutoff","0.05"),
 		NET_FC_CUTOFF("netFcCutoff","1.00"),
 		POSITIVE_ONLY("positiveOnly","false"),
-		DONT_ANALYZE("dontAnalyze","false"),
+		DONT_ANALYZE("dontAnalyze","true"),
 		HEATMAP_COUNT("heatMapCount","20");
 
 		String name;

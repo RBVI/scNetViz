@@ -28,9 +28,9 @@ public class tSNEContext implements TSneConfiguration {
 
 	@Tunable(description="Number of Iterations", 
 	         longDescription="The number of iterations of the algorithm to perform",
-	         exampleStringValue="5000",
+	         exampleStringValue="1000",
 	         groups={"t-SNE Parameters"}, gravity=68)
-	public int iterations=5000;
+	public int iterations=1000;
 
 	@Tunable(description="Use Barnes-Hut approximation", 
 	         longDescription="The Barnes-Hut approximation is a way to reduce the computational complexity "+
@@ -38,7 +38,7 @@ public class tSNEContext implements TSneConfiguration {
 	                         "center of mass of all of those nodes",
 	         exampleStringValue="false",
 	         groups={"t-SNE Parameters"}, gravity=69)
-	public boolean useBarnesHut=true;
+	public boolean useBarnesHut=false;
 
 	/*
 	@Tunable(description="Theta value for Barnes-Hut", 
@@ -53,7 +53,7 @@ public class tSNEContext implements TSneConfiguration {
 	         longDescription="The threshold value to activate Barnes-Hut.  This value reflects the accuracy "+
 	                         "of the simulation.  If theta=0 then the approximation is never used",
 	         exampleStringValue="0.001",
-	         groups={"t-SNE Parameters"}, gravity=70)
+	         groups={"t-SNE Parameters"}, gravity=70, dependsOn="useBarnesHut=true")
 	public BoundedDouble theta=new BoundedDouble(0.0, 0.001, 2.0, false, false);
 
 	@Tunable(description="Log normalize the data", 
