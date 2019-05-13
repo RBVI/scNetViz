@@ -209,6 +209,8 @@ public class ModelUtils {
 			network.getRow(node).set(CyNetwork.SELECTED, false);
 		}
 
+		selectedNodes = new ArrayList<>();
+
 		// Our row is encoded in the network name
 		String categoryRow = network.getRow(network).get(CyNetwork.NAME, String.class);
 		String column = categoryRow+" log2FC";
@@ -224,11 +226,13 @@ public class ModelUtils {
 				case POSITIVE_ONLY:
 					if (v > 0.0) {
 						row.set(CyNetwork.SELECTED, true);
+						selectedNodes.add(node);
 					}
 					break;
 				case NEGATIVE_ONLY:
 					if (v < 0.0) {
 						row.set(CyNetwork.SELECTED, true);
+						selectedNodes.add(node);
 					}
 					break;
 			}
