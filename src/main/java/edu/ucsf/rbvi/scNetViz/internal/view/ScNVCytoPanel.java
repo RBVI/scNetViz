@@ -372,13 +372,15 @@ public class ScNVCytoPanel extends JPanel
 					}
 					// Call string get enrichment command
 					Map<String, Object> args = new HashMap<>();
+
+					args.clear();
+					// Hide the enrichment panel (just in case)
+					manager.executeCommand("string", "hide enrichment", args, null, true);
+
+					args.clear();
 					args.put("cutoff", String.valueOf(fdrCutoff));
 					args.put("selectedNodesOnly", selectedOnly);
 					manager.executeCommand("string", "retrieve enrichment", args, null, true);
-
-					args.clear();
-					// Show the enrichment panel
-					manager.executeCommand("string", "hide enrichment", args, null, true);
 
 					args.clear();
 					// Show the enrichment panel
