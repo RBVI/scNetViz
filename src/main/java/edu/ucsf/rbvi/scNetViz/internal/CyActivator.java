@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.sources.hca.HCASource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDECommandTaskFactory;
@@ -95,6 +96,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		// Register our sources
 		scNVManager.addSource(new GXASource(scNVManager));
+		scNVManager.addSource(new HCASource(scNVManager));
 		scNVManager.addSource(new FileSource(scNVManager));
 
 		{
