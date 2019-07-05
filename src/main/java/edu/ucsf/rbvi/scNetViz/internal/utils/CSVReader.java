@@ -23,19 +23,27 @@ import org.cytoscape.work.TaskMonitor;
 public class CSVReader {
 	public static String delimiter = null;
 
-	public static List<String[]> readCSV(TaskMonitor taskMonitor, String name) throws IOException, FileNotFoundException {
+	public static List<String[]> readCSV(TaskMonitor taskMonitor, String name) 
+	                                     throws IOException, FileNotFoundException {
 		return readCSV(taskMonitor, new File(name));
 	}
 
-	public static List<String[]> readCSV(TaskMonitor taskMonitor, File name) throws IOException, FileNotFoundException {
+	public static List<String[]> readCSV(TaskMonitor taskMonitor, File name) 
+	                                     throws IOException, FileNotFoundException {
 		LogUtils.log(taskMonitor, TaskMonitor.Level.INFO, "Reading CSV file '"+name.toString()+"'");
 
 		// Open the file
 		BufferedReader input = new BufferedReader(new FileReader(name));
-		return readCSV(taskMonitor, input);
+		return readCSV(taskMonitor, input, 0);
 	}
 
-	public static List<String[]> readCSV(TaskMonitor taskMonitor, InputStream stream, String name) throws IOException {
+	public static List<String[]> readCSV(TaskMonitor taskMonitor, InputStream stream, String name) 
+	                                     throws IOException {
+		return readCSV(taskMonitor, stream, name, 0);
+	}
+
+	public static List<String[]> readCSV(TaskMonitor taskMonitor, InputStream stream, String name, int skipLines) 
+	                                     throws IOException {
 		LogUtils.log(taskMonitor, TaskMonitor.Level.INFO, "Reading CSV file '"+name.toString()+"'");
 		if (FileUtils.isGzip(name)) {
 			// System.out.println("Creating gzip stream");
@@ -47,19 +55,21 @@ public class CSVReader {
 		// System.out.println("Creating buffered reader");
 		BufferedReader input = new BufferedReader(new InputStreamReader(stream));
 			// System.out.println("- done");
-		return readCSV(taskMonitor, input);
+		return readCSV(taskMonitor, input, skipLines);
 	}
 
-	public static List<String[]> readCSV(TaskMonitor taskMonitor, BufferedReader input) throws IOException, FileNotFoundException {
-		System.out.println("readCSV");
-
+	public static List<String[]> readCSV(TaskMonitor taskMonitor, BufferedReader input, int skipLines) 
+	                                     throws IOException, FileNotFoundException {
 		// Read each row
 		List<String[]> rowList = new ArrayList<>();
 		do {
 			String[] row = readRow(input);
 			if (row == null)
 				break;
-			rowList.add(row);
+			if (skipLines == 0)
+				rowList.add(row);
+			else
+				skipLines--;
 		} while (true);
 
 		LogUtils.log(taskMonitor, TaskMonitor.Level.INFO, "Found "+rowList.size()+" rows with "+rowList.get(0).length+" labels each");

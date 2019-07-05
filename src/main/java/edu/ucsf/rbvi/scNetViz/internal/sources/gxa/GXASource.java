@@ -106,7 +106,15 @@ public class GXASource implements Source {
 
 	public void loadGXAEntries(TaskMonitor taskMonitor) {
 		if (metadataMap.size() > 0) return;
-		JSONObject json = HTTPUtils.fetchJSON(EXPERIMENTS_URL, taskMonitor);
+		JSONObject json;
+		try {
+			json = HTTPUtils.fetchJSON(EXPERIMENTS_URL, taskMonitor);
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Unable to fetch expreiments from EBI: "+
+			                        e.getMessage());
+			return;
+		}
+		if (json == null) return;
 		JSONArray experiments = (JSONArray) json.get("aaData");
 		for (Object exp: experiments) {
 			GXAMetadata entry = new GXAMetadata((JSONObject)exp);

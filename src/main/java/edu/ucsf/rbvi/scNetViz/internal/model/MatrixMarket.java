@@ -199,6 +199,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void setRowTable(List<String[]> rowTable, int index) {
 		rowKey = index;
 		setRowTable(rowTable);
+		System.out.println("rowLabel(1) = "+rowLabels.get(1)+", rowTable[1][0] = "+rowTable.get(1)[rowKey]);
 	}
 
 	public void setColumnTable(List<String[]> colTable, int index) {
@@ -209,7 +210,6 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void setColumnTable(List<String[]> colTable) {
 		this.colTable = colTable;
 		if (colTable != null) {
-			System.out.println("Column tables has "+colTable.size()+" entries with key index "+columnKey);
 			colLabels = getLabels(colTable, columnKey);
 		}
 	}

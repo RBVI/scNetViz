@@ -19,13 +19,13 @@ import javax.swing.table.TableModel;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+
 import org.apache.log4j.Logger;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.service.util.CyServiceRegistrar;
@@ -40,8 +40,12 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
+import edu.ucsf.rbvi.scNetViz.internal.utils.HTTPUtils;
+
 
 public class HCAExperiment implements Experiment {
+	public static String HCA_MATRIX_URL = "https://matrix.data.humancellatlas.org/v1/matrix/";
+
 	final Logger logger;
 
 	String accession = null;
@@ -64,8 +68,7 @@ public class HCAExperiment implements Experiment {
 		logger = Logger.getLogger(CyUserLog.NAME);
 		this.hcaExperiment = this;
 		categories = new ArrayList<Category>();
-		// categories.add(new HCACluster(manager, this));
-		// categories.add(new HCADesign(manager, this));
+		categories.add(new HCADesign(manager, this));
 		this.source = source;
 		this.hcaMetadata = entry;
 		this.accession = (String)hcaMetadata.get(Metadata.ACCESSION);
@@ -119,93 +122,82 @@ public class HCAExperiment implements Experiment {
 	}
 
 	public void fetchMTX (final TaskMonitor monitor) {
-		/*
+		// Create the JSON argument
+		String query = "{\"filter\": {\"op\":\"=\",\"value\":\""+
+		                 accession+"\",\"field\":\"project.provenance.document_id\"},\"format\":\"mtx\"}";
 		// Get the URI
-		String fetchString = String.format(HCA_MTX_URI, accession);
-
 		try {
 			CloseableHttpClient httpclient = HttpClients.createDefault();
-			HttpGet httpGet = new HttpGet(fetchString);
-			CloseableHttpResponse response1 = httpclient.execute(httpGet);
-			if (response1.getStatusLine().getStatusCode() != 200) {
+			JSONObject jsonResponse = HTTPUtils.postJSON(HCA_MATRIX_URL, httpclient, query, monitor);
+
+			String requestId = (String)jsonResponse.get("request_id");
+
+			// Now that we have a request ID, interate through until the matrix server is ready
+			int retries = 120;
+			JSONObject status = null;
+			while (retries > 0) {
+				status = HTTPUtils.fetchJSON(HCA_MATRIX_URL+requestId, httpclient, monitor);
+				if (status != null && status.containsKey("status") && 
+				    !((String)status.get("status")).equals("In Progress")) {
+					break;
+				}
+				Thread.sleep(5000); // 5 seconds
+				retries--;
+			}
+			if (retries == 0 || status == null) {
+				monitor.showMessage(TaskMonitor.Level.ERROR, "Timeout waiting for matrix service");
+				httpclient.close();
 				return;
 			}
-			HttpEntity entity1 = response1.getEntity();
 
-			try {
-				ZipInputStream zipStream = new ZipInputStream(entity1.getContent());
-
-				ZipEntry entry;
-				while ((entry = zipStream.getNextEntry()) != null) {
-					String name = entry.getName();
-					if (name.endsWith(".mtx_cols")) {
-						colTable = CSVReader.readCSV(monitor, zipStream, name);
-						if (mtx != null) 
-							mtx.setColumnTable(colTable);
-					} else if (name.endsWith(".mtx_rows")) {
-						rowTable = CSVReader.readCSV(monitor, zipStream, name);
-						if (mtx != null) 
-							mtx.setRowTable(rowTable);
-					} else if (name.endsWith(".mtx")) {
-						mtx = new MatrixMarket(scNVManager, null, null);
-						mtx.setRowTable(rowTable);
-						mtx.setColumnTable(colTable);
-						mtx.readMTX(monitor, zipStream, name);
-					}
-					zipStream.closeEntry();
-				}
-				zipStream.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-				response1.close();
+			String statusValue = (String)status.get("status");
+			if (!statusValue.equals("Complete")) {
+				monitor.showMessage(TaskMonitor.Level.ERROR, "Error getting matrix: "+statusValue);
+				httpclient.close();
+				return;
 			}
+			httpclient.close();
+
+			CloseableHttpClient httpZipClient = HttpClients.createDefault();
+			String matrixURL = (String)status.get("matrix_url");
+			ZipInputStream zipStream = HTTPUtils.getZipStream(matrixURL, httpZipClient, monitor);
+			ZipEntry entry;
+			while ((entry = zipStream.getNextEntry()) != null) {
+				String name = entry.getName();
+				if (name.endsWith("cells.tsv.gz")) {
+					colTable = CSVReader.readCSV(monitor, zipStream, name, 0);
+
+					// First, create our design category
+					((HCADesign)categories.get(0)).fetchDesign(this, colTable, monitor);
+
+					// Now, we need to skip over the header
+					colTable.remove(0);
+
+					if (mtx != null) 
+						mtx.setColumnTable(colTable, 1);
+				} else if (name.endsWith("genes.tsv.gz")) {
+					rowTable = CSVReader.readCSV(monitor, zipStream, name, 1);
+					if (mtx != null) 
+						mtx.setRowTable(rowTable, 0);
+				} else if (name.endsWith(".mtx.gz")) {
+					mtx = new MatrixMarket(scNVManager, null, null);
+					if (rowTable != null)
+						mtx.setRowTable(rowTable, 0);
+
+					if (colTable != null)
+						mtx.setColumnTable(colTable, 1);
+
+					mtx.readMTX(monitor, zipStream, name);
+				}
+			}
+			zipStream.close();
+			httpZipClient.close();
+
 		} catch (Exception e) {}
 		scNVManager.addExperiment(accession, this);
-		*/
-	}
-
-	/*
-	public void fetchClusters (final TaskMonitor monitor) {
-		categories.set(0,HCACluster.fetchCluster(scNVManager, accession, this, monitor));
-
-		// Sanity check
-	}
-
-	public void fetchClusters () {
-		new Thread(new FetchClusterThread()).start();
 	}
 
 	public void fetchDesign (final TaskMonitor monitor) {
-		categories.set(1, HCADesign.fetchDesign(scNVManager, accession, this, monitor));
-
-		// Sanity check
-	}
-
-	public void fetchDesign () {
-		new Thread(new FetchDesignThread()).start();
-	}
-	*/
-
-	// FIXME
-	public void fetchIDF (final TaskMonitor monitor) {
-	}
-
-	public ZipInputStream getZipStream(String uri, TaskMonitor monitor) throws Exception {
-		CloseableHttpClient httpclient = HttpClients.createDefault();
-		HttpGet httpGet = new HttpGet(uri);
-		CloseableHttpResponse response1 = httpclient.execute(httpGet);
-		if (response1.getStatusLine().getStatusCode() != 200) {
-			return null;
-		}
-		ZipInputStream stream = null;
-		try {
-			HttpEntity entity1 = response1.getEntity();
-			stream = new ZipInputStream(entity1.getContent());
-		} finally {
-			response1.close();
-		}
-		return stream;
 	}
 
 	public String toHTML() {

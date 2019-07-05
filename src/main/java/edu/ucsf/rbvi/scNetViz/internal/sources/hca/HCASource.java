@@ -46,9 +46,6 @@ import static org.cytoscape.work.ServiceProperties.TOOL_BAR_GRAVITY;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP;
 
 public class HCASource implements Source {
-	public static String MATRIX_TITLE_URL = "https://matrix.data.humancellatlas.org/v1/filter/project.project_core.project_title";
-	public static String MATRIX_SHORT_NAME_URL = "https://matrix.data.humancellatlas.org/v1/filter/project.project_core.project_short_name";
-	public static String MATRIX_DOCUMENT_ID_URL = "https://matrix.data.humancellatlas.org/v1/filter/project.provenance.document_id";
 	public static String HCA_PROJECT_URL = "https://service.explore.data.humancellatlas.org/repository/projects?";
 
 	final Logger logger;
@@ -110,11 +107,16 @@ public class HCASource implements Source {
 
 	public void loadHCAEntries(TaskMonitor taskMonitor) {
 		if (metadataMap.size() > 0) return;
-		JSONObject json = HTTPUtils.fetchJSON(HCA_PROJECT_URL+"&filters="+URLEncoder.encode("{'file':{'fileFormat':{'is':['matrix']}}}"), taskMonitor);
-		JSONArray hits = (JSONArray) json.get("hits");
-		for (Object hit: hits) {
-			HCAMetadata entry = new HCAMetadata((JSONObject)hit);
-			metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);
+		String query = "&filters="+URLEncoder.encode("{'file':{'fileFormat':{'is':['matrix']}}}");
+		try {
+			JSONObject json = HTTPUtils.fetchJSON(HCA_PROJECT_URL+query, taskMonitor);
+			JSONArray hits = (JSONArray) json.get("hits");
+			for (Object hit: hits) {
+				HCAMetadata entry = new HCAMetadata((JSONObject)hit);
+				metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);
+			}
+		} catch (Exception e) {
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Exception reading HCA experiment list: "+e.getMessage());
 		}
   }
 
@@ -150,15 +152,7 @@ public class HCASource implements Source {
 	public Experiment getExperiment(Metadata metadata, TaskMonitor monitor, boolean showTable) {
 		HCAExperiment exp = new HCAExperiment(scNVManager, this, (HCAMetadata)metadata);
 		exp.fetchMTX (monitor);
-		/*
-		if (showTable) {
-			exp.fetchClusters(monitor);
-			exp.fetchDesign(monitor);
-		} else {
-			exp.fetchClusters();
-			exp.fetchDesign();
-		}
-		*/
+		exp.fetchDesign(monitor);
 		return exp;
 	}
 

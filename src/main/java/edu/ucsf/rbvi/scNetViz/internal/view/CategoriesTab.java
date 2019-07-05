@@ -78,7 +78,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		this.categoriesNameList = new ArrayList<>();
 		this.categoryTables = new HashMap<>();
 		for (Category c: categoriesList) {
-			categoriesNameList.add(c.toString());
+			if (c != null)
+				categoriesNameList.add(c.toString());
 		}
 
 		this.setLayout(new BorderLayout());

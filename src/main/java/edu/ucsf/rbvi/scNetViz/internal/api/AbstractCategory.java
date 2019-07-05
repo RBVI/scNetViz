@@ -383,16 +383,19 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 		int tpmHeaderCols = 1;
 
-		// System.out.println("hdrCols = "+hdrCols+", row = "+row);
-
-		for (int col = 0; col < nCols; col++) {
+		for (int col = hdrCols; col < nCols; col++) {
+			// Get the corresponding mtx column first
+			int mtxCol = mapColumn(col, tpmHeaderCols, colLabelMap);
+			if (mtxCol < 0) continue;
 			Object v = getValue(row, col);
-			// System.out.println("v("+col+") = "+v);
+			if (v != null && v.toString().length() == 0) {
+				v = "Unspecified";
+			}
 			if (!catMap.containsKey(v)) {
 				catMap.put(v, new ArrayList<>());
 				sizes.put(v, 0);
 			}
-			catMap.get(v).add(mapColumn(col, tpmHeaderCols, colLabelMap));
+			catMap.get(v).add(mtxCol);
 			sizes.put(v, sizes.get(v)+1);
 		}
 
@@ -401,10 +404,18 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			catMap.put(UNUSED_CAT, new ArrayList<>());
 			sizes.put(UNUSED_CAT, 0);
 			for (String key: colLabelMap.keySet()) {
+				// System.out.println("Adding "+key+" to catMap");
 				catMap.get(UNUSED_CAT).add(colLabelMap.get(key));
 				sizes.put(UNUSED_CAT, sizes.get(UNUSED_CAT)+1);
 			}
 		}
+
+		/*
+		System.out.println("catMap: ");
+		for (Object cat: catMap.keySet()) {
+			System.out.println(cat+": "+catMap.get(cat));
+		}
+		*/
 		return catMap.keySet().size();
 	}
 
@@ -412,6 +423,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		String lbl = getColumnLabel(col+hdrCols);
 		if (colLabelMap.get(lbl) == null) {
 			System.out.println("Can't find column label: "+lbl);
+			return -1;
 		}
 		int mtxCol =  colLabelMap.get(lbl);
 		colLabelMap.remove(lbl);

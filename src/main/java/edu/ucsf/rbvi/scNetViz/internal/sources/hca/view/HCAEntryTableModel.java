@@ -13,7 +13,7 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.hca.HCASource;
 public class HCAEntryTableModel extends AbstractTableModel {
 	List<Metadata> entries = null;
 
-	static String[] columnNames = {"Accession", "Loaded", "Experiment", "Cells", "Organisms"};
+	static String[] columnNames = {"Accession", "Type", "Description", "Cells", "Organisms", "Tissues"};
 
 	public HCAEntryTableModel (List<Metadata> entries) {
 		super();
@@ -46,6 +46,8 @@ public class HCAEntryTableModel extends AbstractTableModel {
 				return Integer.class;
 			case 4:
 				return String.class;
+			case 5:
+				return String.class;
 		}
 		return String.class;
 	}
@@ -57,13 +59,15 @@ public class HCAEntryTableModel extends AbstractTableModel {
 			case 0:
 				return entry.get(HCAMetadata.ACCESSION);
 			case 1:
-				return entry.get(HCAMetadata.DATE);
+				return entry.get(HCAMetadata.TYPE);
 			case 2:
 				return entry.get(HCAMetadata.DESCRIPTION);
 			case 3:
 				return new Integer(((Long)entry.get(HCAMetadata.ASSAYS)).intValue());
 			case 4:
 				return entry.get(HCAMetadata.SPECIES);
+			case 5:
+				return entry.get(HCAMetadata.ORGANS);
 		}
 		return null;
 	}

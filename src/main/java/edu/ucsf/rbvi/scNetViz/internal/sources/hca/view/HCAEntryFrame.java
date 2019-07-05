@@ -69,7 +69,7 @@ public class HCAEntryFrame extends JFrame {
 		this.scNVManager = scNVManager;
 		this.hcaSource = hcaSource;
 		this.setLayout(new BorderLayout());
-		this.setTitle("Single Cell Expression Atlas Browser");
+		this.setTitle("Human Cell Atlas Browser");
 		this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		iconFont = scNVManager.getService(IconManager.class).getIconFont(17.0f);
 		init();
