@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.api;
 
+import java.io.File;
 import java.util.List;
 import javax.swing.table.TableModel;
 
@@ -30,4 +31,7 @@ public interface Experiment {
 	// of Experiment might want to provide their own
 	// TableModel
 	public TableModel getTableModel();
+
+	// This is the hook for saving all of the experiment files in a session
+	public void createSessionFiles(String accession, List<File> files) throws Exception;
 }

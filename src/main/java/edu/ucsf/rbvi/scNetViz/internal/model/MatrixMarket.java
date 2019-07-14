@@ -1,11 +1,14 @@
 package edu.ucsf.rbvi.scNetViz.internal.model;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -31,13 +34,12 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public static String HEADER = "%%MatrixMarket";
 	public static String COMMENT = "%";
 	public static String delimiter = null;
-	public static int LABEL_INDEX = 1;
 
 	public static enum MTXOBJECT {
 		MATRIX("matrix"),
 		// DGRAPH("directed graph"),
 		VECTOR("vector");
-	
+
 		String strOType;
 		MTXOBJECT(String type) {
 			this.strOType = type;
@@ -58,7 +60,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public enum MTXFORMAT {
 		COORDINATE("coordinate"),
 		ARRAY("array");
-	
+
 		String strFormat;
 		MTXFORMAT(String format) {
 			this.strFormat = format;
@@ -80,7 +82,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		COMPLEX("complex"),
 		INTEGER("integer"),
 		PATTERN("pattern");
-	
+
 		String strType;
 		MTXTYPE(String type) {
 			this.strType = type;
@@ -292,7 +294,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				if (index == 1 && intMatrix[0][0] > intMatrix[1][0]) {
 					// Ugh.  It's inverted.
 					invert = true;
-					System.out.println("INVERT!");
+					// System.out.println("INVERT!");
 					intMatrix[nonZeros-1][0] = intMatrix[0][0];
 					intMatrix[nonZeros-1][1] = intMatrix[0][1];
 					intMatrix[nonZeros-2][0] = intMatrix[1][0];
@@ -579,6 +581,43 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		double v = getDoubleValue(row+1, col+1);
 		// System.out.println("Value for "+rowLabel+":"+row+","+colLabel+":"+col+" = "+v);
 		return v;
+	}
+
+	public void saveFile(File file) throws IOException {
+		FileOutputStream fos = new FileOutputStream(file);
+		OutputStreamWriter osw = new OutputStreamWriter(fos, "utf-8");
+		BufferedWriter writer = new BufferedWriter(osw);
+
+		// Output header
+		writer.write(HEADER+" "+objectType.toString()+" "+format.toString()+" "+type.toString()+" "+sym.toString()+"\n");
+		writer.write(""+nRows+" "+nCols);
+		if (format.equals(MTXFORMAT.COORDINATE))
+			writer.write(" "+nonZeros);
+		writer.write("\n");
+
+		// Output data
+		if (format == MTXFORMAT.ARRAY) {
+			for (int col = 0; col < nCols; col++) {
+				for (int row = 0; row < nRows; row++) {
+					if (type.equals(MTXTYPE.INTEGER)) {
+						writer.write(String.valueOf(intMatrix[row][col])+"\n");
+					} else {
+						writer.write(String.valueOf(doubleMatrix[row][col])+"\n");
+					}
+				}
+			}
+		} else if (format == MTXFORMAT.COORDINATE) {
+			for (int index = 0; index < nonZeros; index++) {
+				if (type.equals(MTXTYPE.INTEGER)) {
+					writer.write(intMatrix[index][0]+" "+intMatrix[index][1]+" "+intMatrix[index][2]+"\n");
+				} else {
+					writer.write(intMatrix[index][0]+" "+intMatrix[index][1]+" "+doubleMatrix[index][0]+"\n");
+				}
+			}
+		}
+		writer.close();
+		osw.close();
+		fos.close();
 	}
 
 	private void parseHeader(String header) throws IOException {

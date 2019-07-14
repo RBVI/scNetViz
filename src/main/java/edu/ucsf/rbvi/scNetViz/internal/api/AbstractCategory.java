@@ -2,6 +2,7 @@ package edu.ucsf.rbvi.scNetViz.internal.api;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -37,6 +38,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.SimpleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
@@ -349,6 +351,10 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		return logFC;
 	}
 
+	public void saveFile(File file) throws IOException {
+		CSVWriter.writeCSV(file, this, "\t");
+	}
+
 	double calcLogFC(double mean1, int size1, double mean2, int size2) {
 		if (mean1 != 0.0 && mean2 != 0.0)
 			return Math.log(mean1/mean2);
@@ -420,7 +426,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	}
 
 	private int mapColumn(int col, int tpmHeaders, Map<String, Integer> colLabelMap) {
-		String lbl = getColumnLabel(col+hdrCols);
+		String lbl = getColumnLabel(col);
 		if (colLabelMap.get(lbl) == null) {
 			System.out.println("Can't find column label: "+lbl);
 			return -1;

@@ -1,5 +1,7 @@
 package edu.ucsf.rbvi.scNetViz.internal.api;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.swing.table.TableModel;
@@ -144,4 +146,7 @@ public interface Category {
 	public String toString();
 
 	public String toJSON();
+
+	// Export the file to the session
+	public void saveFile(File exportFile) throws IOException;
 }

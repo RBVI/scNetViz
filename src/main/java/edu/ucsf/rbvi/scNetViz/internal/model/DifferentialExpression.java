@@ -13,6 +13,8 @@ package edu.ucsf.rbvi.scNetViz.internal.model;
  *    the value that will be reported as the logGER.
  **/
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -31,6 +33,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.MyDouble;
 import edu.ucsf.rbvi.scNetViz.internal.api.PercentDouble;
 import edu.ucsf.rbvi.scNetViz.internal.api.PValueDouble;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 import edu.ucsf.rbvi.scNetViz.internal.utils.MatrixUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
@@ -134,6 +137,16 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return tableModel;
 	}
 
+	public String toJSON() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		builder.append("\"category\": \""+category.toString()+"\",");
+		builder.append("\"row\": "+categoryRow+",");
+		builder.append("\"ddrCutoff\": "+dDRCutoff+",");
+		builder.append("\"log2FCCutoff\": "+log2FCCutoff+"}");
+		return builder.toString();
+	}
+
 	public String toString() {
 		return "Differential expression for category "+category+" row "+categoryRow;
 	}
@@ -171,7 +184,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		double[] pValues = logGERMap.get(cat).get("pValue");
 		// double[] fdr = fdrMap.get(cat);
 		//
-		System.out.println("getGeneList: nGenes = "+nGenes+", maxGenes = "+maxGenes+", positiveOnly = "+positiveOnly);
+		// System.out.println("getGeneList: nGenes = "+nGenes+", maxGenes = "+maxGenes+", positiveOnly = "+positiveOnly);
 
 		if (nGenes > 0) {
 			return getTopGenes(null, pValues, nGenes);
@@ -217,6 +230,10 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			return set;
 		}
 		return category.getMeans(categoryRow).keySet();
+	}
+
+	public void saveFile(File file) throws IOException {
+		CSVWriter.writeCSV(file, this, "\t");
 	}
 
 	private int countValues(double[] array) {

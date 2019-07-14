@@ -2,6 +2,7 @@ package edu.ucsf.rbvi.scNetViz.internal.sources.file;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -68,10 +69,11 @@ public class FileCategory extends AbstractCategory implements Category {
 	public String toJSON() { 
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
-		builder.append("name: "+toString()+",");
-		builder.append("rows: "+getMatrix().getNRows()+",");
-		builder.append("columns: "+getMatrix().getNCols()+",");
-		builder.append("default row: "+getDefaultRow()+",");
+		builder.append("\"name\": \""+toString()+"\",");
+		builder.append("\"source\": \""+source+"\",");
+		builder.append("\"rows\": "+getMatrix().getNRows()+",");
+		builder.append("\"columns\": "+getMatrix().getNCols()+",");
+		builder.append("\"default row\": "+getDefaultRow());
 		builder.append("}");
 		return builder.toString();
 	}

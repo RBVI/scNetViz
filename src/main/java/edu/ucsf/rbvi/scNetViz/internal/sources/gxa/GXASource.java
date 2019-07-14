@@ -101,7 +101,7 @@ public class GXASource implements Source {
 
 	}
 
-	public String getName() { return "EBI GXA"; }
+	public String getName() { return "GXA"; }
 	public String toString() { return "Single Cell Expression Atlas"; }
 
 	public void loadGXAEntries(TaskMonitor taskMonitor) {

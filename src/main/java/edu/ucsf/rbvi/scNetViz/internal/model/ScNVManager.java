@@ -1,5 +1,9 @@
 package edu.ucsf.rbvi.scNetViz.internal.model;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,6 +20,8 @@ import org.cytoscape.command.AvailableCommands;
 import org.cytoscape.command.CommandExecutorTaskFactory;
 import org.cytoscape.property.CyProperty;
 import org.cytoscape.service.util.CyServiceRegistrar;
+import org.cytoscape.session.events.SessionAboutToBeSavedEvent;
+import org.cytoscape.session.events.SessionAboutToBeSavedListener;
 import org.cytoscape.work.SynchronousTaskManager;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
@@ -29,7 +35,7 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.ExperimentFrame;
 import edu.ucsf.rbvi.scNetViz.internal.view.ScNVCytoPanel;
 
-public class ScNVManager {
+public class ScNVManager implements SessionAboutToBeSavedListener {
 
 	final AvailableCommands availableCommands;
 	final CommandExecutorTaskFactory ceTaskFactory;
@@ -53,6 +59,9 @@ public class ScNVManager {
 		this.taskManager = registrar.getService(TaskManager.class);
 		this.syncTaskManager = registrar.getService(SynchronousTaskManager.class);
 		settings = new ScNVSettings();
+
+		registrar.registerService(this, SessionAboutToBeSavedListener.class, new Properties());
+		// registrar.registerService(this, SessionLoadedListener.class, new Properties());
 	}
 
 	public void addSource(Source source) {
@@ -195,4 +204,40 @@ public class ScNVManager {
 		registrar.unregisterService(service, serviceClass);
 	}
 
+	// We need to save all of our experiment, category, and DE tables
+	public void handleEvent(SessionAboutToBeSavedEvent e) {
+		String tmpDir = System.getProperty("java.io.tmpdir");
+		File jsonFile = new File(tmpDir, "Experiments.json");
+
+		try {
+			FileOutputStream fos = new FileOutputStream(jsonFile);
+			OutputStreamWriter osw = new OutputStreamWriter(fos, "utf-8");
+			BufferedWriter writer = new BufferedWriter(osw);
+
+			writer.write("{\"Experiments\":[");
+			List<File> files = new ArrayList<File>();
+			int expNumber = experimentMap.keySet().size();
+			for (String accession: experimentMap.keySet()) {
+				Experiment experiment = experimentMap.get(accession);
+				writer.write(experiment.toJSON());
+				if (expNumber-- > 1)
+					writer.write(",\n");
+				try {
+					experiment.createSessionFiles(accession, files);
+				} catch (Exception create) {
+				}
+			}
+			writer.write("]}\n");
+			writer.close();
+			osw.close();
+			fos.close();
+			files.add(jsonFile);
+
+			try {
+				e.addAppFiles("edu.ucsf.rbvi.scNetViz", files);
+			} catch (Exception add) {
+			}
+		} catch (Exception jsonException) {
+		}
+	}
 }

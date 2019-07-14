@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,6 +39,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 import edu.ucsf.rbvi.scNetViz.internal.utils.FileUtils;
 import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 
@@ -250,6 +252,54 @@ public class FileExperiment implements Experiment {
 			builder.append(cat.toJSON()+",");
 		}
 		return builder.substring(0, builder.length()-1)+"]}";
+	}
+
+	public void createSessionFiles(String accession, List<File> files) throws Exception {
+		String tmpDir = System.getProperty("java.io.tmpdir");
+		String expPrefix = source.getName()+"."+accession;
+		try {
+			// Save the Experiment file as an MTX
+			File mtxFile = new File(tmpDir, URLEncoder.encode(expPrefix)+".mtx");
+			mtx.saveFile(mtxFile);
+			files.add(mtxFile);
+			File mtxRowFile = new File(tmpDir, URLEncoder.encode(expPrefix)+".mtx_rows");
+			CSVWriter.writeCSV(mtxRowFile, rowTable);
+			files.add(mtxRowFile);
+
+			File mtxColFile = new File(tmpDir, URLEncoder.encode(expPrefix)+".mtx_cols");
+			CSVWriter.writeCSV(mtxColFile, colTable);
+			files.add(mtxColFile);
+		} catch (Exception e) {
+			logger.error("Unable to save MTX data for "+accession+" in session: "+e.toString());
+				e.printStackTrace();
+			return;
+		}
+
+		// Save each Category as a CSV
+		for (Category cat: categories) {
+			try {
+				String catPrefix = URLEncoder.encode(expPrefix+"."+cat.getSource().getName()+"."+cat.toString());
+				File catFile = new File(tmpDir, catPrefix+".csv");
+				cat.saveFile(catFile);
+				files.add(catFile);
+			} catch (Exception e) {
+				logger.error("Unable to save categtory data for "+accession+" "+cat+" in session: "+e.toString());
+				e.printStackTrace();
+			}
+		}
+
+		// Save the current DiffExp as a CSV
+		if (diffExp != null) {
+			try {
+				String dePrefix = URLEncoder.encode(expPrefix+".diffExp");
+				File deFile = new File(tmpDir, dePrefix+".csv");
+				diffExp.saveFile(deFile);
+				files.add(deFile);
+			} catch (Exception e) {
+				logger.error("Unable to save differential expression results for "+diffExp.toString()+" in session: "+e.toString());
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private boolean isColumnFile(String fileName) {

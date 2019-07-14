@@ -1,6 +1,8 @@
 package edu.ucsf.rbvi.scNetViz.internal.sources.gxa;
 
+import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,13 +42,10 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	final Logger logger;
 
 	// The suggested k value
-	int k = 0;
+	int suggestedK = 0;
 
 	// The number of K values provided
 	int nK = 0;
-
-	// The lowest K value
-	int minK = 0;
 
 	// The clusters
 	int[][] clusters;
@@ -69,9 +68,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 
 	@Override
 	public int getDefaultRow() { 
-		if (k >= minK)
-			return k-minK;
-		return 0;
+		return suggestedK;
 	}
 
 	@Override
@@ -81,10 +78,11 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	public String toJSON() { 
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
-		builder.append("name: "+toString()+",");
-		builder.append("rows: "+getMatrix().getNRows()+",");
-		builder.append("columns: "+getMatrix().getNCols()+",");
-		builder.append("default row: "+getDefaultRow()+",");
+		builder.append("\"name\": \""+toString()+"\",");
+		builder.append("\"source\": \""+source+"\",");
+		builder.append("\"rows\": "+getMatrix().getNRows()+",");
+		builder.append("\"columns\": "+getMatrix().getNCols()+",");
+		builder.append("\"default row\": "+getDefaultRow());
 		builder.append("}");
 		return builder.toString();
 	}
@@ -117,7 +115,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		int col = colLabels.indexOf(column);
 
 		int intRow = Integer.valueOf(row);
-		return clusters[col-2][intRow-minK];
+		return clusters[col-2][intRow];
 	}
 
 	@Override
@@ -151,30 +149,26 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	}
 
 	@Override
-	public int getHeaderCols() { return 2; }
+	public int getHeaderCols() { return hdrCols; }
 
 	public int getNRows() {
 		return clusters[0].length-1;
 	}
 
 	public int[] getCluster() {
-		if (k == 0)
-			return getCluster(minK); // No default K was selected
-
-		return getCluster(k);
+		return getCluster(suggestedK);
 	}
 
 	public int[] getCluster(int kClust) {
 		int ncolumns = clusters.length;
 		int[] clustRow = new int[ncolumns];
 		for (int col = 0; col < ncolumns; col++) {
-			clustRow[col] = clusters[col][kClust-minK];
+			clustRow[col] = clusters[col][kClust];
 		}
 		return clustRow;
 	}
 
-	public int getMinK() { return minK; }
-	public int getK() { return k; }
+	public int getK() { return suggestedK; }
 	public int getSortedK() { return sortedK; }
 
 	public Map<Integer,List<String>> getClusterList(int kClust) {
@@ -219,7 +213,6 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	}
 	*/
 
-
 	public static GXACluster fetchCluster(ScNVManager scManager, String accession, 
 	                                      GXAExperiment experiment, TaskMonitor monitor) {
 		// Get the URI
@@ -227,49 +220,58 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		if (input == null || input.size() < 2) return null;
 
 		int nclusters = input.size();
-		int ncolumns = input.get(0).length-2;
+		int ncolumns = input.get(0).length;
 
 		GXACluster gxaCluster = new GXACluster(scManager, experiment);
 
+		// System.out.println("ncolumns = "+ncolumns+", ncluster = "+nclusters);
 		gxaCluster.clusters = new int[ncolumns][nclusters];
 		boolean first = true;
 		List<String> lbl = new ArrayList<>();
 
+		int clustering = 0;
 		for (String[] line: input) {
 			if (first) {
 				first = false;
+				// System.out.println("Column header line has: "+line.length+" columns");
 				gxaCluster.setColLabels(Arrays.asList(line));
 				// gxaCluster.headers = line;
 				continue;
 			}
+			// System.out.println("Input:");
+			// for (String l: line) { System.out.print(l+","); }
+			// System.out.println();
 			int thisK = Integer.parseInt(line[1]);
 			lbl.add("k = "+thisK);
 			if (line[0].equals("TRUE")) {
-				gxaCluster.k = thisK;
+				gxaCluster.suggestedK = clustering;
 			}
-			if (gxaCluster.minK == 0)
-				gxaCluster.minK = thisK;
 
+			// System.out.println("line.length = "+line.length);
+			// System.out.println("thisK = "+thisK);
+
+			gxaCluster.clusters[0][clustering] = thisK;
 			for (int i = 2; i < line.length; i++) {
-				gxaCluster.clusters[i-2][thisK-gxaCluster.minK] = Integer.parseInt(line[i]);
+				gxaCluster.clusters[i-1][clustering] = Integer.parseInt(line[i]);
 			}
+			clustering++;
 
 		}
 
 		gxaCluster.setRowLabels(lbl);
 
-		gxaCluster.selectedRow = gxaCluster.k - gxaCluster.minK;
+		gxaCluster.selectedRow = gxaCluster.suggestedK;
 
 		if (monitor != null) {
-			monitor.showMessage(TaskMonitor.Level.INFO, "Read "+(nclusters-1)+" clusters.  Suggested K = "+gxaCluster.k);
-			monitor.showMessage(TaskMonitor.Level.INFO, "   minimum K = "+gxaCluster.minK);
+			monitor.showMessage(TaskMonitor.Level.INFO, "Read "+(nclusters-1)+" clusters.  Suggested K = "+gxaCluster.suggestedK);
 		} else {
-			gxaCluster.logger.info("Read "+(nclusters-1)+" clusters.  Suggested K = "+gxaCluster.k);
-			gxaCluster.logger.info("   minimum K = "+gxaCluster.minK);
+			gxaCluster.logger.info("Read "+(nclusters-1)+" clusters.  Suggested K = "+gxaCluster.suggestedK);
 		}
 
 		gxaCluster.nCols = ncolumns;
 		gxaCluster.nRows = nclusters;
+
+		gxaCluster.source = experiment.getSource();
 		
 		return gxaCluster;
 	}
@@ -293,13 +295,13 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 			super(cluster.getHeaderCols());
 			this.cluster = cluster;
 			this.experiment = cluster.experiment;
-			// System.out.println("ncols = "+ncols+", nrows = "+nrows);
+			// System.out.println("ncols = "+cluster.nCols+", nrows = "+cluster.nRows);
 			// System.out.println("clusters.length = "+cluster.clusters.length);
 			hdrCols = 2;
 		}
 
 		@Override
-		public int getColumnCount() { return cluster.getNCols()+2; }
+		public int getColumnCount() { return cluster.getNCols(); }
 
 		@Override
 		public int getSelectedRow() { return cluster.getSelectedRow(); }
@@ -332,7 +334,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 
 		@Override
 		public void sortColumns(int row) {
-			sortedK = row+cluster.minK;
+			sortedK = row;
 			super.sortColumns(row);
 		}
 
@@ -341,15 +343,13 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 			// System.out.println("getValueAt: "+row+","+column);
 			switch (column) {
 				case 0:
-					return (row+cluster.minK) == k ? "True" : "False";
-				case 1:
-					return row+cluster.minK;
+					return (row) == suggestedK ? "True" : "False";
 				default:
 					int value;
 					if (columnIndex != null)
-						value = cluster.clusters[columnIndex[column]-2][row];
+						value = cluster.clusters[columnIndex[column]-1][row];
 					else
-						value = cluster.clusters[column-2][row];
+						value = cluster.clusters[column-1][row];
 					return new Integer(value);
 			}
 		}
