@@ -58,12 +58,17 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 
 	Source source;
 
+	public GXACluster(final ScNVManager scManager, final GXAExperiment experiment, List<String[]> table) {
+		this(scManager, experiment);
+
+	}
+
 	public GXACluster(final ScNVManager scManager, final GXAExperiment experiment) {
 		super(scManager, experiment, "Cluster", 0, 0);
 		super.hdrCols = 2;
 
 		logger = Logger.getLogger(CyUserLog.NAME);
-		source = scManager.getSource("EBI GXA");
+		source = scManager.getSource("GXA");
 	}
 
 	@Override
@@ -190,28 +195,12 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		return;
 	}
 
-	/*
-	// Calculate the logGER between each category and all other categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public Map<Object, double[]> getLogGER(int category) {
-		return null;
-	}
+	public static GXACluster readCluster(ScNVManager scManager, GXAExperiment experiment, File file) throws IOException {
+		List<String[]> input = CSVReader.readCSV(null, file);
+		if (input == null || input.size() < 2) return null;
 
-	// Calculate the logGER between the category and all other categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public double[] getLogGER(int category, Object category1) {
-		return null;
-	};
-
-	// Calculate the logGER between the two categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public double[] getLogGER(int category, Object category1, Object category2) {
-		return null;
+		return getClusterFromCSV(scManager, experiment, input, null);
 	}
-	*/
 
 	public static GXACluster fetchCluster(ScNVManager scManager, String accession, 
 	                                      GXAExperiment experiment, TaskMonitor monitor) {
@@ -219,6 +208,10 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		List<String[]> input = CSVReader.readCSVFromHTTP(monitor, GXA_CLUSTER_URI, accession);
 		if (input == null || input.size() < 2) return null;
 
+		return getClusterFromCSV(scManager, experiment, input, monitor);
+	}
+
+	private static GXACluster getClusterFromCSV(ScNVManager scManager, GXAExperiment experiment, List<String[]> input, TaskMonitor monitor) {
 		int nclusters = input.size();
 		int ncolumns = input.get(0).length;
 

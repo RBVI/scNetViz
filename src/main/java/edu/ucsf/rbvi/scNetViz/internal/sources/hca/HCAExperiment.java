@@ -213,18 +213,16 @@ public class HCAExperiment implements Experiment {
 	public String toJSON() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
-		builder.append("source: '"+getSource().toString()+"',");
-		builder.append("accession: '"+getMetadata().get(Metadata.ACCESSION).toString()+"',");
-		builder.append("species: '"+getSpecies().toString()+"',");
-		builder.append("description: '"+getMetadata().get(Metadata.DESCRIPTION).toString()+"',");
-		builder.append("rows: '"+getMatrix().getNRows()+"',");
-		builder.append("columns: '"+getMatrix().getNCols()+"',");
+		builder.append("\"source\": \""+getSource().toString()+"\",\n");
+		builder.append("\"metadata\": "+hcaMetadata.toJSON()+",\n");
+		builder.append("\"rows\": "+getMatrix().getNRows()+",");
+		builder.append("\"columns\": "+getMatrix().getNCols()+",");
 		List<Category> categories = getCategories();
-		builder.append("categories: [");
+		builder.append("\"categories\": [");
 		for (Category cat: categories) {
-			builder.append(cat.toJSON()+",");
+			builder.append(cat.toJSON()+",\n");
 		}
-		return builder.substring(0, builder.length()-1)+"]}";
+		return builder.substring(0, builder.length()-2)+"]}";
 	}
 
 	public void createSessionFiles(String accession, List<File> files) throws Exception {

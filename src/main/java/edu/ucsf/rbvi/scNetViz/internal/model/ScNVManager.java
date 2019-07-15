@@ -3,6 +3,8 @@ package edu.ucsf.rbvi.scNetViz.internal.model;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +16,7 @@ import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.command.AvailableCommands;
@@ -22,6 +25,8 @@ import org.cytoscape.property.CyProperty;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.session.events.SessionAboutToBeSavedEvent;
 import org.cytoscape.session.events.SessionAboutToBeSavedListener;
+import org.cytoscape.session.events.SessionLoadedEvent;
+import org.cytoscape.session.events.SessionLoadedListener;
 import org.cytoscape.work.SynchronousTaskManager;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
@@ -29,13 +34,14 @@ import org.cytoscape.work.TaskManager;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.TaskObserver;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.ExperimentFrame;
 import edu.ucsf.rbvi.scNetViz.internal.view.ScNVCytoPanel;
 
-public class ScNVManager implements SessionAboutToBeSavedListener {
+public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoadedListener {
 
 	final AvailableCommands availableCommands;
 	final CommandExecutorTaskFactory ceTaskFactory;
@@ -61,7 +67,7 @@ public class ScNVManager implements SessionAboutToBeSavedListener {
 		settings = new ScNVSettings();
 
 		registrar.registerService(this, SessionAboutToBeSavedListener.class, new Properties());
-		// registrar.registerService(this, SessionLoadedListener.class, new Properties());
+		registrar.registerService(this, SessionLoadedListener.class, new Properties());
 	}
 
 	public void addSource(Source source) {
@@ -204,6 +210,44 @@ public class ScNVManager implements SessionAboutToBeSavedListener {
 		registrar.unregisterService(service, serviceClass);
 	}
 
+	// See if we have data in the session, and load it if we do
+	public void handleEvent(SessionLoadedEvent e) {
+		Map<String,List<File>> appFiles = e.getLoadedSession().getAppFileListMap();
+		if (!appFiles.containsKey("edu.ucsf.rbvi.scNetViz"))
+			return;
+
+		List<File> scNvFiles = appFiles.get("edu.ucsf.rbvi.scNetViz");
+		Map<String, File> fileMap = new HashMap<>();
+		for (File f: scNvFiles) {
+			fileMap.put(f.getName(),f);
+		}
+
+		if (!fileMap.containsKey("Experiments.json"))
+			return;
+
+		JSONParser parser = new JSONParser();
+		JSONObject jsonExperiment;
+		try {
+			jsonExperiment = (JSONObject) parser.parse(new FileReader(fileMap.get("Experiments.json")));
+		} catch(Exception ioe) {
+			return;
+		}
+
+		JSONArray experiments = (JSONArray) jsonExperiment.get("Experiments");
+		for (Object exp: experiments) {
+			JSONObject jsonExp = (JSONObject) exp;
+			Experiment experiment = getExperimentFromSession(jsonExp, fileMap);
+			if (experiment == null) continue;
+
+			if (jsonExp.containsKey("categories")) {
+				JSONArray categories = (JSONArray) jsonExp.get("categories");
+				for (Object cat: categories) {
+					Category category = getCategoryFromSession((JSONObject)cat, experiment, fileMap);
+				}
+			}
+		}
+	}
+
 	// We need to save all of our experiment, category, and DE tables
 	public void handleEvent(SessionAboutToBeSavedEvent e) {
 		String tmpDir = System.getProperty("java.io.tmpdir");
@@ -239,5 +283,19 @@ public class ScNVManager implements SessionAboutToBeSavedListener {
 			}
 		} catch (Exception jsonException) {
 		}
+	}
+
+	private Experiment getExperimentFromSession(JSONObject jsonExp, Map<String,File> fileMap) {
+		String src = (String)jsonExp.get("source");
+		if (sourceMap.containsKey(src))
+			return sourceMap.get(src).loadExperimentFromSession(jsonExp, fileMap);
+		return null;
+	}
+
+	private Category getCategoryFromSession(JSONObject jsonCategory, Experiment experiment, Map<String,File> fileMap) {
+		String src = (String)jsonCategory.get("source");
+		if (sourceMap.containsKey(src))
+			return sourceMap.get(src).loadCategoryFromSession(jsonCategory, experiment, fileMap);
+		return null;
 	}
 }

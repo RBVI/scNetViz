@@ -19,6 +19,7 @@ import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
@@ -117,5 +118,13 @@ public class FileSource implements Source {
 			metadataMap.put((String)metadata.get(Metadata.ACCESSION), metadata);
 		}
 		return exp;
+	}
+
+	public Experiment loadExperimentFromSession(JSONObject jsonExperiment, Map<String, File> fileMap) {
+		return null;
+	}
+
+	public Category loadCategoryFromSession(JSONObject jsonExperiment, Experiment experiment, Map<String, File> fileMap) {
+		return null;
 	}
 }

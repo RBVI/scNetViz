@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.sources.gxa;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
@@ -173,6 +175,33 @@ public class GXASource implements Source {
 			entryFrame.setVisible(true);
 		} else if (entryFrame != null)
 			entryFrame.setVisible(false);
-		
+	}
+
+	public Experiment loadExperimentFromSession(JSONObject jsonExperiment, Map<String, File> fileMap) {
+		// Get and create the GXAMetadata from the JSON
+		GXAMetadata metadata = new GXAMetadata();
+		if (jsonExperiment.containsKey("metadata"))
+			metadata.fromJSON((JSONObject)jsonExperiment.get("metadata"));
+
+		// Create the GXAExperiment
+		GXAExperiment experiment = new GXAExperiment(scNVManager, this, metadata);
+		try {
+			experiment.loadFromSession(fileMap);
+		} catch (Exception e) {
+			logger.error("Unable to load experiment from session: "+e.toString());
+		}
+
+		return null;
+	}
+
+	public Category loadCategoryFromSession(JSONObject jsonCategory, Experiment experiment, Map<String, File> fileMap) {
+		if (experiment instanceof GXAExperiment) {
+			try {
+				((GXAExperiment)experiment).loadCategoryFromSession(jsonCategory, fileMap);
+			} catch (Exception e) {
+				logger.error("Unable to load category from session: "+e.toString());
+			}
+		}
+		return null;
 	}
 }

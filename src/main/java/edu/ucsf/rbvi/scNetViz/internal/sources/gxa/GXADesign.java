@@ -52,7 +52,7 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 	public GXADesign(final ScNVManager scManager, final GXAExperiment experiment) {
 		super(scManager, experiment, "Design/Factors", 0, 0);
 		logger = Logger.getLogger(CyUserLog.NAME);
-		source = scManager.getSource("EBI GXA");
+		source = scManager.getSource("GXA");
 	}
 
 	@Override
@@ -140,28 +140,12 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		return;
 	}
 
-	/*
-	// Calculate the logGER between each category and all other categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public Map<Object, double[]> getLogGER(int category) {
-		return null;
-	}
+	public static GXADesign readDesign(ScNVManager scManager, GXAExperiment experiment, File file) throws IOException {
+		List<String[]> input = CSVReader.readCSV(null, file);
+		if (input == null || input.size() < 2) return null;
 
-	// Calculate the logGER between the category and all other categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public double[] getLogGER(int category, Object category1) {
-		return null;
-	};
-
-	// Calculate the logGER between the two categories
-	// This will trigger the calculation of means and sizes
-	@Override
-	public double[] getLogGER(int category, Object category1, Object category2) {
-		return null;
+		return getDesignFromCSV(scManager, experiment, input, null);
 	}
-	*/
 
 	public static GXADesign fetchDesign(ScNVManager scManager, String accession, 
 	                                    GXAExperiment experiment, TaskMonitor monitor) {
@@ -169,6 +153,10 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		List<String[]> input = CSVReader.readCSVFromHTTP(monitor, GXA_DESIGN_URI, accession);
 		if (input == null || input.size() < 2) return null;
 
+		return getDesignFromCSV(scManager, experiment, input, monitor);
+	}
+
+	private static GXADesign getDesignFromCSV(ScNVManager scManager, GXAExperiment experiment, List<String[]> input, TaskMonitor monitor) {
 		GXADesign gxaDesign = new GXADesign(scManager, experiment);
 		gxaDesign.nCols = input.size()-1;
 		gxaDesign.nRows = input.get(0).length-1;

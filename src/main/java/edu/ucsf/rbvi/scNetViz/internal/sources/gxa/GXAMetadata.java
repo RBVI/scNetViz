@@ -33,6 +33,10 @@ public class GXAMetadata extends HashMap<String, Object> implements Metadata {
 		put(FACTORS, expFactors);
 	}
 
+	public GXAMetadata() {
+		super();
+	}
+
 	public String toHTML() {
 		return "<html><p style='width: 500px'><b>"+get(ACCESSION)+"</b>: "+get(DESCRIPTION)+"</p></html>";
 	}
@@ -57,5 +61,20 @@ public class GXAMetadata extends HashMap<String, Object> implements Metadata {
 			}
 		}
 		return json.substring(0, json.length()-1)+"}";
+	}
+
+	public void fromJSON(JSONObject json) {
+		for (Object key: json.keySet()) {
+			Object value = json.get(key);
+			if (value instanceof JSONArray) {
+				List<String> array = new ArrayList<>();
+				for (Object obj: (JSONArray)value) {
+					array.add((String)obj);
+				}
+				put((String)key, array);
+			} else {
+				put((String)key, value);
+			}
+		}
 	}
 }

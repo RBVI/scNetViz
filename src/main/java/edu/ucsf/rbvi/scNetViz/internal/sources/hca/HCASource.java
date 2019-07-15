@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.sources.hca;
 
+import java.io.File;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,6 +19,7 @@ import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
@@ -166,5 +168,13 @@ public class HCASource implements Source {
 		} else if (entryFrame != null)
 			entryFrame.setVisible(false);
 		
+	}
+
+	public Experiment loadExperimentFromSession(JSONObject jsonExperiment, Map<String, File> fileMap) {
+		return null;
+	}
+
+	public Category loadCategoryFromSession(JSONObject jsonExperiment, Experiment experiment, Map<String, File> fileMap) {
+		return null;
 	}
 }

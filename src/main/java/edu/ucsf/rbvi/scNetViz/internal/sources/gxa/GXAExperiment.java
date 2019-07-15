@@ -32,6 +32,8 @@ import org.cytoscape.application.CyUserLog;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.TaskMonitor;
 
+import org.json.simple.JSONObject;
+
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
@@ -219,23 +221,21 @@ public class GXAExperiment implements Experiment {
 	public String toJSON() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
-		builder.append("\"source\": \""+getSource().toString()+"\",");
-		builder.append("\"accession\": \""+getMetadata().get(Metadata.ACCESSION).toString()+"\",");
-		builder.append("\"species\": \""+getSpecies().toString()+"\",");
-		builder.append("\"description\": \""+getMetadata().get(Metadata.DESCRIPTION).toString()+"\",");
-		builder.append("\"rows\": "+getMatrix().getNRows()+",");
-		builder.append("\"columns\": "+getMatrix().getNCols()+",");
+		builder.append("\"source\": \""+getSource().toString()+"\",\n");
+		builder.append("\"metadata\": "+gxaMetadata.toJSON()+",\n");
+		builder.append("\"rows\": "+getMatrix().getNRows()+",\n");
+		builder.append("\"columns\": "+getMatrix().getNCols()+",\n");
 		List<Category> categories = getCategories();
 		builder.append("\"categories\": [");
 		int nCat = categories.size();
 		for (Category cat: categories) {
 			builder.append(cat.toJSON());
-			if (nCat-- > 1) builder.append(",");
+			if (nCat-- > 1) builder.append(",\n");
 		}
 		builder.append("]");
 		if (diffExp != null) {
 			builder.append(",\"differential expression\":");
-			builder.append(diffExp.toJSON());
+			builder.append(diffExp.toJSON()+"\n");
 		}
 		builder.append("}");
 		return builder.toString();
@@ -286,6 +286,51 @@ public class GXAExperiment implements Experiment {
 				logger.error("Unable to save differential expression results for "+diffExp.toString()+" in session: "+e.toString());
 				e.printStackTrace();
 			}
+		}
+	}
+
+	public void loadFromSession(Map<String, File> fileMap) throws IOException {
+		// Find our files
+		String expPrefix = URLEncoder.encode(source.getName()+"."+accession);
+		if (!fileMap.containsKey(expPrefix+".mtx"))
+			throw new FileNotFoundException("File '"+expPrefix+".mtx' doesn't exist");
+
+		File mtxFile = fileMap.get(expPrefix+".mtx");
+
+		if (!fileMap.containsKey(expPrefix+".mtx_rows"))
+			throw new FileNotFoundException("File '"+expPrefix+".mtx_rows' doesn't exist");
+
+		File rowFile = fileMap.get(expPrefix+".mtx_rows");
+
+		if (!fileMap.containsKey(expPrefix+".mtx_cols"))
+			throw new FileNotFoundException("File '"+expPrefix+".mtx_cols' doesn't exist");
+
+		File colFile = fileMap.get(expPrefix+".mtx_cols");
+
+		// Read in the MatrixMarket file
+		mtx = new MatrixMarket(scNVManager);
+		mtx.readMTX(null, fileMap.get(expPrefix+".mtx"));
+	
+		// Read in our row and column headers
+		colTable = CSVReader.readCSV(null, colFile);
+		rowTable = CSVReader.readCSV(null, rowFile);
+		mtx.setRowTable(rowTable);
+		mtx.setColumnTable(colTable);
+	}
+
+	public void loadCategoryFromSession(JSONObject jsonCategory, Map<String, File> fileMap) throws IOException {
+		// See which category it is
+		String name = (String)jsonCategory.get("name");
+		String catSource = (String)jsonCategory.get("source");
+		String catPrefix = URLEncoder.encode(source.getName()+"."+accession+"."+catSource+"."+name);
+		String fileName = catPrefix+".csv";
+		if (!fileMap.containsKey(fileName))
+			throw new FileNotFoundException("File '"+fileName+"' doesn't exist");
+
+		if (name.equals("Cluster")) {
+			categories.set(0, GXACluster.readCluster(scNVManager, this, fileMap.get(fileName)));
+		} else if (name.equals("Design/Factors")) {
+			categories.set(1, GXADesign.readDesign(scNVManager, this, fileMap.get(fileName)));
 		}
 	}
 
