@@ -12,6 +12,8 @@ import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
+import org.json.simple.JSONObject;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -34,6 +36,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.SimpleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
 public class GXACluster extends AbstractCategory implements IntegerMatrix {
@@ -85,9 +88,11 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		builder.append("{");
 		builder.append("\"name\": \""+toString()+"\",");
 		builder.append("\"source\": \""+source+"\",");
+		builder.append("\"source name\": \""+source.getName()+"\",");
 		builder.append("\"rows\": "+getMatrix().getNRows()+",");
 		builder.append("\"columns\": "+getMatrix().getNCols()+",");
 		builder.append("\"default row\": "+getDefaultRow());
+		builder.append("\"suggested K\": "+suggestedK);
 		builder.append("}");
 		return builder.toString();
 	}
@@ -195,11 +200,16 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		return;
 	}
 
-	public static GXACluster readCluster(ScNVManager scManager, GXAExperiment experiment, File file) throws IOException {
+	public static GXACluster readCluster(ScNVManager scManager, GXAExperiment experiment, File file, JSONObject jsonCategory) throws IOException {
 		List<String[]> input = CSVReader.readCSV(null, file);
 		if (input == null || input.size() < 2) return null;
 
-		return getClusterFromCSV(scManager, experiment, input, null);
+		GXACluster cluster =  getClusterFromCSV(scManager, experiment, input, null);
+		if (jsonCategory.containsKey("suggested K")) {
+			cluster.suggestedK = ((Long)jsonCategory.get("suggested K")).intValue();
+			cluster.selectedRow = suggestedK;
+		}
+		return cluster;
 	}
 
 	public static GXACluster fetchCluster(ScNVManager scManager, String accession, 
@@ -217,7 +227,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 
 		GXACluster gxaCluster = new GXACluster(scManager, experiment);
 
-		// System.out.println("ncolumns = "+ncolumns+", ncluster = "+nclusters);
+		System.out.println("ncolumns = "+ncolumns+", ncluster = "+nclusters);
 		gxaCluster.clusters = new int[ncolumns][nclusters];
 		boolean first = true;
 		List<String> lbl = new ArrayList<>();
@@ -236,7 +246,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 			// System.out.println();
 			int thisK = Integer.parseInt(line[1]);
 			lbl.add("k = "+thisK);
-			if (line[0].equals("TRUE")) {
+			if (line[0].equalsIgnoreCase("TRUE")) {
 				gxaCluster.suggestedK = clustering;
 			}
 

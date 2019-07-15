@@ -221,6 +221,7 @@ public class GXAExperiment implements Experiment {
 	public String toJSON() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
+		builder.append("\"source name\": \""+getSource().getName()+"\",\n");
 		builder.append("\"source\": \""+getSource().toString()+"\",\n");
 		builder.append("\"metadata\": "+gxaMetadata.toJSON()+",\n");
 		builder.append("\"rows\": "+getMatrix().getNRows()+",\n");
@@ -308,30 +309,43 @@ public class GXAExperiment implements Experiment {
 		File colFile = fileMap.get(expPrefix+".mtx_cols");
 
 		// Read in the MatrixMarket file
+		System.out.println("Reading MTX file");
 		mtx = new MatrixMarket(scNVManager);
 		mtx.readMTX(null, fileMap.get(expPrefix+".mtx"));
 	
+		System.out.println("Reading column header file");
 		// Read in our row and column headers
 		colTable = CSVReader.readCSV(null, colFile);
 		rowTable = CSVReader.readCSV(null, rowFile);
 		mtx.setRowTable(rowTable);
-		mtx.setColumnTable(colTable);
+		mtx.setColumnTable(colTable, 0);
+		scNVManager.addExperiment(accession, this);
 	}
 
-	public void loadCategoryFromSession(JSONObject jsonCategory, Map<String, File> fileMap) throws IOException {
+	public Category loadCategoryFromSession(JSONObject jsonCategory, Map<String, File> fileMap) throws IOException {
 		// See which category it is
 		String name = (String)jsonCategory.get("name");
-		String catSource = (String)jsonCategory.get("source");
+		System.out.println("Loading category: '"+name+"' from session");
+		String catSource = (String)jsonCategory.get("source name");
+		System.out.println("Source = "+catSource);
 		String catPrefix = URLEncoder.encode(source.getName()+"."+accession+"."+catSource+"."+name);
 		String fileName = catPrefix+".csv";
+		System.out.println("fileName = "+fileName);
 		if (!fileMap.containsKey(fileName))
 			throw new FileNotFoundException("File '"+fileName+"' doesn't exist");
 
 		if (name.equals("Cluster")) {
-			categories.set(0, GXACluster.readCluster(scNVManager, this, fileMap.get(fileName)));
+			System.out.println("Reading cluster");
+			GXACluster cluster = GXACluster.readCluster(scNVManager, this, fileMap.get(fileName), jsonCategory);
+			categories.set(0, cluster);
+			return cluster;
 		} else if (name.equals("Design/Factors")) {
-			categories.set(1, GXADesign.readDesign(scNVManager, this, fileMap.get(fileName)));
+			System.out.println("Reading design/factors");
+			GXADesign design = GXADesign.readDesign(scNVManager, this, fileMap.get(fileName), jsonCategory);
+			categories.set(1, design);
+			return design;
 		}
+		return null;
 	}
 
 	class FetchClusterThread implements Runnable {

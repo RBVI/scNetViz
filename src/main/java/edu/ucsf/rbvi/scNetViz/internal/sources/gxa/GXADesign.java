@@ -12,6 +12,8 @@ import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
+import org.json.simple.JSONObject;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -67,6 +69,7 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		builder.append("{");
 		builder.append("\"name\": \""+toString()+"\",");
 		builder.append("\"source\": \""+source+"\",");
+		builder.append("\"source name\": \""+source.getName()+"\",");
 		builder.append("\"rows\": "+getMatrix().getNRows()+",");
 		builder.append("\"columns\": "+getMatrix().getNCols()+",");
 		builder.append("\"default row\": "+getDefaultRow());
@@ -140,7 +143,7 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		return;
 	}
 
-	public static GXADesign readDesign(ScNVManager scManager, GXAExperiment experiment, File file) throws IOException {
+	public static GXADesign readDesign(ScNVManager scManager, GXAExperiment experiment, File file, JSONObject jsonCategory) throws IOException {
 		List<String[]> input = CSVReader.readCSV(null, file);
 		if (input == null || input.size() < 2) return null;
 

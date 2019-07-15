@@ -71,6 +71,7 @@ public class FileCategory extends AbstractCategory implements Category {
 		builder.append("{");
 		builder.append("\"name\": \""+toString()+"\",");
 		builder.append("\"source\": \""+source+"\",");
+		builder.append("\"source name\": \""+source.getName()+"\",");
 		builder.append("\"rows\": "+getMatrix().getNRows()+",");
 		builder.append("\"columns\": "+getMatrix().getNCols()+",");
 		builder.append("\"default row\": "+getDefaultRow());

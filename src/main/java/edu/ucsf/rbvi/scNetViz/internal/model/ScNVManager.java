@@ -219,6 +219,7 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 		List<File> scNvFiles = appFiles.get("edu.ucsf.rbvi.scNetViz");
 		Map<String, File> fileMap = new HashMap<>();
 		for (File f: scNvFiles) {
+			System.out.println("File map has file: "+f.getName());
 			fileMap.put(f.getName(),f);
 		}
 
@@ -237,9 +238,11 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 		for (Object exp: experiments) {
 			JSONObject jsonExp = (JSONObject) exp;
 			Experiment experiment = getExperimentFromSession(jsonExp, fileMap);
+			System.out.println("Loaded expermient: "+experiment);
 			if (experiment == null) continue;
 
 			if (jsonExp.containsKey("categories")) {
+				System.out.println("Getting categories");
 				JSONArray categories = (JSONArray) jsonExp.get("categories");
 				for (Object cat: categories) {
 					Category category = getCategoryFromSession((JSONObject)cat, experiment, fileMap);
@@ -286,14 +289,16 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 	}
 
 	private Experiment getExperimentFromSession(JSONObject jsonExp, Map<String,File> fileMap) {
-		String src = (String)jsonExp.get("source");
+		String src = (String)jsonExp.get("source name");
+		System.out.println("Getting an experiment from "+src);
 		if (sourceMap.containsKey(src))
 			return sourceMap.get(src).loadExperimentFromSession(jsonExp, fileMap);
 		return null;
 	}
 
 	private Category getCategoryFromSession(JSONObject jsonCategory, Experiment experiment, Map<String,File> fileMap) {
-		String src = (String)jsonCategory.get("source");
+		String src = (String)jsonCategory.get("source name");
+		System.out.println("Getting a category from "+src);
 		if (sourceMap.containsKey(src))
 			return sourceMap.get(src).loadCategoryFromSession(jsonCategory, experiment, fileMap);
 		return null;

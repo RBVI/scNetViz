@@ -241,6 +241,7 @@ public class FileExperiment implements Experiment {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
 		builder.append("\"source\": \""+getSource().toString()+"\",\n");
+		builder.append("\"source name\": \""+getSource().getName()+"\",\n");
 		builder.append("\"metadata\": "+fileMetadata.toJSON()+",\n");
 		builder.append("\"rows\": "+getMatrix().getNRows()+",\n");
 		builder.append("\"columns\": "+getMatrix().getNCols()+",\n");

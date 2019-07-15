@@ -189,18 +189,22 @@ public class GXASource implements Source {
 			experiment.loadFromSession(fileMap);
 		} catch (Exception e) {
 			logger.error("Unable to load experiment from session: "+e.toString());
+			return null;
 		}
 
-		return null;
+		return experiment;
 	}
 
 	public Category loadCategoryFromSession(JSONObject jsonCategory, Experiment experiment, Map<String, File> fileMap) {
 		if (experiment instanceof GXAExperiment) {
+			Category category = null;
 			try {
-				((GXAExperiment)experiment).loadCategoryFromSession(jsonCategory, fileMap);
+				category = ((GXAExperiment)experiment).loadCategoryFromSession(jsonCategory, fileMap);
 			} catch (Exception e) {
 				logger.error("Unable to load category from session: "+e.toString());
+				return null;
 			}
+			return category;
 		}
 		return null;
 	}

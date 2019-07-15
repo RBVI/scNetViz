@@ -248,6 +248,8 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			line = reader.readLine();
 		}
 
+		System.out.println("Header line = "+line);
+
 		// at this point, line should have our dimensions.
 		// if we have a coordinate, we want three values, otherwise we want two
 		String[] dims = line.split("\\s+");
@@ -269,7 +271,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
 			nonZeros = Integer.parseInt(dims[2]);
-			// System.out.println("nonZeros = "+nonZeros);
+			System.out.println("nonZeros = "+nonZeros);
 			colIndex = new int[nCols+1];
 			Arrays.fill(colIndex, -1);
 			colIndex[nCols] = nonZeros; // Point to the end
@@ -608,10 +610,12 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
 			for (int index = 0; index < nonZeros; index++) {
+				int row = intMatrix[index][0]+1;
+				int col = intMatrix[index][1]+1;
 				if (type.equals(MTXTYPE.INTEGER)) {
-					writer.write(intMatrix[index][0]+" "+intMatrix[index][1]+" "+intMatrix[index][2]+"\n");
+					writer.write(row+" "+col+" "+intMatrix[index][2]+"\n");
 				} else {
-					writer.write(intMatrix[index][0]+" "+intMatrix[index][1]+" "+doubleMatrix[index][0]+"\n");
+					writer.write(row+" "+col+" "+doubleMatrix[index][0]+"\n");
 				}
 			}
 		}
