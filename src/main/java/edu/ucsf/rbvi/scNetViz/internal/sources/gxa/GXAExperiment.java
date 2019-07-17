@@ -235,7 +235,7 @@ public class GXAExperiment implements Experiment {
 		}
 		builder.append("]");
 		if (diffExp != null) {
-			builder.append(",\"differential expression\":");
+			builder.append(",\""+ScNVManager.DIFFEXP+"\":");
 			builder.append(diffExp.toJSON()+"\n");
 		}
 		builder.append("}");
@@ -344,6 +344,23 @@ public class GXAExperiment implements Experiment {
 			GXADesign design = GXADesign.readDesign(scNVManager, this, fileMap.get(fileName), jsonCategory);
 			categories.set(1, design);
 			return design;
+		}
+		return null;
+	}
+
+	public DifferentialExpression loadDiffExpFromSession(JSONObject jsonDiffExp, Map<String, File> fileMap) throws IOException {
+		// Get the file
+		String deFileName = URLEncoder.encode(source.getName()+"."+accession+".diffExp")+".csv";
+		if (fileMap.containsKey(deFileName)) {
+			File deFile = fileMap.get(deFileName);
+			try {
+				diffExp = new DifferentialExpression(scNVManager, this, jsonDiffExp, deFile);
+			} catch (Exception e) {
+				logger.error("Unable to read differential expression data for "+accession+" in session: "+e.toString());
+				e.printStackTrace();
+				return null;
+			}
+			return diffExp;
 		}
 		return null;
 	}

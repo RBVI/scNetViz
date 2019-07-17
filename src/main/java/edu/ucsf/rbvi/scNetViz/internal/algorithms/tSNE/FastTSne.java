@@ -304,18 +304,19 @@ public class FastTSne implements TSne {
 	public R Hbeta (double [][] D, double beta, int index){
 		DMatrixRMaj P  = new DMatrixRMaj(D);
 		// if (index == 0)
-		// 	writeMatrix("P"+index, P);
+		 	writeMatrix("P"+index, P);
 		scale(-beta,P);
+		System.out.println("beta = "+beta);
 		// if (index == 0)
-		// 	writeMatrix("HbetaP-scaled-"+index, P);
+		 	writeMatrix("HbetaP-scaled-"+index, P);
 		elementExp(P,P);
 
 		// if (index == 0)
-		//	writeMatrix("HbetaP-"+index, P);
+			writeMatrix("HbetaP-"+index, P);
 		double sumP = elementSum(P);   // sumP confirmed scalar
 		if (sumP == 0) {
 			// System.out.println("sumP = 0!");
-			// writeMatrix("Px"+index, P);
+			 writeMatrix("Px"+index, P);
 			throw new RuntimeException("sumP = 0, index = "+index);
 		}
 		//System.out.println("sumP = "+sumP);
@@ -351,8 +352,9 @@ public class FastTSne implements TSne {
 		double [][] P       = fillMatrix(n,n,0.0);
 		double [] beta      = fillMatrix(n,n,1.0)[0];
 		double logU         = Math.log(perplexity);
-		// System.out.println("Starting x2p...");
+		System.out.println("Starting x2p...");
 		for (int i = 0; i < n; i++) {
+			System.out.println("i = "+i);
 			if (config.cancelled())
 				break;
 			if (i % 500 == 0)
@@ -374,8 +376,10 @@ public class FastTSne implements TSne {
 
 			// Evaluate whether the perplexity is within tolerance
 			double Hdiff = H - logU;
+			// System.out.println("Hdiff = "+Hdiff+" tol = "+tol);
 			int tries = 0;
 			while(Math.abs(Hdiff) > tol && tries < 50){
+				System.out.println("Checking tolerance: tries = "+tries+", i = "+i);
 				if (Hdiff > 0){
 					betamin = beta[i];
 					if (Double.isInfinite(betamax))
@@ -390,15 +394,17 @@ public class FastTSne implements TSne {
 						beta[i] = ( beta[i] + betamin) / 2;
 				}
 
+				System.out.println("Checking tolerance: i = "+i);
 				hbeta = Hbeta(Di, beta[i], i);
 				H = hbeta.H;
 				thisP = hbeta.P;
 				Hdiff = H - logU;
+				System.out.println("Checking tolerance: Hdiff = "+Hdiff);
 				tries = tries + 1;
 			}
-			// writeMatrix("thisP-"+i, thisP);
+			writeMatrix("thisP-"+i, thisP);
 			assignValuesToRow(P, i,concatenate(range(0,i),range(i+1,n)),thisP[0]);
-			// writeMatrix("Ph-"+i, P);
+			writeMatrix("Ph-"+i, P);
 		}
 
 		R r = new R();

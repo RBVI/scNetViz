@@ -93,8 +93,9 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	@Override
 	public Map<Object, double[]> getMeans(int category) {
 		updateMatrixInfo();
-		if (means != null && category == lastCategory)
+		if (means != null && category == lastCategory) {
 			return means;
+		}
 
 		if (sizes == null || category != lastCategory) {
 			getSizes(category);

@@ -22,6 +22,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
+import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.utils.HTTPUtils;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.tasks.GXAListEntriesTaskFactory;
@@ -207,5 +208,14 @@ public class GXASource implements Source {
 			return category;
 		}
 		return null;
+	}
+	public DifferentialExpression loadDiffExpFromSession(JSONObject jsonDiffExp, Experiment experiment, Map<String, File> fileMap) {
+		try {
+			return ((GXAExperiment)experiment).loadDiffExpFromSession(jsonDiffExp, fileMap);
+		} catch (Exception e) {
+			logger.error("Unable to load differential expression from session: "+e.toString());
+			return null;
+		}
+
 	}
 }

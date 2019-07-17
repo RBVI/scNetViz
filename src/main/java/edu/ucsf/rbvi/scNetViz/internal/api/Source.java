@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import org.json.simple.JSONObject;
+import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 
 public interface Source {
 	public static String SOURCENAME = "name";
@@ -13,4 +14,5 @@ public interface Source {
 	public Experiment getExperiment(String accession);
 	public Experiment loadExperimentFromSession(JSONObject jsonExperiment, Map<String,File> fileMap);
 	public Category loadCategoryFromSession(JSONObject jsonCategory, Experiment experiment, Map<String,File> fileMap);
+	public DifferentialExpression loadDiffExpFromSession(JSONObject jsonDiffExp, Experiment experiment, Map<String,File> fileMap);
 }

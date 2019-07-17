@@ -207,7 +207,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		GXACluster cluster =  getClusterFromCSV(scManager, experiment, input, null);
 		if (jsonCategory.containsKey("suggested K")) {
 			cluster.suggestedK = ((Long)jsonCategory.get("suggested K")).intValue();
-			cluster.selectedRow = suggestedK;
+			cluster.selectedRow = cluster.suggestedK;
 		}
 		return cluster;
 	}

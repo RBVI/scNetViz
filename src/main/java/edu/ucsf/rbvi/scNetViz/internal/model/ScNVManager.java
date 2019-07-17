@@ -55,6 +55,13 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 	final ScNVSettings settings;
 	private ScNVCytoPanel cytoPanel;
 
+	public final static String APP_NAME = "edu.ucsf.rbvi.scNetViz";
+	public final static String CATEGORIES = "categories";
+	public final static String DIFFEXP = "differential expression";
+	public final static String EXPERIMENTS = "Experiments";
+	public final static String EXPERIMENTS_FILE = "Experiments.json";
+	public final static String SOURCE_NAME = "source name";
+
 	public ScNVManager(final CyServiceRegistrar registrar) {
 		experimentMap = new HashMap<>();
 		sourceMap = new HashMap<>();
@@ -213,40 +220,44 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 	// See if we have data in the session, and load it if we do
 	public void handleEvent(SessionLoadedEvent e) {
 		Map<String,List<File>> appFiles = e.getLoadedSession().getAppFileListMap();
-		if (!appFiles.containsKey("edu.ucsf.rbvi.scNetViz"))
+		if (!appFiles.containsKey(APP_NAME))
 			return;
 
-		List<File> scNvFiles = appFiles.get("edu.ucsf.rbvi.scNetViz");
+		List<File> scNvFiles = appFiles.get(APP_NAME);
 		Map<String, File> fileMap = new HashMap<>();
 		for (File f: scNvFiles) {
 			System.out.println("File map has file: "+f.getName());
 			fileMap.put(f.getName(),f);
 		}
 
-		if (!fileMap.containsKey("Experiments.json"))
+		if (!fileMap.containsKey(EXPERIMENTS_FILE))
 			return;
 
 		JSONParser parser = new JSONParser();
 		JSONObject jsonExperiment;
 		try {
-			jsonExperiment = (JSONObject) parser.parse(new FileReader(fileMap.get("Experiments.json")));
+			jsonExperiment = (JSONObject) parser.parse(new FileReader(fileMap.get(EXPERIMENTS_FILE)));
 		} catch(Exception ioe) {
 			return;
 		}
 
-		JSONArray experiments = (JSONArray) jsonExperiment.get("Experiments");
+		JSONArray experiments = (JSONArray) jsonExperiment.get(EXPERIMENTS);
 		for (Object exp: experiments) {
 			JSONObject jsonExp = (JSONObject) exp;
 			Experiment experiment = getExperimentFromSession(jsonExp, fileMap);
 			System.out.println("Loaded expermient: "+experiment);
 			if (experiment == null) continue;
 
-			if (jsonExp.containsKey("categories")) {
+			if (jsonExp.containsKey(CATEGORIES)) {
 				System.out.println("Getting categories");
-				JSONArray categories = (JSONArray) jsonExp.get("categories");
+				JSONArray categories = (JSONArray) jsonExp.get(CATEGORIES);
 				for (Object cat: categories) {
 					Category category = getCategoryFromSession((JSONObject)cat, experiment, fileMap);
 				}
+			}
+
+			if (jsonExp.containsKey(DIFFEXP)) {
+				getDiffExpFromSession((JSONObject)jsonExp.get(DIFFEXP), experiment, fileMap);
 			}
 		}
 	}
@@ -254,14 +265,14 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 	// We need to save all of our experiment, category, and DE tables
 	public void handleEvent(SessionAboutToBeSavedEvent e) {
 		String tmpDir = System.getProperty("java.io.tmpdir");
-		File jsonFile = new File(tmpDir, "Experiments.json");
+		File jsonFile = new File(tmpDir, EXPERIMENTS_FILE);
 
 		try {
 			FileOutputStream fos = new FileOutputStream(jsonFile);
 			OutputStreamWriter osw = new OutputStreamWriter(fos, "utf-8");
 			BufferedWriter writer = new BufferedWriter(osw);
 
-			writer.write("{\"Experiments\":[");
+			writer.write("{\""+EXPERIMENTS+"\":[");
 			List<File> files = new ArrayList<File>();
 			int expNumber = experimentMap.keySet().size();
 			for (String accession: experimentMap.keySet()) {
@@ -281,7 +292,7 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 			files.add(jsonFile);
 
 			try {
-				e.addAppFiles("edu.ucsf.rbvi.scNetViz", files);
+				e.addAppFiles(APP_NAME, files);
 			} catch (Exception add) {
 			}
 		} catch (Exception jsonException) {
@@ -289,7 +300,7 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 	}
 
 	private Experiment getExperimentFromSession(JSONObject jsonExp, Map<String,File> fileMap) {
-		String src = (String)jsonExp.get("source name");
+		String src = (String)jsonExp.get(SOURCE_NAME);
 		System.out.println("Getting an experiment from "+src);
 		if (sourceMap.containsKey(src))
 			return sourceMap.get(src).loadExperimentFromSession(jsonExp, fileMap);
@@ -297,10 +308,15 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 	}
 
 	private Category getCategoryFromSession(JSONObject jsonCategory, Experiment experiment, Map<String,File> fileMap) {
-		String src = (String)jsonCategory.get("source name");
+		String src = (String)jsonCategory.get(SOURCE_NAME);
 		System.out.println("Getting a category from "+src);
 		if (sourceMap.containsKey(src))
 			return sourceMap.get(src).loadCategoryFromSession(jsonCategory, experiment, fileMap);
 		return null;
+	}
+
+	private void getDiffExpFromSession(JSONObject jsonDiffExp, Experiment experiment, Map<String,File> fileMap) {
+		System.out.println("Getting differential expression for experiment "+experiment);
+		experiment.getSource().loadDiffExpFromSession(jsonDiffExp, experiment, fileMap);
 	}
 }
