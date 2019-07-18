@@ -394,7 +394,8 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			// Get the corresponding mtx column first
 			int mtxCol = mapColumn(col, tpmHeaderCols, colLabelMap);
 			if (mtxCol < 0) continue;
-			Object v = getValue(row, col);
+			Object v = getValue(row, col-hdrCols+1);
+			// System.out.println("v for "+getColumnLabel(col)+"("+mtxCol+":"+col+") = "+v);
 			if (v != null && v.toString().length() == 0) {
 				v = "Unspecified";
 			}

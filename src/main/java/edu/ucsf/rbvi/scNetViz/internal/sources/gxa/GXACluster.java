@@ -47,6 +47,9 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	// The suggested k value
 	int suggestedK = 0;
 
+	// The default row (corresponds to suggestedK)
+	int defaultRow = 0;
+
 	// The number of K values provided
 	int nK = 0;
 
@@ -76,7 +79,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 
 	@Override
 	public int getDefaultRow() { 
-		return suggestedK;
+		return defaultRow;
 	}
 
 	@Override
@@ -172,8 +175,9 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	public int[] getCluster(int kClust) {
 		int ncolumns = clusters.length;
 		int[] clustRow = new int[ncolumns];
+		int kRow = getRowForK(kClust);
 		for (int col = 0; col < ncolumns; col++) {
-			clustRow[col] = clusters[col][kClust];
+			clustRow[col] = clusters[col][kRow];
 		}
 		return clustRow;
 	}
@@ -200,14 +204,24 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		return;
 	}
 
-	public static GXACluster readCluster(ScNVManager scManager, GXAExperiment experiment, File file, JSONObject jsonCategory) throws IOException {
+	public int getRowForK(int k) {
+		for (int row = 0; row < k; row++) {
+			if ((Integer)getValue(row, 1) == k)
+				return row;
+		}
+		return -1;
+	}
+
+	public static GXACluster readCluster(ScNVManager scManager, GXAExperiment experiment, File file, 
+	                                     JSONObject jsonCategory) throws IOException {
 		List<String[]> input = CSVReader.readCSV(null, file);
 		if (input == null || input.size() < 2) return null;
 
 		GXACluster cluster =  getClusterFromCSV(scManager, experiment, input, null);
 		if (jsonCategory.containsKey("suggested K")) {
 			cluster.suggestedK = ((Long)jsonCategory.get("suggested K")).intValue();
-			cluster.selectedRow = cluster.suggestedK;
+			// Fix me
+			cluster.selectedRow = cluster.getRowForK(cluster.suggestedK);
 		}
 		return cluster;
 	}
@@ -221,13 +235,14 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		return getClusterFromCSV(scManager, experiment, input, monitor);
 	}
 
-	private static GXACluster getClusterFromCSV(ScNVManager scManager, GXAExperiment experiment, List<String[]> input, TaskMonitor monitor) {
+	private static GXACluster getClusterFromCSV(ScNVManager scManager, GXAExperiment experiment, 
+	                                            List<String[]> input, TaskMonitor monitor) {
 		int nclusters = input.size();
 		int ncolumns = input.get(0).length;
 
 		GXACluster gxaCluster = new GXACluster(scManager, experiment);
 
-		System.out.println("ncolumns = "+ncolumns+", ncluster = "+nclusters);
+		// System.out.println("ncolumns = "+ncolumns+", ncluster = "+nclusters);
 		gxaCluster.clusters = new int[ncolumns][nclusters];
 		boolean first = true;
 		List<String> lbl = new ArrayList<>();
@@ -247,7 +262,8 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 			int thisK = Integer.parseInt(line[1]);
 			lbl.add("k = "+thisK);
 			if (line[0].equalsIgnoreCase("TRUE")) {
-				gxaCluster.suggestedK = clustering;
+				gxaCluster.suggestedK = thisK;
+				gxaCluster.selectedRow = clustering;
 			}
 
 			// System.out.println("line.length = "+line.length);
@@ -262,8 +278,6 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		}
 
 		gxaCluster.setRowLabels(lbl);
-
-		gxaCluster.selectedRow = gxaCluster.suggestedK;
 
 		if (monitor != null) {
 			monitor.showMessage(TaskMonitor.Level.INFO, "Read "+(nclusters-1)+" clusters.  Suggested K = "+gxaCluster.suggestedK);
@@ -346,7 +360,8 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 			// System.out.println("getValueAt: "+row+","+column);
 			switch (column) {
 				case 0:
-					return (row) == suggestedK ? "True" : "False";
+					int thisK = (Integer) getValueAt(row, 1);
+					return (thisK) == suggestedK ? "True" : "False";
 				default:
 					int value;
 					if (columnIndex != null)
