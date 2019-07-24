@@ -47,7 +47,7 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 
 public class GXAExperiment implements Experiment {
 	public static String RESULTS_URL = "https://www.ebi.ac.uk/gxa/sc/experiments/%s/Results";
-	public static String GXA_MTX_URI = "https://www.ebi.ac.uk/gxa/sc/experiment/%s/download/zip?fileType=quantification-filtered";
+	public static String GXA_MTX_URI = "https://www.ebi.ac.uk/gxa/sc/experiment/%s/download/zip?fileType=normalised";
 	final Logger logger;
 
 	String accession = null;

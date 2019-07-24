@@ -109,7 +109,8 @@ public class HCAEntryTable extends JTable {
 		}
 		if (column == 2) {
 			// Set the tooltip for this column
-			String ttText = createToolTip(getModel().getValueAt(row, column).toString());
+			int modelRow = convertRowIndexToModel(row);
+			String ttText = createToolTip(getModel().getValueAt(modelRow, column).toString());
 			((JLabel)returnComp).setToolTipText(ttText);
 		} else {
 			((JLabel)returnComp).setToolTipText(null);
