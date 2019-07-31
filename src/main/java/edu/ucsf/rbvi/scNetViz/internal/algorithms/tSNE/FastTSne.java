@@ -306,18 +306,21 @@ public class FastTSne implements TSne {
 		// if (index == 0)
 		// 	writeMatrix("P"+index, P);
 		scale(-beta,P);
+		// System.out.println("beta = "+beta);
 		// if (index == 0)
 		// 	writeMatrix("HbetaP-scaled-"+index, P);
 		elementExp(P,P);
 
 		// if (index == 0)
 		//	writeMatrix("HbetaP-"+index, P);
-		double sumP = elementSum(P);   // sumP confirmed scalar
-		if (sumP == 0) {
+		double sumP = elementSum(P);
+	 	if (sumP == 0.0)	 // sumP confirmed scalar
+			sumP = 2.220446049250313e-32;   // Make sure sumP is never zero
+		//if (sumP == 0) {
 			// System.out.println("sumP = 0!");
 			// writeMatrix("Px"+index, P);
-			throw new RuntimeException("sumP = 0, index = "+index);
-		}
+			//throw new RuntimeException("sumP = 0, index = "+index);
+		//}
 		//System.out.println("sumP = "+sumP);
 		DMatrixRMaj Dd  = new DMatrixRMaj(D);
 		elementMult(Dd, P);
@@ -353,9 +356,10 @@ public class FastTSne implements TSne {
 		double logU         = Math.log(perplexity);
 		// System.out.println("Starting x2p...");
 		for (int i = 0; i < n; i++) {
+			// System.out.println("i = "+i);
 			if (config.cancelled())
 				break;
-			if (i % 500 == 0)
+			if (i % 100 == 0)
 				monitor.showMessage(TaskMonitor.Level.INFO, "Computing P-values for point " + i + " of " + n + "...");
 			double betamin = Double.NEGATIVE_INFINITY;
 			double betamax = Double.POSITIVE_INFINITY;
@@ -374,8 +378,10 @@ public class FastTSne implements TSne {
 
 			// Evaluate whether the perplexity is within tolerance
 			double Hdiff = H - logU;
+			// System.out.println("Hdiff = "+Hdiff+" tol = "+tol);
 			int tries = 0;
 			while(Math.abs(Hdiff) > tol && tries < 50){
+				// System.out.println("Checking tolerance: tries = "+tries+", i = "+i);
 				if (Hdiff > 0){
 					betamin = beta[i];
 					if (Double.isInfinite(betamax))
@@ -390,10 +396,12 @@ public class FastTSne implements TSne {
 						beta[i] = ( beta[i] + betamin) / 2;
 				}
 
+				// System.out.println("Checking tolerance: i = "+i);
 				hbeta = Hbeta(Di, beta[i], i);
 				H = hbeta.H;
 				thisP = hbeta.P;
 				Hdiff = H - logU;
+				// System.out.println("Checking tolerance: Hdiff = "+Hdiff);
 				tries = tries + 1;
 			}
 			// writeMatrix("thisP-"+i, thisP);

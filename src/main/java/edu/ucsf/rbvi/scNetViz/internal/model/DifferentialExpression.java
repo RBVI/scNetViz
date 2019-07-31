@@ -13,6 +13,8 @@ package edu.ucsf.rbvi.scNetViz.internal.model;
  *    the value that will be reported as the logGER.
  **/
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -23,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.json.simple.JSONObject;
+
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
@@ -31,6 +35,8 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.MyDouble;
 import edu.ucsf.rbvi.scNetViz.internal.api.PercentDouble;
 import edu.ucsf.rbvi.scNetViz.internal.api.PValueDouble;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 import edu.ucsf.rbvi.scNetViz.internal.utils.MatrixUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
@@ -40,14 +46,82 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	int categoryRow;
 	double dDRCutoff;
 	double log2FCCutoff;
-	Map<Object, Map<String, double[]>> logGERMap;
-	Map<Object, double[]> fdrMap;
+	Map<Object, Map<String, double[]>> logGERMap = null;
+	// Map<Object, double[]> fdrMap = null;
 	final double[][] matrix;
 
 	SortableTableModel tableModel = null;
 
 	int nGenes;
 	int nCategories;
+
+	public DifferentialExpression(final ScNVManager manager, final Experiment experiment, JSONObject json, File file) {
+		super(manager);
+		this.experiment = experiment;
+
+		String catName = (String)json.get("category");
+		Category catTemp = null;
+		for (Category cat: experiment.getCategories()) {
+			if (cat.toString().equals(catName)) {
+				catTemp = cat;
+				break;
+			}
+		}
+		this.category = catTemp;
+		this.categoryRow = ((Long)json.get("row")).intValue();
+		this.dDRCutoff = (Double)json.get("ddrCutoff");
+		this.log2FCCutoff = (Double)json.get("log2FCCutoff");
+
+		List<String[]> matrixLines = null;
+		try {
+			matrixLines = CSVReader.readCSV(null, file);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		super.nCols = matrixLines.get(0).length-1;
+		super.setColLabels(Arrays.asList(matrixLines.get(0)));
+		super.nRows = matrixLines.size()-1;
+		matrix = new double[nRows][nCols];
+		List<String> rowLabels = new ArrayList<>();
+		for (int row = 1; row < matrixLines.size(); row++) {
+			String[] line = matrixLines.get(row);
+			rowLabels.add(line[0]);
+			for (int col = 1; col < line.length; col++) {
+				try {
+					if (line[col].length() == 0)
+						matrix[row-1][col-1] = Double.NaN;
+					else
+						matrix[row-1][col-1] = Double.parseDouble(line[col]);
+				} catch (NumberFormatException nfe) {
+					throw new RuntimeException("Unable to read line: "+line[col]);
+				}
+			}
+		}
+		super.setRowLabels(rowLabels);
+
+		// Now, built our logGERMap
+		logGERMap = new HashMap<>();
+		for (Object cat: category.getMeans(categoryRow).keySet()) {
+			double[] logGer = new double[nRows];
+			double[] pValue = new double[nRows];
+
+			int gerColumn = getColumn(cat, "log2FC");
+			int pVColumn = getColumn(cat, "pValue");
+
+			for (int row = 0; row < nRows; row++) {
+				// System.out.println("log2FC = "+getDoubleValue(row, gerColumn)+", pValue = "+getDoubleValue(row, pVColumn));
+				logGer[row] = getDoubleValue(row, gerColumn-1);
+				pValue[row] = getDoubleValue(row, pVColumn-1);
+			}
+			
+			HashMap<String, double[]> logCatMap = new HashMap<>();
+			logCatMap.put("logFC", logGer);
+			logCatMap.put("pValue", pValue);
+			logGERMap.put(cat, logCatMap);
+
+		}
+	}
 
 	public DifferentialExpression(final ScNVManager manager, final Category category, int categoryRow,
 	                              double dDRCutoff, double log2FCCutoff) {
@@ -66,12 +140,12 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		Map<Object, double[]> means = category.getMeans(categoryRow);
 		Map<Object, double[]> drMap = category.getDr(categoryRow);
 		Map<Object, double[]> mtdcMap = category.getMTDC(categoryRow);
-		fdrMap = new HashMap<>();
+		// fdrMap = new HashMap<>();
 
 		logGERMap = category.getLogGER(categoryRow, dDRCutoff-.001, log2FCCutoff);
 		super.nCols = means.keySet().size()*6; // 6 columns for each category/cluster
 		if (means.containsKey(Category.UNUSED_CAT))
-			super.nCols = super.nCols - 6;  // We son't want to show the "unused" category
+			super.nCols = super.nCols - 6;  // We don't want to show the "unused" category
 
 		List<String> labels = new ArrayList<String>(nRows);
 		for (int row = 0; row < mtx.getNRows(); row++) {
@@ -97,7 +171,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		setColLabels(colHeaders);
 
 		// Initialize the matrix
-		matrix = new double[nCols][nRows];
+		matrix = new double[nRows][nCols];
 		int col = 0;
 		for (Object cat: means.keySet()) {
 			if (cat.equals(Category.UNUSED_CAT))
@@ -109,15 +183,15 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			double[] logGER = logGERMap.get(cat).get("logFC");
 			double[] pValue = logGERMap.get(cat).get("pValue");
 			double[] FDR = adjustPValues(pValue);
-			fdrMap.put(cat, FDR);
+			// fdrMap.put(cat, FDR);
 
 			for (int row = 0; row < nRows; row++) {
-				matrix[col][row] = mean[row];
-				matrix[col+1][row] = drs[row];
-				matrix[col+2][row] = mtdc[row];
-				matrix[col+3][row] = logGER[row];
-				matrix[col+4][row] = pValue[row];
-				matrix[col+5][row] = FDR[row];
+				matrix[row][col] = mean[row];
+				matrix[row][col+1] = drs[row];
+				matrix[row][col+2] = mtdc[row];
+				matrix[row][col+3] = logGER[row];
+				matrix[row][col+4] = pValue[row];
+				matrix[row][col+5] = FDR[row];
 			}
 			col += 6;
 		}
@@ -134,12 +208,27 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return tableModel;
 	}
 
+	public String toJSON() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		builder.append("\"category\": \""+category.toString()+"\",");
+		builder.append("\"row\": "+categoryRow+",");
+		builder.append("\"ddrCutoff\": "+dDRCutoff+",");
+		builder.append("\"log2FCCutoff\": "+log2FCCutoff+"}");
+		return builder.toString();
+	}
+
 	public String toString() {
 		return "Differential expression for category "+category+" row "+categoryRow;
 	}
 
-	public Map<Object,Map<String, double[]>> getLogGERMap() { return logGERMap; }
-	public Map<String, double[]> getLogGERMap(Object cat) { return logGERMap.get(cat); }
+	public Map<Object,Map<String, double[]>> getLogGERMap() { 
+		return logGERMap; 
+	}
+
+	public Map<String, double[]> getLogGERMap(Object cat) { 
+		return logGERMap.get(cat); 
+	}
 
 	public double[] getLogGER(Object cat, boolean positiveOnly) { 
 		if (logGERMap.containsKey(cat)) {
@@ -171,7 +260,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		double[] pValues = logGERMap.get(cat).get("pValue");
 		// double[] fdr = fdrMap.get(cat);
 		//
-		System.out.println("getGeneList: nGenes = "+nGenes+", maxGenes = "+maxGenes+", positiveOnly = "+positiveOnly);
+		// System.out.println("getGeneList: nGenes = "+nGenes+", maxGenes = "+maxGenes+", positiveOnly = "+positiveOnly);
 
 		if (nGenes > 0) {
 			return getTopGenes(null, pValues, nGenes);
@@ -217,6 +306,19 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			return set;
 		}
 		return category.getMeans(categoryRow).keySet();
+	}
+
+	public void saveFile(File file) throws IOException {
+		CSVWriter.writeCSV(file, this, "\t");
+	}
+
+	private int getColumn(Object cat, String lbl) {
+		String colName = category.mkLabel(cat)+" "+lbl;
+		for (int col = 1; col < nCols; col++) {
+			if (colName.equals(getColumnLabel(col)))
+				return col;
+		}
+		return -1;
 	}
 
 	private int countValues(double[] array) {
@@ -291,7 +393,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 
 	@Override
 	public double getDoubleValue(int row, int column) {
-		return matrix[column][row];
+		return matrix[row][column];
 	}
 
 	@Override

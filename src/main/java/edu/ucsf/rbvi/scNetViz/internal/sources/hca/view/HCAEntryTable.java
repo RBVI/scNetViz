@@ -1,4 +1,4 @@
-package edu.ucsf.rbvi.scNetViz.internal.sources.gxa.view;
+package edu.ucsf.rbvi.scNetViz.internal.sources.hca.view;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -27,26 +27,26 @@ import org.cytoscape.model.CyTable;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
-import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAExperiment;
-import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAMetadata;
-import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
+import edu.ucsf.rbvi.scNetViz.internal.sources.hca.HCAExperiment;
+import edu.ucsf.rbvi.scNetViz.internal.sources.hca.HCAMetadata;
+import edu.ucsf.rbvi.scNetViz.internal.sources.hca.HCASource;
 import edu.ucsf.rbvi.scNetViz.internal.view.HeaderRenderer;
 
-public class GXAEntryTable extends JTable {
+public class HCAEntryTable extends JTable {
 	final ScNVManager scNVManager;
-	final GXASource gxaSource;
+	final HCASource hcaSource;
 	List<Metadata> entries;
 
 	static String[] columnNames = {"Loaded", "Experiment", "Cells", "Comparisons", "Organisms", "Experimental Variables"};
 
 	static Color alternateColor = new Color(234,255,234);
 
-	public GXAEntryTable (final ScNVManager scNVManager, final GXASource gxaSource, final GXAEntryTableModel tableModel) {
+	public HCAEntryTable (final ScNVManager scNVManager, final HCASource hcaSource, final HCAEntryTableModel tableModel) {
 		super(tableModel);
 		this.scNVManager = scNVManager;
-		this.gxaSource = gxaSource;
+		this.hcaSource = hcaSource;
 
-		entries = gxaSource.getMetadata();
+		entries = hcaSource.getMetadata();
 
 		this.setAutoCreateRowSorter(true);
 		this.setAutoCreateColumnsFromModel(true);
@@ -60,12 +60,14 @@ public class GXAEntryTable extends JTable {
 
 		setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
+		/*
 		// Figure out the row heights
 		for (int i = 0; i < entries.size(); i++) {
-			List<?> factors = (List)entries.get(i).get(GXAMetadata.FACTORS);
+			List<?> factors = (List)entries.get(i).get(HCAMetadata.FACTORS);
 			int lines = factors.size();
 			this.setRowHeight(i, lines*16);
 		}
+		*/
 
 		// Set up selection listener
 		getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -73,7 +75,7 @@ public class GXAEntryTable extends JTable {
 				int row = getSelectedRow();
 				if (row != -1) {
 					String acc = (String)getValueAt(row,0);
-					gxaSource.getEntryFrame().enableButtons(acc, true);
+					hcaSource.getEntryFrame().enableButtons(acc, true);
 				}
 			}
 		});
@@ -87,7 +89,7 @@ public class GXAEntryTable extends JTable {
 				if (mouseEvent.getClickCount() == 2 && table.getSelectedRow() != -1) {
 					// Load the experiment
 					String acc = (String)table.getValueAt(row,0);
-					gxaSource.getEntryFrame().loadExperiment(acc);
+					hcaSource.getEntryFrame().loadExperiment(acc);
 					// TaskIterator tasks = new TaskIterator(new LoadExperimentTask(acc));
 					// scNVManager.executeTasks(tasks);
 				}

@@ -2,6 +2,7 @@ package edu.ucsf.rbvi.scNetViz.internal.api;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -37,6 +38,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.SimpleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
@@ -91,8 +93,9 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	@Override
 	public Map<Object, double[]> getMeans(int category) {
 		updateMatrixInfo();
-		if (means != null && category == lastCategory)
+		if (means != null && category == lastCategory) {
 			return means;
+		}
 
 		if (sizes == null || category != lastCategory) {
 			getSizes(category);
@@ -349,6 +352,10 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		return logFC;
 	}
 
+	public void saveFile(File file) throws IOException {
+		CSVWriter.writeCSV(file, this, "\t");
+	}
+
 	double calcLogFC(double mean1, int size1, double mean2, int size2) {
 		if (mean1 != 0.0 && mean2 != 0.0)
 			return Math.log(mean1/mean2);
@@ -383,16 +390,20 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 		int tpmHeaderCols = 1;
 
-		// System.out.println("hdrCols = "+hdrCols+", row = "+row);
-
-		for (int col = 0; col < nCols; col++) {
-			Object v = getValue(row, col);
-			// System.out.println("v("+col+") = "+v);
+		for (int col = hdrCols; col < nCols; col++) {
+			// Get the corresponding mtx column first
+			int mtxCol = mapColumn(col, tpmHeaderCols, colLabelMap);
+			if (mtxCol < 0) continue;
+			Object v = getValue(row, col-hdrCols+1);
+			// System.out.println("v for "+getColumnLabel(col)+"("+mtxCol+":"+col+") = "+v);
+			if (v != null && v.toString().length() == 0) {
+				v = "Unspecified";
+			}
 			if (!catMap.containsKey(v)) {
 				catMap.put(v, new ArrayList<>());
 				sizes.put(v, 0);
 			}
-			catMap.get(v).add(mapColumn(col, tpmHeaderCols, colLabelMap));
+			catMap.get(v).add(mtxCol);
 			sizes.put(v, sizes.get(v)+1);
 		}
 
@@ -401,17 +412,26 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			catMap.put(UNUSED_CAT, new ArrayList<>());
 			sizes.put(UNUSED_CAT, 0);
 			for (String key: colLabelMap.keySet()) {
+				// System.out.println("Adding "+key+" to catMap");
 				catMap.get(UNUSED_CAT).add(colLabelMap.get(key));
 				sizes.put(UNUSED_CAT, sizes.get(UNUSED_CAT)+1);
 			}
 		}
+
+		/*
+		System.out.println("catMap: ");
+		for (Object cat: catMap.keySet()) {
+			System.out.println(cat+": "+catMap.get(cat));
+		}
+		*/
 		return catMap.keySet().size();
 	}
 
 	private int mapColumn(int col, int tpmHeaders, Map<String, Integer> colLabelMap) {
-		String lbl = getColumnLabel(col+hdrCols);
+		String lbl = getColumnLabel(col);
 		if (colLabelMap.get(lbl) == null) {
 			System.out.println("Can't find column label: "+lbl);
+			return -1;
 		}
 		int mtxCol =  colLabelMap.get(lbl);
 		colLabelMap.remove(lbl);

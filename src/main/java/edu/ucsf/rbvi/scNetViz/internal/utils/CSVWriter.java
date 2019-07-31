@@ -16,6 +16,21 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.StringMatrix;
 
 public class CSVWriter {
+
+	public static void writeCSV(File file, List<String[]> table) throws IOException {
+		BufferedWriter output = new BufferedWriter(new FileWriter(file));
+		for (String[] line: table) {
+			int count = line.length;
+			for (String txt: line) {
+				output.write(txt);
+				if (count-- > 1)
+					output.write("\t");
+			}
+			output.write("\n");
+		}
+		output.close();
+	}
+
 	public static void writeCSV(File file, Matrix matrix, String delimiter) {
 		BufferedWriter output = null;
 		try {

@@ -1,6 +1,7 @@
-package edu.ucsf.rbvi.scNetViz.internal.sources.gxa;
+package edu.ucsf.rbvi.scNetViz.internal.sources.hca;
 
 import java.io.File;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,10 +26,10 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.utils.HTTPUtils;
-import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.tasks.GXAListEntriesTaskFactory;
-import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.tasks.GXALoadExperimentTaskFactory;
-import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.tasks.GXAShowEntriesTaskFactory;
-import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.view.GXAEntryFrame;
+import edu.ucsf.rbvi.scNetViz.internal.sources.hca.tasks.HCAListEntriesTaskFactory;
+// import edu.ucsf.rbvi.scNetViz.internal.sources.hca.tasks.HCALoadExperimentTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.sources.hca.tasks.HCAShowEntriesTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.sources.hca.view.HCAEntryFrame;
 
 import static org.cytoscape.work.ServiceProperties.COMMAND;
 import static org.cytoscape.work.ServiceProperties.COMMAND_DESCRIPTION;
@@ -47,93 +48,90 @@ import static org.cytoscape.work.ServiceProperties.TITLE;
 import static org.cytoscape.work.ServiceProperties.TOOL_BAR_GRAVITY;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP;
 
-public class GXASource implements Source {
-	public static String EXPERIMENTS_URL = "https://www.ebi.ac.uk/gxa/sc/json/experiments";
+public class HCASource implements Source {
+	public static String HCA_PROJECT_URL = "https://service.explore.data.humancellatlas.org/repository/projects?";
 
 	final Logger logger;
 	final ScNVManager scNVManager;
-	final Map<String, GXAMetadata> metadataMap;
-	GXAEntryFrame entryFrame = null;
+	final Map<String, HCAMetadata> metadataMap;
+	HCAEntryFrame entryFrame = null;
 
-	public GXASource (ScNVManager manager) {
+	public HCASource (ScNVManager manager) {
 		scNVManager = manager;
 		logger = Logger.getLogger(CyUserLog.NAME);
 
-		// Read in all of the metadata (entries) for gxa
+		// Read in all of the metadata (entries) for hca
 		metadataMap = new HashMap<>();
 
 		{
 			Properties props = new Properties();
-			props.put(SOURCENAME, "gxa");
+			props.put(SOURCENAME, "hca");
 			scNVManager.registerService(this, Source.class, props);
 		}
 
 		// Register our task factories
 		{
 			Properties props = new Properties();
-			props.put(TITLE, "Browse Single Cell Expression Atlas");
+			props.put(TITLE, "Browse the Human Cell Atlas");
 			props.put(PREFERRED_MENU, "Apps.scNetViz");
 			props.setProperty(IN_TOOL_BAR, "TRUE");
 			props.setProperty(TOOL_BAR_GRAVITY, "100f");
 			props.setProperty(TOOLTIP, "Show Experiments Table");
-			String ebiLogoURL = getClass().getResource("/images/EMBL-EBI-Logo-36x36.png").toString();
+			String ebiLogoURL = getClass().getResource("/images/hca.png").toString();
 			props.setProperty(LARGE_ICON_URL, ebiLogoURL);
-			scNVManager.registerService(new GXAShowEntriesTaskFactory(manager, this), TaskFactory.class, props);
+			scNVManager.registerService(new HCAShowEntriesTaskFactory(manager, this), TaskFactory.class, props);
 		}
 
 		// Register our commands
 		{
 			Properties props = new Properties();
-			props.setProperty(COMMAND_DESCRIPTION, "List all Gene Expression Atlas (GXA) entries available");
+			props.setProperty(COMMAND_DESCRIPTION, "List all Gene Expression Atlas (HCA) entries available");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
-			props.setProperty(COMMAND, "list gxa entries");
+			props.setProperty(COMMAND, "list hca entries");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
 
-			scNVManager.registerService(new GXAListEntriesTaskFactory(manager, this), TaskFactory.class, props);
+			scNVManager.registerService(new HCAListEntriesTaskFactory(manager, this), TaskFactory.class, props);
 		}
 		
 		{
 			Properties props = new Properties();
 			props.put(COMMAND_NAMESPACE, "scnetviz");
-			props.put(COMMAND_DESCRIPTION, "Load an experiment from the EBI Gene Expression Atlas");
-			props.put(COMMAND, "load gxa experiment");
+			props.put(COMMAND_DESCRIPTION, "Load an experiment from the Human Cell Atlas matrix service");
+			props.put(COMMAND, "load hca experiment");
 			props.put(COMMAND_SUPPORTS_JSON, "true");
-			scNVManager.registerService(new GXALoadExperimentTaskFactory(manager, this), TaskFactory.class, props);
+			// scNVManager.registerService(new HCALoadExperimentTaskFactory(manager, this), TaskFactory.class, props);
 		}
 
 	}
 
-	public String getName() { return "GXA"; }
-	public String toString() { return "Single Cell Expression Atlas"; }
+	public String getName() { return "HCA"; }
+	public String toString() { return "Human Cell Atlas"; }
 
-	public void loadGXAEntries(TaskMonitor taskMonitor) {
+	public void loadHCAEntries(TaskMonitor taskMonitor) {
 		if (metadataMap.size() > 0) return;
-		JSONObject json;
+		String query = "&filters="+URLEncoder.encode("{'file':{'fileFormat':{'is':['matrix']}}}");
 		try {
-			json = HTTPUtils.fetchJSON(EXPERIMENTS_URL, taskMonitor);
+			JSONObject json = HTTPUtils.fetchJSON(HCA_PROJECT_URL+query, taskMonitor);
+			JSONArray hits = (JSONArray) json.get("hits");
+			for (Object hit: hits) {
+				HCAMetadata entry = new HCAMetadata((JSONObject)hit);
+				metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);
+			}
 		} catch (Exception e) {
-			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Unable to fetch expreiments from EBI: "+
-			                        e.getMessage());
-			return;
-		}
-		if (json == null) return;
-		JSONArray experiments = (JSONArray) json.get("aaData");
-		for (Object exp: experiments) {
-			GXAMetadata entry = new GXAMetadata((JSONObject)exp);
-			metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);
+			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Exception reading HCA experiment list: "+e.getMessage());
 		}
   }
 
 	public List<String> getAccessions() {
 		if (metadataMap.size() == 0)
-			loadGXAEntries(null);
+			loadHCAEntries(null);
 		return new ArrayList<>(metadataMap.keySet());
 	}
 
 	public List<Metadata> getMetadata() {
 		if (metadataMap.size() == 0)
-			loadGXAEntries(null);
+			loadHCAEntries(null);
 		return new ArrayList<>(metadataMap.values());
 	}
 
@@ -155,67 +153,33 @@ public class GXASource implements Source {
 	}
 
 	public Experiment getExperiment(Metadata metadata, TaskMonitor monitor, boolean showTable) {
-		GXAExperiment exp = new GXAExperiment(scNVManager, this, (GXAMetadata)metadata);
+		HCAExperiment exp = new HCAExperiment(scNVManager, this, (HCAMetadata)metadata);
 		exp.fetchMTX (monitor);
-		if (showTable) {
-			exp.fetchClusters(monitor);
-			exp.fetchDesign(monitor);
-		} else {
-			exp.fetchClusters();
-			exp.fetchDesign();
-		}
+		exp.fetchDesign(monitor);
 		return exp;
 	}
 
-	public GXAEntryFrame getEntryFrame() { return entryFrame; }
+	public HCAEntryFrame getEntryFrame() { return entryFrame; }
 
 	public void showEntriesTable(boolean showHide) {
 		if (entryFrame == null && showHide) {
-			entryFrame = new GXAEntryFrame(scNVManager, this);
+			entryFrame = new HCAEntryFrame(scNVManager, this);
 		} else if (showHide) {
 			entryFrame.setVisible(true);
 		} else if (entryFrame != null)
 			entryFrame.setVisible(false);
+		
 	}
 
 	public Experiment loadExperimentFromSession(JSONObject jsonExperiment, Map<String, File> fileMap) {
-		// Get and create the GXAMetadata from the JSON
-		GXAMetadata metadata = new GXAMetadata();
-		if (jsonExperiment.containsKey("metadata"))
-			metadata.fromJSON((JSONObject)jsonExperiment.get("metadata"));
-
-		// Create the GXAExperiment
-		GXAExperiment experiment = new GXAExperiment(scNVManager, this, metadata);
-		try {
-			experiment.loadFromSession(fileMap);
-		} catch (Exception e) {
-			logger.error("Unable to load experiment from session: "+e.toString());
-			return null;
-		}
-
-		return experiment;
-	}
-
-	public Category loadCategoryFromSession(JSONObject jsonCategory, Experiment experiment, Map<String, File> fileMap) {
-		if (experiment instanceof GXAExperiment) {
-			Category category = null;
-			try {
-				category = ((GXAExperiment)experiment).loadCategoryFromSession(jsonCategory, fileMap);
-			} catch (Exception e) {
-				logger.error("Unable to load category from session: "+e.toString());
-				return null;
-			}
-			return category;
-		}
 		return null;
 	}
-	public DifferentialExpression loadDiffExpFromSession(JSONObject jsonDiffExp, Experiment experiment, Map<String, File> fileMap) {
-		try {
-			return ((GXAExperiment)experiment).loadDiffExpFromSession(jsonDiffExp, fileMap);
-		} catch (Exception e) {
-			logger.error("Unable to load differential expression from session: "+e.toString());
-			return null;
-		}
 
+	public Category loadCategoryFromSession(JSONObject jsonExperiment, Experiment experiment, Map<String, File> fileMap) {
+		return null;
+	}
+
+	public DifferentialExpression loadDiffExpFromSession(JSONObject jsonDiffExp, Experiment experiment, Map<String, File> fileMap) {
+		return null;
 	}
 }

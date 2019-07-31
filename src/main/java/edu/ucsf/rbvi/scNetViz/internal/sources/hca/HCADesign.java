@@ -1,4 +1,4 @@
-package edu.ucsf.rbvi.scNetViz.internal.sources.gxa;
+package edu.ucsf.rbvi.scNetViz.internal.sources.hca;
 
 import java.io.File;
 import java.io.InputStream;
@@ -11,8 +11,6 @@ import java.util.Map;
 
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
-
-import org.json.simple.JSONObject;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -39,8 +37,8 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.SortableTableModel;
 
-public class GXADesign extends AbstractCategory implements StringMatrix {
-	public static String GXA_DESIGN_URI = "https://www.ebi.ac.uk/gxa/sc/experiment/%s/download?fileType=experiment-design";
+public class HCADesign extends AbstractCategory implements StringMatrix {
+	public static String HCA_DESIGN_URI = "https://www.ebi.ac.uk/hca/sc/experiment/%s/download?fileType=experiment-design";
 	final Logger logger;
 
 	String[][] categories;
@@ -51,10 +49,11 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 
 	Source source;
 
-	public GXADesign(final ScNVManager scManager, final GXAExperiment experiment) {
+	public HCADesign(final ScNVManager scManager, final HCAExperiment experiment) {
 		super(scManager, experiment, "Design/Factors", 0, 0);
 		logger = Logger.getLogger(CyUserLog.NAME);
-		source = scManager.getSource("GXA");
+		source = scManager.getSource("HCA");
+		hdrCols = 0;
 	}
 
 	@Override
@@ -69,7 +68,6 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		builder.append("{");
 		builder.append("\"name\": \""+toString()+"\",");
 		builder.append("\"source\": \""+source+"\",");
-		builder.append("\"source name\": \""+source.getName()+"\",");
 		builder.append("\"rows\": "+getMatrix().getNRows()+",");
 		builder.append("\"columns\": "+getMatrix().getNCols()+",");
 		builder.append("\"default row\": "+getDefaultRow());
@@ -135,7 +133,7 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 	}
 
 	@Override
-	public int getHeaderCols() { return 1; }
+	public int getHeaderCols() { return hdrCols; }
 
 	// dDRthreshold is the cutoff for the minimum difference between clusters
 	@Override
@@ -143,60 +141,48 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		return;
 	}
 
-	public static GXADesign readDesign(ScNVManager scManager, GXAExperiment experiment, File file, JSONObject jsonCategory) throws IOException {
-		List<String[]> input = CSVReader.readCSV(null, file);
-		if (input == null || input.size() < 2) return null;
+	public void fetchDesign(HCAExperiment experiment, List<String[]> inputTable, TaskMonitor monitor) {
 
-		return getDesignFromCSV(scManager, experiment, input, null);
-	}
+		List<String[]> input = new ArrayList(inputTable);
+		// For HCA, the design information is encoded in the cell table.
+		if (input == null || input.size() < 2) return;
 
-	public static GXADesign fetchDesign(ScNVManager scManager, String accession, 
-	                                    GXAExperiment experiment, TaskMonitor monitor) {
-		// Get the URI
-		List<String[]> input = CSVReader.readCSVFromHTTP(monitor, GXA_DESIGN_URI, accession);
-		if (input == null || input.size() < 2) return null;
+		nCols = input.size()+hdrCols;
+		nRows = input.get(0).length-1;
 
-		return getDesignFromCSV(scManager, experiment, input, monitor);
-	}
-
-	private static GXADesign getDesignFromCSV(ScNVManager scManager, GXAExperiment experiment, List<String[]> input, TaskMonitor monitor) {
-		GXADesign gxaDesign = new GXADesign(scManager, experiment);
-		gxaDesign.nCols = input.size()-1;
-		gxaDesign.nRows = input.get(0).length-1;
-
-		// System.out.println("nCols = "+gxaDesign.nCols+", experiment ncols = "+experiment.getMatrix().getNCols());
-
-		gxaDesign.setRowLabels(stripArray(input.get(0), 1));
-		gxaDesign.categories = new String[gxaDesign.nRows][gxaDesign.nCols];
-		List<String> colLabels = new ArrayList<String>(gxaDesign.nCols);
+		setRowLabels(stripArray(input.get(0), 1));
+		categories = new String[nRows][nCols];
+		List<String> colLabels = new ArrayList<String>(nCols);
 		colLabels.add("Category");
 
 		boolean first = true;
-		int col = 0;
+		int col = hdrCols;
 		for (String[] line: input) {
-			if (first) {
-				first = false;
-			} else {
-				colLabels.add(stripQuotes(line[0]));
-				for (int row = 1; row < gxaDesign.nRows; row++) {
-					gxaDesign.categories[row-1][col] = stripQuotes(line[row]);
+			if (col >= hdrCols) {
+				if (first) {
+					first = false;
+				} else {
+					String label = stripQuotes(new String(line[0]));
+					colLabels.add(label);
 				}
-				col++;
+				for (int row = 1; row < nRows; row++) {
+					categories[row-1][col-hdrCols] = stripQuotes(new String(line[row]));
+				}
 			}
+			col++;
+
 		}
-		gxaDesign.setColLabels(colLabels);
+		setColLabels(colLabels);
 
-		gxaDesign.source = experiment.getSource();
-
-		LogUtils.log(monitor, TaskMonitor.Level.INFO, "Read "+gxaDesign.nRows+
-			                    " rows with "+gxaDesign.nCols+" columns");
-		return gxaDesign;
+		LogUtils.log(monitor, TaskMonitor.Level.INFO, "Read "+nRows+
+			                    " rows with "+nCols+" columns");
+		return;
 	}
 
 	static private List<String> stripArray(String[] array, int offset) {
 		List<String> result = new ArrayList<>();
 		for (int i = offset; i < array.length; i++) {
-			String str = array[i];
+			String str = new String(array[i]);
 			result.add(str.replaceAll("^\"|\"$", ""));
 		}
 		return result;
@@ -225,22 +211,22 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 
 	public SortableTableModel getTableModel() {
 		if (tableModel == null)
-			tableModel = new GXADesignTableModel(this);
+			tableModel = new HCADesignTableModel(this);
 		return tableModel;
 	}
 
-	public class GXADesignTableModel extends SortableTableModel {
-		final GXADesign design;
+	public class HCADesignTableModel extends SortableTableModel {
+		final HCADesign design;
 		final Experiment experiment;
 
-		GXADesignTableModel(final GXADesign design) {
+		HCADesignTableModel(final HCADesign design) {
 			super(design.getHeaderCols());
 			this.design = design;
 			this.experiment = design.experiment;
 			// NOTE: we're pivoting the table!
 			// ncols = design.rows.size();
 			// nrows = design.columns.length-1;
-			hdrCols = 1;
+			hdrCols = 0;
 		}
 
 		@Override
