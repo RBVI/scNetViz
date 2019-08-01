@@ -195,7 +195,10 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void setRowTable(List<String[]> rowTable) {
 		this.rowTable = rowTable;
 		if (rowTable != null)
-			rowLabels = getLabels(rowTable, rowKey);
+			if (rowTable.get(0).length <= rowKey)
+				rowLabels = getLabels(rowTable, rowTable.get(0).length-1);
+			else
+				rowLabels = getLabels(rowTable, rowKey);
 	}
 
 	public void setRowTable(List<String[]> rowTable, int index) {
@@ -212,7 +215,10 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void setColumnTable(List<String[]> colTable) {
 		this.colTable = colTable;
 		if (colTable != null) {
-			colLabels = getLabels(colTable, columnKey);
+			if (colTable.get(0).length <= columnKey)
+				colLabels = getLabels(colTable, colTable.get(0).length-1);
+			else
+				colLabels = getLabels(colTable, columnKey);
 		}
 	}
 
