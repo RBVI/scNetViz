@@ -73,7 +73,7 @@ public class CSVReader {
 		} while (true);
 
 		LogUtils.log(taskMonitor, TaskMonitor.Level.INFO, "Found "+rowList.size()+" rows with "+rowList.get(0).length+" labels each");
-		System.out.println("readCSV - done");
+		// System.out.println("readCSV - done");
 		return rowList;
 	}
 

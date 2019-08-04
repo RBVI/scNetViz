@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -20,7 +21,9 @@ import javax.swing.table.TableModel;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -128,13 +131,41 @@ public class GXAExperiment implements Experiment {
 		// Get the URI
 		String fetchString = String.format(GXA_MTX_URI, accession);
 
+		// IMPORTANT!  We need to do a gc here to avoid any pauses later
+		Runtime.getRuntime().gc();
+
+		// See how many cells we have.  For really large matrices, we want to "peak" first and
+		// preallocate our arrays.
+		int assays = ((Long)gxaMetadata.get(GXAMetadata.ASSAYS)).intValue();
+
+		if (assays > 40000) {
+			fetchAccession(monitor, fetchString, true);
+		}
+
+		fetchAccession(monitor, fetchString, false);
+
+		scNVManager.addExperiment(accession, this);
+	}
+
+	private void fetchAccession(TaskMonitor monitor, String fetchString, boolean peak) {
+		System.out.println("fetchAccession");
 		try {
 			CloseableHttpClient httpclient = HttpClients.createDefault();
+			RequestConfig config = RequestConfig.custom()
+							.setSocketTimeout(60*1000)
+							.build();
 			HttpGet httpGet = new HttpGet(fetchString);
+			httpGet.setConfig(config);
 			CloseableHttpResponse response1 = httpclient.execute(httpGet);
 			if (response1.getStatusLine().getStatusCode() != 200) {
 				return;
 			}
+			/*
+			Header[] headers = response1.getAllHeaders();
+			for (Header header: headers) {
+				System.out.println("Key: "+header.getName()+" ,Value: "+header.getValue());
+			}
+			*/
 			HttpEntity entity1 = response1.getEntity();
 
 			try {
@@ -143,6 +174,19 @@ public class GXAExperiment implements Experiment {
 				ZipEntry entry;
 				while ((entry = zipStream.getNextEntry()) != null) {
 					String name = entry.getName();
+
+					if (peak) {
+						if (name.endsWith(".mtx")) {
+							mtx = new MatrixMarket(scNVManager, null, null);
+							mtx.peak(monitor, zipStream, name);
+							zipStream.closeEntry();
+							zipStream.close();
+							return;
+						} else {
+							continue;
+						}
+					}
+
 					if (name.endsWith(".mtx_cols")) {
 						colTable = CSVReader.readCSV(monitor, zipStream, name);
 						if (mtx != null) 
@@ -152,10 +196,22 @@ public class GXAExperiment implements Experiment {
 						if (mtx != null) 
 							mtx.setRowTable(rowTable);
 					} else if (name.endsWith(".mtx")) {
-						mtx = new MatrixMarket(scNVManager, null, null);
+						if (mtx == null)
+							mtx = new MatrixMarket(scNVManager, null, null);
 						mtx.setRowTable(rowTable);
 						mtx.setColumnTable(colTable);
 						mtx.readMTX(monitor, zipStream, name);
+						/*
+						{
+							FileOutputStream outStream = new FileOutputStream("/tmp/"+name);
+							byte[] buffer = new byte[8192];
+							int count = 0;
+							while ((count = zipStream.read(buffer)) >= 0) {
+								outStream.write(buffer, 0, count);
+							}
+							outStream.close();
+						}
+						*/
 					}
 					zipStream.closeEntry();
 				}
@@ -166,7 +222,6 @@ public class GXAExperiment implements Experiment {
 				response1.close();
 			}
 		} catch (Exception e) {}
-		scNVManager.addExperiment(accession, this);
 	}
 
 	public void fetchClusters (final TaskMonitor monitor) {

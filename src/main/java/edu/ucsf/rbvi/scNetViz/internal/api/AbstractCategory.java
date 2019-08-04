@@ -513,8 +513,10 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		}
 
 		public Map <Object, Map <String, double[]>> call() {
+			// System.out.println("Starting GetLogGER for "+cat+" "+category);
 			Map<Object, Map<String, double[]>> returnMap = new HashMap<>();;
 			returnMap.put(cat, getLogGER(category, cat, dDRthreshold, log2FCCutoff));
+			// System.out.println("Finished GetLogGER for "+cat+" "+category);
 			return returnMap;
 		}
 	}

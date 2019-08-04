@@ -171,6 +171,8 @@ public class FileExperiment implements Experiment {
 					}
 				}
 				tarStream.close();
+			} else {
+				readFile(monitor, mtxFile, skipFirst);
 			}
 		} catch(IOException e) {}
 
