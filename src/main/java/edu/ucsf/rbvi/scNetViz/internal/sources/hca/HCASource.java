@@ -110,13 +110,17 @@ public class HCASource implements Source {
 
 	public void loadHCAEntries(TaskMonitor taskMonitor) {
 		if (metadataMap.size() > 0) return;
-		String query = "&filters="+URLEncoder.encode("{'file':{'fileFormat':{'is':['matrix']}}}");
+		// String query = "filters="+URLEncoder.encode("{\"file\":{\"fileFormat\":{\"is\":[\"matrix\"]}}}");
+		String query = "filters="+URLEncoder.encode("{\"fileFormat\":{\"is\":[\"matrix\"]}}");
 		try {
 			JSONObject json = HTTPUtils.fetchJSON(HCA_PROJECT_URL+query, taskMonitor);
 			JSONArray hits = (JSONArray) json.get("hits");
 			for (Object hit: hits) {
-				HCAMetadata entry = new HCAMetadata((JSONObject)hit);
-				metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);
+				// For some reason, even though we only ask for projects with matrix files, we get others also
+				if (HCAMetadata.hasMatrix((JSONObject)hit)) {
+					HCAMetadata entry = new HCAMetadata((JSONObject)hit);
+					metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);
+				}
 			}
 		} catch (Exception e) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Exception reading HCA experiment list: "+e.getMessage());
