@@ -145,7 +145,7 @@ public class ViewUtils {
 						continue;
 					newMap.put(category.mkLabel(key), catMap.get(key));
 				}
-				names = CyPlotUtils.listToMap(newMap, exp.getMatrix().getColLabels());
+				names = CyPlotUtils.listToMap(sortedKeys, newMap, exp.getMatrix().getColLabels());
 				xValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 0);
 				yValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 1);
 			} else {

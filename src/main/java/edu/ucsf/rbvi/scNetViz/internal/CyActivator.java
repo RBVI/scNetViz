@@ -134,6 +134,10 @@ public class CyActivator extends AbstractCyActivator {
 		{
 			tSNETaskFactory calcTSNE = new tSNETaskFactory(scNVManager);
 			Properties props = new Properties();
+			props.setProperty(TITLE, "t-TNE (local)");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Calculate Embeddings");
+			props.setProperty(IN_TOOL_BAR, "FALSE");
+			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "calculate tSNE");
 			props.setProperty(COMMAND_DESCRIPTION, "Calculate the tSNE embedding");
@@ -146,8 +150,8 @@ public class CyActivator extends AbstractCyActivator {
 		{
 			RemoteUMAPTaskFactory calcUMAP = new RemoteUMAPTaskFactory(scNVManager);
 			Properties props = new Properties();
-			props.setProperty(TITLE, "Calculate UMAP embedding");
-			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.embeddings");
+			props.setProperty(TITLE, "UMAP");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Calculate Embeddings");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
@@ -162,8 +166,8 @@ public class CyActivator extends AbstractCyActivator {
 		{
 			RemoteGraphTaskFactory calcGraph = new RemoteGraphTaskFactory(scNVManager);
 			Properties props = new Properties();
-			props.setProperty(TITLE, "Calculate graph layout embedding");
-			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.embeddings");
+			props.setProperty(TITLE, "Graph layout");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Calculate Embeddings");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
@@ -178,8 +182,8 @@ public class CyActivator extends AbstractCyActivator {
 		{
 			RemoteTSNETaskFactory calcTSNE = new RemoteTSNETaskFactory(scNVManager);
 			Properties props = new Properties();
-			props.setProperty(TITLE, "Calculate graph t-SNE layout (on server)");
-			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.embeddings");
+			props.setProperty(TITLE, "t-SNE (on server)");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Calculate Embeddings");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");

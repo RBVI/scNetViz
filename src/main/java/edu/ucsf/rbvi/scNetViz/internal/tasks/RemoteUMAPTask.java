@@ -33,14 +33,22 @@ public class RemoteUMAPTask extends AbstractEmbeddingTask implements ObservableT
 
 	@Tunable (description="Number of neighbors", 
 	          longDescription="This parameter controls how UMAP balances local versus "+
-						                "global structure in the data."+
-						                "Low values will force UMAP to concentrate on very local structure, "+
-														"while larger values will lose fine detail for the sake of getting "+
-														"the broader context of the data.")
+	                          "global structure in the data."+
+	                          "Low values will force UMAP to concentrate on very local structure, "+
+	                          "while larger values will lose fine detail for the sake of getting "+
+	                          "the broader context of the data.",
+	          tooltip="<html>This parameter controls how UMAP balances local versus "+
+	                   "global structure in the data."+
+	                   "<p>Low values will force UMAP to concentrate on very local structure, "+
+	                   "while larger values will lose fine detail for the sake of getting "+
+	                   "the broader context of the data.</html>")
 	public int n_neighbors = 10;
 
 	@Tunable (description="Minimum distance",
-	          longDescription="Controls how tightly UMAP is allowed to pack points together.")
+	          tooltip="Controls how tightly UMAP is allowed to pack points together.  Lower numbers"+
+	                          " result in tighter groupings and more distance between groups",
+	          longDescription="Controls how tightly UMAP is allowed to pack points together. Lower numbers"+
+	                          " result in tighter groupings and more distance between groups")
 	public double min_dist = 0.5;
 
 	public RemoteUMAPTask(final ScNVManager manager, final String acc) {

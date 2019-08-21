@@ -162,10 +162,10 @@ public class CyPlotUtils {
 		return builder.toString();
 	}
 
-	public static String listToMap(Map<Object, List<Integer>> map, List<String> list) {
+	public static String listToMap(List<Object> order, Map<Object, List<Integer>> map, List<String> list) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
-		for (Object trace: map.keySet()) {
+		for (Object trace: order) {
 			builder.append("\""+trace.toString()+"\":[");
 			for (Integer index: map.get(trace)) {
 				builder.append("\""+list.get(index)+"\",");

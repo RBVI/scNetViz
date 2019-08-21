@@ -30,15 +30,22 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 	public ListSingleSelection<String> accession = null;
 
 	@Tunable (description="Perplexity", 
+	          tooltip="<html>Related to the number of nearest neighbors.  Larger datasets usually require"+
+	                  "<br/>a larger perplexity. Consider selecting a value between 5 and 50.</html>",
 	          longDescription="Related to the number of nearest neighbors.  Larger datasets usually require"+
-	                          "	a larger perplexity. Consider selecting a value between 5 and 50.")
+	                          " a larger perplexity. Consider selecting a value between 5 and 50.")
 	public double perplexity = 20;
 
 	@Tunable (description="Initial dimensions", 
+	          tooltip="The number of principal components to use.",
 	          longDescription="The number of principal components to use.")
 	public int n_pcs = 0;
 
 	@Tunable (description="Early exaggeration", 
+	          tooltip="<html>Controls how tight natural clusters in the original space "+
+	                  "are in the embedded space and how much space will be between "+
+	                  "them. <br/>For larger values, the space between natural clusters will be "+
+	                  "larger in the embedded space.</html>",
 	          longDescription="Controls how tight natural clusters in the original space "+
 	                          "are in the embedded space and how much space will be between "+
 	                          "them. For larger values, the space between natural clusters will be "+
@@ -46,6 +53,11 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 	public double early_exaggeration = 12.0;
 
 	@Tunable (description="Learning rate", 
+	          tooltip="<html>The learning rate can be a critical parameter. It should <br/>"+
+	                  "be between 100 and 1000. If the cost function increases during <br/>"+
+	                  "initial optimization, the early exaggeration factor or the <br/>"+
+	                  "learning rate might be too high. If the cost function gets <br/>"+
+	                  "stuck in a bad local minimum increasing the learning rate helps sometimes.</html>",
 	          longDescription="The learning rate can be a critical parameter. It should "+
 	                          "be between 100 and 1000. If the cost function increases during "+
 	                          "initial optimization, the early exaggeration factor or the "+

@@ -27,7 +27,9 @@ public class RemoteGraphTask extends AbstractEmbeddingTask implements Observable
 	public static String SHORTNAME = "draw_graph";
 	public static String NAME = "Force-directed graph drawing";
 	public final static String GROUP_ATTRIBUTE = "__Graph.SUID";
-	public String[] layouts = {"fa","fr","lgl","dlr","rt"};
+	public String[] layouts = {"fa (ForceAtlas2)","kk (Kamada Kawai)", "fr (Fruchterman Reingold)",
+	                           "lgl (Large Graph)","dlr (Distributed Recursive Layout)",
+	                           "rt (Reingold Tilford tree layout)"};
 
 	@Tunable (description="Experiment to show")
 	public ListSingleSelection<String> accession = null;
@@ -36,7 +38,14 @@ public class RemoteGraphTask extends AbstractEmbeddingTask implements Observable
 	          longDescription="‘fa’ (ForceAtlas2) or any valid igraph layout. Of particular interest are "+
 	                          "‘fr’ (Fruchterman Reingold), ‘kk’ (Kamadi Kawai’, slower than ‘fr’), ‘lgl’ "+
 	                          "(Large Graph, very fast), ‘drl’ (Distributed Recursive Layout, pretty fast) and "+
-	                          "‘rt’ (Reingold Tilford tree layout).")
+	                          "‘rt’ (Reingold Tilford tree layout).",
+	          tooltip="<html><body>Available options are: "+
+	                  "<ul><li>‘fa’ (ForceAtlas2)</li>"+
+	                  "<li>‘fr’ (Fruchterman Reingold)</li>"+
+	                  "<li>‘kk’ (Kamadi Kawai, slower than ‘fr’)</li>"+
+	                  "<li>‘lgl’ (Large Graph, very fast)</li>"+
+	                  "<li>‘drl’ (Distributed Recursive Layout, pretty fast)</li>"+
+	                  "<li>‘rt’ (Reingold Tilford tree layout)</li></ul></body></html>")
 	public ListSingleSelection<String> layout = new ListSingleSelection<>(layouts);
 
 	public RemoteGraphTask(final ScNVManager manager, final String acc) {

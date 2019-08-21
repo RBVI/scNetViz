@@ -15,6 +15,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
@@ -57,7 +58,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 	final ExperimentFrame expFrame;
 	final String accession;
 	JTable experimentTable;
-	JButton cellPlotButton;
+	public JButton cellPlotButton;
 
 	public TPMTab(final ScNVManager manager, final Experiment experiment, final ExperimentFrame expFrame) {
 		this.manager = manager;
@@ -98,15 +99,16 @@ public class TPMTab extends JPanel implements TaskObserver {
 			if (embedding == null)
 				return;
 			experiment.setTSNE(embedding);
-			int geneRow = experimentTable.getSelectedRow();
-			String title = null;
-			if (geneRow >= 0) {
-				geneRow = experimentTable.convertRowIndexToModel(geneRow);
-				title = accession+" Gene "+experimentTable.getModel().getValueAt(geneRow, 0);
-			}
-			ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
+			showPlot();
 			cellPlotButton.setEnabled(true);
+			cellPlotButton.setText("View "+experiment.getPlotType());
+			CategoriesTab cTab = expFrame.getCategoriesTab();
+			if (cTab != null) {
+				cTab.cellPlotButton.setEnabled(true);
+				cTab.cellPlotButton.setText("View "+experiment.getPlotType());
+			}
 		}
+		expFrame.toFront();
 	}
 	
 	private void init() {
@@ -144,34 +146,28 @@ public class TPMTab extends JPanel implements TaskObserver {
 			plotMenu.setFont(new Font("SansSerif", Font.PLAIN, 10));
 			plotMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					String type = (String)plotMenu.getSelectedItem();
-					if ("Local t-SNE".equals(type)) {
-						Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
-						manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
-					} else if ("UMAP".equals(type)) {
-						Task umapTask = new RemoteUMAPTask(manager, accession);
-						manager.executeTasks(new TaskIterator(umapTask), thisComponent);
-					} else if ("t-SNE".equals(type)) {
-						Task tsneTask = new RemoteTSNETask(manager, accession);
-						manager.executeTasks(new TaskIterator(tsneTask), thisComponent);
-					} else if ("Draw graph".equals(type)) {
-						Task graphTask = new RemoteGraphTask(manager, accession);
-						manager.executeTasks(new TaskIterator(graphTask), thisComponent);
-					} else
-						return;
+					final String type = (String)plotMenu.getSelectedItem();
+					SwingUtilities.invokeLater(new Runnable() {
+							public void run() {
+								if ("Local t-SNE".equals(type)) {
+									Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
+									manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
+								} else if ("UMAP".equals(type)) {
+									Task umapTask = new RemoteUMAPTask(manager, accession);
+									manager.executeTasks(new TaskIterator(umapTask), thisComponent);
+								} else if ("t-SNE".equals(type)) {
+									Task tsneTask = new RemoteTSNETask(manager, accession);
+									manager.executeTasks(new TaskIterator(tsneTask), thisComponent);
+								} else if ("Draw graph".equals(type)) {
+									Task graphTask = new RemoteGraphTask(manager, accession);
+									manager.executeTasks(new TaskIterator(graphTask), thisComponent);
+								} else
+									return;
+							}
+					});
+					plotMenu.setSelectedIndex(0);
 				}
 			});
-			/*
-			JButton tsne = new JButton("(Re)calculate tSNE");
-			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      tsne.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
-					manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
-				}
-			});
-			buttonsPanelRight.add(tsne);
-			*/
 			buttonsPanelRight.add(plotMenu);
 		}
 		

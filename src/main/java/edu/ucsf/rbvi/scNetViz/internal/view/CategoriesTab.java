@@ -50,8 +50,12 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.AbstractEmbeddingTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDETask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteTSNETask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteUMAPTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteGraphTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 
@@ -67,6 +71,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 	JTextField dDRThreshold;
 	JComboBox<String> categories;
 	JButton diffExpButton;
+	public JButton cellPlotButton;
+	final String accession;
 
 	Category currentCategory = null;
 	JScrollPane categoryPane;
@@ -85,6 +91,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		this.setLayout(new BorderLayout());
 		thisComponent = this;	// Access to inner classes
 		this.expFrame = expFrame;
+		this.accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 		init();
 	}
 
@@ -144,7 +151,21 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
 			expFrame.addDiffExpContent("Diff Exp", diffETab);
 			diffExpButton.setEnabled(true);
+		} else if (obsTask instanceof AbstractEmbeddingTask) {
+			double[][] embedding = ((AbstractEmbeddingTask)obsTask).getResults();
+			if (embedding == null)
+				return;
+			experiment.setTSNE(embedding);
+			showPlot();
+			cellPlotButton.setEnabled(true);
+			cellPlotButton.setText("View "+experiment.getPlotType());
+			TPMTab tpmTab = expFrame.getTPMTab();
+			if (tpmTab != null) {
+				tpmTab.cellPlotButton.setEnabled(true);
+				tpmTab.cellPlotButton.setText("View "+experiment.getPlotType());
+			}
 		}
+		expFrame.toFront();
 	}
 
 	public void changeCategory(Category newCategory, int newRow) {
@@ -293,34 +314,46 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 					manager.executeTasks(new TaskIterator(task));
 				}
 			});
-
-			JButton tsne = new JButton("View tSNE");
-			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      tsne.addActionListener(new ActionListener() {
+			
+			String[] plotTypes = {"New Cell Plot", "t-SNE", "UMAP", "Draw graph", "Local t-SNE"};
+			JComboBox<String> plotMenu = new JComboBox<String>(plotTypes);
+			plotMenu.setFont(new Font("SansSerif", Font.PLAIN, 10));
+			plotMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-					String title = null;
-					Category cat = currentCategory;
-					int catRow = -1;
-					if (cat != null) {
-						title = "tSNE Plot for "+accession+" Category "+cat.toString();
-						catRow = cat.getSelectedRow();
-						if (catRow < 0)
-							catRow = cat.getDefaultRow();
-						if (catRow >= 0) {
-							System.out.println("cat row = "+catRow);
-							System.out.println("Current category = "+cat);
-							List<String> rowLabels = cat.getMatrix().getRowLabels();
-							title += " ("+rowLabels.get(catRow)+")";
-						}
-					}
-					ViewUtils.showtSNE(manager, experiment, cat, catRow, -1, title);
+					final String type = (String)plotMenu.getSelectedItem();
+					SwingUtilities.invokeLater(new Runnable() {
+							public void run() {
+								if ("Local t-SNE".equals(type)) {
+									Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
+									manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
+								} else if ("UMAP".equals(type)) {
+									Task umapTask = new RemoteUMAPTask(manager, accession);
+									manager.executeTasks(new TaskIterator(umapTask), thisComponent);
+								} else if ("t-SNE".equals(type)) {
+									Task tsneTask = new RemoteTSNETask(manager, accession);
+									manager.executeTasks(new TaskIterator(tsneTask), thisComponent);
+								} else if ("Draw graph".equals(type)) {
+									Task graphTask = new RemoteGraphTask(manager, accession);
+									manager.executeTasks(new TaskIterator(graphTask), thisComponent);
+								} else
+									return;
+							}
+					});
+					plotMenu.setSelectedIndex(0);
 				}
 			});
 
-			// buttonsPanelRight.add(new JLabel(""));
-			buttonsPanelRight.add(new JLabel(""));
-			buttonsPanelRight.add(tsne);
+			cellPlotButton = new JButton("View Cell Plot");
+			cellPlotButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+			cellPlotButton.setEnabled(false);
+      cellPlotButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					showPlot();
+				}
+			});
+
+			buttonsPanelRight.add(plotMenu);
+			buttonsPanelRight.add(cellPlotButton);
 			buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
 		}
@@ -361,6 +394,23 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		});
 		categoryTables.put(category, categoryTable);
 		return categoryTable;
+	}
+
+	private void showPlot() {
+		String title = null;
+		Category cat = currentCategory;
+		int catRow = -1;
+		if (cat != null) {
+			title = experiment.getPlotType()+" Plot for "+accession+" Category "+cat.toString();
+			catRow = cat.getSelectedRow();
+			if (catRow < 0)
+				catRow = cat.getDefaultRow();
+			if (catRow >= 0) {
+				List<String> rowLabels = cat.getMatrix().getRowLabels();
+				title += " ("+rowLabels.get(catRow)+")";
+			}
+		}
+		ViewUtils.showtSNE(manager, experiment, cat, catRow, -1, title);
 	}
 
 }
