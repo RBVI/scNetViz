@@ -60,6 +60,7 @@ public class GXAExperiment implements Experiment {
 	GXAMetadata gxaMetadata = null;
 	List<Category> categories;
 	double[][] tSNE;
+	String plotType = "t-SNE";
 
 	final ScNVManager scNVManager;
 	final GXAExperiment gxaExperiment;
@@ -118,6 +119,12 @@ public class GXAExperiment implements Experiment {
 		return tSNE;
 	}
 
+	@Override
+	public void setPlotType(String type) { this.plotType = type; }
+
+	@Override
+	public String getPlotType() { return plotType; }
+
 	public DifferentialExpression getDiffExp() { return diffExp; }
 	public void setDiffExp(DifferentialExpression de) { diffExp = de; }
 
@@ -143,6 +150,9 @@ public class GXAExperiment implements Experiment {
 		}
 
 		fetchAccession(monitor, fetchString, false);
+
+		if (mtx != null)
+			mtx.createCache(source.getName(), accession);
 
 		scNVManager.addExperiment(accession, this);
 	}
@@ -176,6 +186,7 @@ public class GXAExperiment implements Experiment {
 					String name = entry.getName();
 
 					if (peak) {
+						// Use peak to pre-allocate all of the necessary memory
 						if (name.endsWith(".mtx")) {
 							mtx = new MatrixMarket(scNVManager, null, null);
 							mtx.peak(monitor, zipStream, name);

@@ -1,18 +1,25 @@
 package edu.ucsf.rbvi.scNetViz.internal.utils;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -23,9 +30,12 @@ import org.json.simple.parser.JSONParser;
 
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class HTTPUtils {
+	public static final String WS_URL = "http://webservices.rbvi.ucsf.edu/scnetviz/api/v1/";
 
 	public static JSONObject postJSON(String uri, CloseableHttpClient httpclient, 
 	                                  String jsonQuery, TaskMonitor monitor) throws Exception {
@@ -47,6 +57,30 @@ public class HTTPUtils {
 
 		JSONObject jsonResponse = (JSONObject) new JSONParser().parse(new InputStreamReader(entity1.getContent()));
 		return jsonResponse;
+	}
+
+	public static List<String> postFile(String uri, File f, TaskMonitor monitor) throws Exception {
+		System.out.println("postFile: "+uri);
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		HttpPost httpPost = new HttpPost(uri);
+		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+		builder.addBinaryBody("file", f, ContentType.DEFAULT_BINARY, f.getName());
+		HttpEntity entity = builder.build();
+		httpPost.setEntity(entity);
+		CloseableHttpResponse response = httpclient.execute(httpPost);
+		int statusCode = response.getStatusLine().getStatusCode();
+		if (statusCode != 200 && statusCode != 202) {
+			monitor.showMessage(TaskMonitor.Level.ERROR, "Got "+
+			                    response.getStatusLine().getStatusCode()+" code from server");
+			return null;
+		}
+		BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+		List<String> strings = new ArrayList<>();
+		String line;
+		while((line = reader.readLine()) != null) {
+			strings.add(line);
+		}
+		return strings;
 	}
 
 	public static JSONObject fetchJSON(String uri, TaskMonitor monitor) throws Exception {
@@ -98,6 +132,15 @@ public class HTTPUtils {
 			throw e;
 		}
 		return stream;
+	}
+
+	public static String getWebServicesURL(String command, Experiment exp, String args) {
+		String url = WS_URL+command+"?source="+exp.getSource().getName()+"&accession="+
+		             exp.getMetadata().get(Metadata.ACCESSION).toString();
+		if (args != null) {
+			url += "&"+args;
+		}
+		return url;
 	}
 
 	public static void showWebPage(ScNVManager manager, String uri, TaskMonitor monitor) {

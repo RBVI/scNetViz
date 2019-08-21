@@ -185,6 +185,19 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 			taskManager.execute(ceTaskFactory.createTaskIterator(namespace, command, args, observer));
 	}
 
+	public boolean haveNamespace(String namespace) {
+		List<String> namespaces = availableCommands.getNamespaces();
+		if (namespaces.contains(namespace)) return true;
+		return false;
+	}
+
+	public boolean haveCommand(String namespace, String command) {
+		if (!haveNamespace(namespace)) return false;
+		List<String> commands = availableCommands.getCommands(namespace);
+		if (commands.contains(command)) return true;
+		return false;
+	}
+
 	public void executeTasks(TaskIterator tasks) {
 		taskManager.execute(tasks);
 	}

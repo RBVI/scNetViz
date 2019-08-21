@@ -209,6 +209,7 @@ public class GXAEntryFrame extends JFrame {
 			this.add(scrollPane, BorderLayout.CENTER);
 			this.pack();
 			this.setVisible(true);
+			this.toFront();
 		}
 	}
 

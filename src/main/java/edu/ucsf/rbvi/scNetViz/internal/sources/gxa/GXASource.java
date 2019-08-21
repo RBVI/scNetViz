@@ -76,7 +76,7 @@ public class GXASource implements Source {
 			props.setProperty(IN_TOOL_BAR, "TRUE");
 			props.setProperty(TOOL_BAR_GRAVITY, "100f");
 			props.setProperty(TOOLTIP, "Show Experiments Table");
-			String ebiLogoURL = getClass().getResource("/images/EMBL-EBI-Logo-36x36.png").toString();
+			String ebiLogoURL = getClass().getResource("/images/sc_atlas_logo.png").toString();
 			props.setProperty(LARGE_ICON_URL, ebiLogoURL);
 			scNVManager.registerService(new GXAShowEntriesTaskFactory(manager, this), TaskFactory.class, props);
 		}

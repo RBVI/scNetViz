@@ -178,6 +178,7 @@ public class ExperimentFrame extends JFrame {
 
 		this.pack();
 		this.setVisible(true);
+		this.toFront();
 	}
 
 	class EmptyJPanel extends JPanel {

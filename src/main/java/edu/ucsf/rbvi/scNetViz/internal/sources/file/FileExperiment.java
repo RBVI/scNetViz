@@ -52,6 +52,7 @@ public class FileExperiment implements Experiment {
 	MatrixMarket mtx = null;
 	final List<Category> categories;
 	double[][] tSNE;
+	String plotType = "t-SNE";
 	// GXACluster fileCluster = null;
 	// GXAIDF fileIDF = null;
 	// GXADesign fileDesign = null;
@@ -112,6 +113,12 @@ public class FileExperiment implements Experiment {
 	public double[][] getTSNE() {
 		return tSNE;
 	}
+
+	@Override
+	public void setPlotType(String type) { this.plotType = type; }
+
+	@Override
+	public String getPlotType() { return plotType; }
 
 	public Metadata getMetadata() { return fileMetadata; }
 

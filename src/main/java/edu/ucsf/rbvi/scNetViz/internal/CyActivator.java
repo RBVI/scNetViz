@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.model.Species;
 import edu.ucsf.rbvi.scNetViz.internal.sources.hca.HCASource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
@@ -50,6 +51,9 @@ import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportDiffExpTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportExperimentTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.GetExperimentTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ListExperimentsTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteUMAPTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteTSNETaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteGraphTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SelectTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTaskFactory;
@@ -133,6 +137,54 @@ public class CyActivator extends AbstractCyActivator {
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "calculate tSNE");
 			props.setProperty(COMMAND_DESCRIPTION, "Calculate the tSNE embedding");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(calcTSNE, TaskFactory.class, props);
+		}
+		
+		{
+			RemoteUMAPTaskFactory calcUMAP = new RemoteUMAPTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(TITLE, "Calculate UMAP embedding");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.embeddings");
+			props.setProperty(IN_TOOL_BAR, "FALSE");
+			props.setProperty(IN_MENU_BAR, "TRUE");
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "calculate UMAP");
+			props.setProperty(COMMAND_DESCRIPTION, "Calculate the UMAP embedding");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(calcUMAP, TaskFactory.class, props);
+		}
+		
+		{
+			RemoteGraphTaskFactory calcGraph = new RemoteGraphTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(TITLE, "Calculate graph layout embedding");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.embeddings");
+			props.setProperty(IN_TOOL_BAR, "FALSE");
+			props.setProperty(IN_MENU_BAR, "TRUE");
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "calculate draw_graph");
+			props.setProperty(COMMAND_DESCRIPTION, "Calculate the graph layout embedding");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(calcGraph, TaskFactory.class, props);
+		}
+		
+		{
+			RemoteTSNETaskFactory calcTSNE = new RemoteTSNETaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(TITLE, "Calculate graph t-SNE layout (on server)");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.embeddings");
+			props.setProperty(IN_TOOL_BAR, "FALSE");
+			props.setProperty(IN_MENU_BAR, "TRUE");
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "calculate tsne");
+			props.setProperty(COMMAND_DESCRIPTION, "Calculate the t-SNE embedding");
 			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
@@ -259,23 +311,7 @@ public class CyActivator extends AbstractCyActivator {
 			scNVManager.registerService(settings, TaskFactory.class, props);
 		}
 
-		/*
-		{
-			// This is for the basic reader.  Note that we'll also load a more advanced one below
-			final BasicCyFileFilter mtxFileFilter = new BasicCyFileFilter(new String[] { "mtx" },
-			                              new String[] { "application/mtx" }, "MTX", DataCategory.TABLE, streamUtil);
-			final MTXReaderTaskFactory mtxReaderFactory = new MTXReaderTaskFactory(mtxFileFilter, scNVManager);
-	
-			Properties mtxReaderProps = new Properties();
-			mtxReaderProps.put(ID, "mtxTableReaderFactory");
-			registerService(bc, mtxReaderFactory, InputStreamTaskFactory.class, mtxReaderProps);
-	
-			Properties mtxImporterProps = new Properties();
-			mtxImporterProps.setProperty(PREFERRED_MENU, "Apps.MTXImporter");
-			mtxImporterProps.setProperty(TITLE, "Import MTX files");
-			registerService(bc, mtxReaderFactory, TaskFactory.class, mtxImporterProps);
-		}
-		*/
-
+		// Start the thread the loads all of the species
+		Species.loadSpecies(scNVManager);
 	}
 }

@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -40,7 +41,11 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAExperiment;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.AbstractEmbeddingTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteTSNETask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteUMAPTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteGraphTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
@@ -50,11 +55,14 @@ public class TPMTab extends JPanel implements TaskObserver {
 	final Experiment experiment;
 	final TPMTab thisComponent;
 	final ExperimentFrame expFrame;
+	final String accession;
 	JTable experimentTable;
+	JButton cellPlotButton;
 
 	public TPMTab(final ScNVManager manager, final Experiment experiment, final ExperimentFrame expFrame) {
 		this.manager = manager;
 		this.experiment = experiment;
+		this.accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 
 		this.setLayout(new BorderLayout());
 		thisComponent = this;	// Access to inner classes
@@ -74,7 +82,6 @@ public class TPMTab extends JPanel implements TaskObserver {
 			experimentTable.getSelectionModel().addSelectionInterval(index, index);
 			experimentTable.scrollRectToVisible(new Rectangle(experimentTable.getCellRect(index, 0, true)));
 		}
-		String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 		ModelUtils.selectNodes(manager, accession, geneList);
 	}
 
@@ -85,19 +92,20 @@ public class TPMTab extends JPanel implements TaskObserver {
 	@Override
 	public void taskFinished(ObservableTask obsTask) {
 		if (obsTask instanceof FileCategoryTask) {
-			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
-		} else if (obsTask instanceof tSNETask) {
-			double[][] tSNEResults = ((tSNETask)obsTask).getResults();
-			experiment.setTSNE(tSNEResults);
+		} else if (obsTask instanceof AbstractEmbeddingTask) {
+			double[][] embedding = ((AbstractEmbeddingTask)obsTask).getResults();
+			if (embedding == null)
+				return;
+			experiment.setTSNE(embedding);
 			int geneRow = experimentTable.getSelectedRow();
 			String title = null;
 			if (geneRow >= 0) {
-				String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 				geneRow = experimentTable.convertRowIndexToModel(geneRow);
 				title = accession+" Gene "+experimentTable.getModel().getValueAt(geneRow, 0);
 			}
 			ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
+			cellPlotButton.setEnabled(true);
 		}
 	}
 	
@@ -119,24 +127,41 @@ public class TPMTab extends JPanel implements TaskObserver {
 		}
 
 		{
-			JButton tsne = new JButton("View tSNE");
-			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      tsne.addActionListener(new ActionListener() {
+			cellPlotButton = new JButton("View Cell Plot");
+			cellPlotButton.setEnabled(false);
+			cellPlotButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      cellPlotButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					String title = null;
-					int geneRow = experimentTable.getSelectedRow();
-					if (geneRow >= 0) {
-						String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-						geneRow = experimentTable.convertRowIndexToModel(geneRow);
-						title = accession+" Expression for "+experimentTable.getModel().getValueAt(geneRow, 0);
-					}
-					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
+					showPlot();
 				}
 			});
-			buttonsPanelRight.add(tsne);
+			buttonsPanelRight.add(cellPlotButton);
 		}
 
 		{
+			String[] plotTypes = {"New Cell Plot", "t-SNE", "UMAP", "Draw graph", "Local t-SNE"};
+			JComboBox<String> plotMenu = new JComboBox<String>(plotTypes);
+			plotMenu.setFont(new Font("SansSerif", Font.PLAIN, 10));
+			plotMenu.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					String type = (String)plotMenu.getSelectedItem();
+					if ("Local t-SNE".equals(type)) {
+						Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
+						manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
+					} else if ("UMAP".equals(type)) {
+						Task umapTask = new RemoteUMAPTask(manager, accession);
+						manager.executeTasks(new TaskIterator(umapTask), thisComponent);
+					} else if ("t-SNE".equals(type)) {
+						Task tsneTask = new RemoteTSNETask(manager, accession);
+						manager.executeTasks(new TaskIterator(tsneTask), thisComponent);
+					} else if ("Draw graph".equals(type)) {
+						Task graphTask = new RemoteGraphTask(manager, accession);
+						manager.executeTasks(new TaskIterator(graphTask), thisComponent);
+					} else
+						return;
+				}
+			});
+			/*
 			JButton tsne = new JButton("(Re)calculate tSNE");
 			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
       tsne.addActionListener(new ActionListener() {
@@ -146,6 +171,8 @@ public class TPMTab extends JPanel implements TaskObserver {
 				}
 			});
 			buttonsPanelRight.add(tsne);
+			*/
+			buttonsPanelRight.add(plotMenu);
 		}
 		
 		{
@@ -181,7 +208,6 @@ public class TPMTab extends JPanel implements TaskObserver {
 				for (int row: rows) {
 					geneList.add(experimentTable.getValueAt(row, 0).toString());
 				}
-				String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 				ModelUtils.selectNodes(manager, accession, geneList);
 			}
 		});
@@ -191,6 +217,16 @@ public class TPMTab extends JPanel implements TaskObserver {
 		this.add(scrollPane, BorderLayout.CENTER);
 		this.revalidate();
 		this.repaint();
+	}
+
+	private void showPlot() {
+		String title = null;
+		int geneRow = experimentTable.getSelectedRow();
+		if (geneRow >= 0) {
+			geneRow = experimentTable.convertRowIndexToModel(geneRow);
+			title = accession+" Expression for "+experimentTable.getModel().getValueAt(geneRow, 0);
+		}
+		ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
 	}
 
 }

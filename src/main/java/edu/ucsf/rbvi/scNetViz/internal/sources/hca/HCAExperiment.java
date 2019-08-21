@@ -57,6 +57,7 @@ public class HCAExperiment implements Experiment {
 	HCAMetadata hcaMetadata = null;
 	List<Category> categories;
 	double[][] tSNE;
+	String plotType = "t-SNE";
 
 	final ScNVManager scNVManager;
 	final HCAExperiment hcaExperiment;
@@ -113,6 +114,12 @@ public class HCAExperiment implements Experiment {
 	public double[][] getTSNE() {
 		return tSNE;
 	}
+
+	@Override
+	public void setPlotType(String type) { this.plotType = type; }
+
+	@Override
+	public String getPlotType() { return plotType; }
 
 	public DifferentialExpression getDiffExp() { return diffExp; }
 	public void setDiffExp(DifferentialExpression de) { diffExp = de; }

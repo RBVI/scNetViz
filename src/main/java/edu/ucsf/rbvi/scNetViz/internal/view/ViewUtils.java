@@ -6,6 +6,9 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,33 +103,16 @@ public class ViewUtils {
 	                            final Category category, final int catRow, 
 	                            final int geneRow, final String title) {
 		double[][] tSNEresults = exp.getTSNE();
+		String type = exp.getPlotType();
 
 		if (tSNEresults == null) {
-			System.out.println("Creating tSNE task");
-			Task tSNETask = new tSNETask((DoubleMatrix)exp.getMatrix());
-			manager.executeTasks(new TaskIterator(tSNETask), new TaskObserver() {
-				@Override
-				public void allFinished(FinishStatus status) {
-				}
-
-				@Override
-				public void taskFinished(ObservableTask obsTask) {
-					System.out.println("task finished");
-					if (obsTask instanceof tSNETask) {
-						double[][] tSNEResults = ((tSNETask)obsTask).getResults();
-						if (tSNEResults == null) return;
-						exp.setTSNE(tSNEResults);
-						showtSNE(manager, exp, category, catRow, geneRow, title);
-					}
-				}
-			});
 			return;
 		}
 
 		String accession = (String)exp.getMetadata().get(Metadata.ACCESSION);
 		String ttl = title;
 		if (ttl == null)
-			ttl = "tSNE Plot for "+accession;
+			ttl = type+" Plot for "+accession;
 
 		if (category == null) {
 			// See if a gene is selected and provide a color trace if it is
@@ -134,12 +120,14 @@ public class ViewUtils {
 			String xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
 			String yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
 			String zValues = null;
-			if (geneRow >= 0)
+			if (geneRow >= 0) {
 				zValues = "{\"trace\": "+
 								CyPlotUtils.valuesToJSON((DoubleMatrix)exp.getMatrix(), geneRow)+"}";
 
+			}
+
 			CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, zValues, 
-			                              ttl, "t-SNE 1", "t-SNE 2", accession);
+			                              ttl, type+" 1", type+" 2", accession);
 		} else {
 			String names;
 			String xValues;
@@ -148,7 +136,11 @@ public class ViewUtils {
 				Map<Object, List<Integer>> catMap = category.getCatMap(catRow);
 				// Reformat the catmap so we have reasonable labels
 				Map<Object, List<Integer>> newMap = new HashMap<>();
-				for (Object key: catMap.keySet()) {
+				// First get the keys so we can sort them
+				List sortedKeys = new ArrayList(catMap.keySet());
+				Collections.sort(sortedKeys);
+				
+				for (Object key: sortedKeys) {
 					if (key.toString().equals("unused"))
 						continue;
 					newMap.put(category.mkLabel(key), catMap.get(key));
@@ -163,7 +155,7 @@ public class ViewUtils {
 			}
 
 			CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, null, 
-			                              title, "t-SNE 1", "t-SNE 2", accession);
+			                              title, type+" 1", type+" 2", accession);
 		}
 	}
 

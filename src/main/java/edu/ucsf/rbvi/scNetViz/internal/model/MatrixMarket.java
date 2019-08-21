@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -17,7 +18,12 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import org.apache.log4j.Logger;
+
+import org.cytoscape.application.CyUserLog;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.model.CyTable;
 import org.cytoscape.model.CyTableFactory;
@@ -27,6 +33,7 @@ import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 import edu.ucsf.rbvi.scNetViz.internal.utils.FileUtils;
 import edu.ucsf.rbvi.scNetViz.internal.utils.MatrixUtils;
 
@@ -143,6 +150,10 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	private List<String[]> colTable;
 	private BitSet controls;
 
+	private File cacheFile = null;
+	private boolean haveCache = false;
+	private boolean cacheCreateInProgress = false;
+
 	public MatrixMarket(final ScNVManager manager) {
 		this(manager, null, null);
 	}
@@ -196,6 +207,15 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		return Double.class;
 	}
 
+	public boolean hasCache() { return haveCache; }
+	public File getMatrixCache() { return cacheFile; }
+
+	public void createCache(String source, String accession) {
+		if (cacheCreateInProgress) return;
+		Thread t = new Thread(new CreateMTXCache(source, accession));
+		t.start();
+	}
+
 	public void setRowTable(List<String[]> rowTable) {
 		this.rowTable = rowTable;
 		if (rowTable != null)
@@ -226,13 +246,8 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		}
 	}
 
-	public void readMTX(TaskMonitor taskMonitor, File mmInputName) throws FileNotFoundException, IOException {
-		FileInputStream inputStream = new FileInputStream(mmInputName);
-		readMTX(taskMonitor, inputStream, mmInputName.getName());
-	}
-
+	// peak allows us to pre-allocate all of the necessary memory
 	public void peak(TaskMonitor taskMonitor, InputStream stream, String mmInputName) throws FileNotFoundException, IOException {
-		System.out.println("peak");
 		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
 		String[] dims = getDims(reader);
 
@@ -244,20 +259,22 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
 			nonZeros = Integer.parseInt(dims[2]);
-			System.out.println("nonZeros = "+nonZeros);
 			colIndex = new int[nCols+1];
 			Arrays.fill(colIndex, -1);
 			colIndex[nCols] = nonZeros; // Point to the end
 			if (type == MTXTYPE.INTEGER) {
 				intMatrix = new int[nonZeros][3];
 			} else if (type == MTXTYPE.REAL) {
-				System.out.println("Allocating matrices");
 				intMatrix = new int[nonZeros][2];
 				doubleArray = new double[nonZeros];
-				System.out.println("done");
 			}
 		}
 		Runtime.getRuntime().gc(); // Get this done before we try the actual reads
+	}
+
+	public void readMTX(TaskMonitor taskMonitor, File mmInputName) throws FileNotFoundException, IOException {
+		FileInputStream inputStream = new FileInputStream(mmInputName);
+		readMTX(taskMonitor, inputStream, mmInputName.getName());
 	}
 
 	public void readMTX(TaskMonitor taskMonitor, InputStream stream, String mmInputName) throws FileNotFoundException, IOException {
@@ -266,7 +283,6 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		boolean debug = false;
 
 		if (FileUtils.isGzip(mmInputName)) {
-			System.out.println("Getting gzip stream");
 			stream = FileUtils.getGzipStream(stream);
 		}
 
@@ -295,7 +311,6 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
 			nonZeros = Integer.parseInt(dims[2]);
-			System.out.println("nonZeros = "+nonZeros);
 			if (colIndex == null) {
 				colIndex = new int[nCols+1];
 				Arrays.fill(colIndex, -1);
@@ -311,7 +326,6 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 					doubleArray = new double[nonZeros];
 			}
 
-			System.out.println("Starting read");
 			for (int index = 0; index < nonZeros; index++) {
 				try {
 					if (invert) {
@@ -345,7 +359,8 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				}
 			}
 		}
-		System.out.println("MTX read complete");
+		if (taskMonitor != null)
+			taskMonitor.showMessage(TaskMonitor.Level.INFO, "MTX read complete");
 	}
 
 	public void mergeTable(CyTable table, String mergeColumn) {
@@ -622,7 +637,12 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 	public void saveFile(File file) throws IOException {
 		FileOutputStream fos = new FileOutputStream(file);
-		OutputStreamWriter osw = new OutputStreamWriter(fos, "utf-8");
+		writeMTX(null, fos);
+		fos.close();
+	}
+
+	public void writeMTX(TaskMonitor taskMonitor, OutputStream stream) throws IOException {
+		OutputStreamWriter osw = new OutputStreamWriter(stream, "utf-8");
 		BufferedWriter writer = new BufferedWriter(osw);
 
 		// Output header
@@ -631,6 +651,8 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		if (format.equals(MTXFORMAT.COORDINATE))
 			writer.write(" "+nonZeros);
 		writer.write("\n");
+
+		System.out.println("nonZeros = "+nonZeros);
 
 		// Output data
 		if (format == MTXFORMAT.ARRAY) {
@@ -644,6 +666,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				}
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
+			System.out.println("Format = coordinate, type = "+type+", nonZeros = "+nonZeros);
 			for (int index = 0; index < nonZeros; index++) {
 				int row = intMatrix[index][0]+1;
 				int col = intMatrix[index][1]+1;
@@ -652,11 +675,16 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				} else {
 					writer.write(row+" "+col+" "+doubleArray[index]+"\n");
 				}
+
+				if ((index+1) == nonZeros) {
+					System.out.println("Last line = "+row+","+col);
+				}
 			}
 		}
-		writer.close();
-		osw.close();
-		fos.close();
+		writer.flush();
+		osw.flush();
+		// writer.close();
+		// osw.close();
 	}
 
 	private void parseHeader(String header) throws IOException {
@@ -905,6 +933,56 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 		public void printBuffer() {
 			System.out.println("Buffer: '"+(new String(buffer))+"'");
+		}
+	}
+
+	class CreateMTXCache implements Runnable {
+		String source;
+		String accession;
+		public CreateMTXCache(String source, String accession) {
+			this.source = source;
+			this.accession = accession;
+		}
+
+		public void run() {
+			cacheCreateInProgress = true;
+			Logger logger = Logger.getLogger(CyUserLog.NAME);
+			try {
+				// Create temp file (set to remove on exit)
+				cacheFile = File.createTempFile("scNetViz-", ".tmp.zip");
+				cacheFile.deleteOnExit();
+	
+				// Create zip stream
+				ZipOutputStream outStream  = new ZipOutputStream(new FileOutputStream(cacheFile));
+				// write our mtx file
+				{
+					ZipEntry mtxEntry = new ZipEntry(source+"/"+accession+"/matrix.mtx");
+					outStream.putNextEntry(mtxEntry);
+					writeMTX(null, outStream);
+					outStream.closeEntry();
+				}
+				// write our row file
+				{
+					ZipEntry rowEntry = new ZipEntry(source+"/"+accession+"/genes.tsv");
+					outStream.putNextEntry(rowEntry);
+					CSVWriter.writeCSV(outStream, rowTable);
+					outStream.closeEntry();
+				}
+				// write our column file
+				{
+					ZipEntry colEntry = new ZipEntry(source+"/"+accession+"/barcodes.tsv");
+					outStream.putNextEntry(colEntry);
+					CSVWriter.writeCSV(outStream, colTable);
+					outStream.closeEntry();
+				}
+				outStream.close();
+				logger.info("Created matrix cache file: "+cacheFile.toString());
+
+				haveCache = true;
+			} catch (Exception e) {
+				logger.error("Unable to create cache file: "+e.toString());
+			}
+			cacheCreateInProgress = false;
 		}
 	}
 }

@@ -12,6 +12,9 @@ import java.util.zip.ZipInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
+import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
+
 public class FileUtils {
 	public static void skipHeader(List<String[]> table) {
 		if ((table.size() > 0) && (table.get(0).length > 1) && 
