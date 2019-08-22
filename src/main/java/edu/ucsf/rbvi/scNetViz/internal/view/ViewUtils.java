@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.swing.Box;
@@ -135,17 +136,28 @@ public class ViewUtils {
 			if (category != null && catRow >= 0) {
 				Map<Object, List<Integer>> catMap = category.getCatMap(catRow);
 				// Reformat the catmap so we have reasonable labels
-				Map<Object, List<Integer>> newMap = new HashMap<>();
-				// First get the keys so we can sort them
+				Map<Object, List<Integer>> newMap = new LinkedHashMap<>();
+
 				List sortedKeys = new ArrayList(catMap.keySet());
 				Collections.sort(sortedKeys);
-				
+
 				for (Object key: sortedKeys) {
 					if (key.toString().equals("unused"))
 						continue;
 					newMap.put(category.mkLabel(key), catMap.get(key));
 				}
-				names = CyPlotUtils.listToMap(sortedKeys, newMap, exp.getMatrix().getColLabels());
+
+				// Sort the keys now.  We need to do this now because clusters are integers and this
+				// will automatically do a numeric sort.  If we waited until after we made them labels, it
+				// would wind up as an alphabetical sort
+				// Collections.sort(sortedKeys);
+
+				// Now make the keys labels
+				// List<String> sortedLabels = new ArrayList<String>(sortedKeys.size());
+				// for (Object key: sortedKeys) {
+				// 	sortedLabels.add(category.mkLabel(key));
+				// }
+				names = CyPlotUtils.listToMap(newMap, exp.getMatrix().getColLabels());
 				xValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 0);
 				yValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 1);
 			} else {
