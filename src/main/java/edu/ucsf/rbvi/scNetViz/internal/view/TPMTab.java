@@ -116,29 +116,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 		// JLabel experimentLabel = new ExperimentLabel(experiment);
 
 		JPanel buttonsPanelRight = new JPanel();
-		{
-			JButton export = new JButton("Export CSV");
-			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      export.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					ExportCSVTask task = new ExportCSVTask(manager, experiment.getMatrix());
-					manager.executeTasks(new TaskIterator(task));
-				}
-			});
-			buttonsPanelRight.add(export);
-		}
 
-		{
-			cellPlotButton = new JButton("View Cell Plot");
-			cellPlotButton.setEnabled(false);
-			cellPlotButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      cellPlotButton.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					showPlot();
-				}
-			});
-			buttonsPanelRight.add(cellPlotButton);
-		}
 
 		{
 			String[] plotTypes = {"New Cell Plot", "t-SNE", "UMAP", "Draw graph", "Local t-SNE"};
@@ -170,6 +148,18 @@ public class TPMTab extends JPanel implements TaskObserver {
 			});
 			buttonsPanelRight.add(plotMenu);
 		}
+
+		{
+			cellPlotButton = new JButton("View Cell Plot");
+			cellPlotButton.setEnabled(false);
+			cellPlotButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      cellPlotButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					showPlot();
+				}
+			});
+			buttonsPanelRight.add(cellPlotButton);
+		}
 		
 		{
 			JButton importCategory = new JButton("Import Category");
@@ -183,6 +173,18 @@ public class TPMTab extends JPanel implements TaskObserver {
 				}
 			});
 			buttonsPanelRight.add(importCategory);
+		}
+
+		{
+			JButton export = new JButton("Export CSV");
+			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      export.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					ExportCSVTask task = new ExportCSVTask(manager, experiment.getMatrix());
+					manager.executeTasks(new TaskIterator(task));
+				}
+			});
+			buttonsPanelRight.add(export);
 		}
 		
 		JPanel topPanel = new JPanel(new BorderLayout());

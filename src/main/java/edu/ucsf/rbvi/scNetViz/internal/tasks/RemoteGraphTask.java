@@ -85,7 +85,11 @@ public class RemoteGraphTask extends AbstractEmbeddingTask implements Observable
 			createCache(mmtx, exp);
 		}
 		File expFile = mmtx.getMatrixCache();
-		String url = HTTPUtils.getWebServicesURL("drawgraph", exp, "layout="+layout.getSelectedValue());
+
+		// Split off the explanatory text
+		String type = layout.getSelectedValue().split(" ")[0];
+
+		String url = HTTPUtils.getWebServicesURL("drawgraph", exp, "layout="+type);
 
 		// Do the query
 		try {

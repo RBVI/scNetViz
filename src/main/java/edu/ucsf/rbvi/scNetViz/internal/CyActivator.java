@@ -134,8 +134,8 @@ public class CyActivator extends AbstractCyActivator {
 		{
 			tSNETaskFactory calcTSNE = new tSNETaskFactory(scNVManager);
 			Properties props = new Properties();
-			props.setProperty(TITLE, "t-TNE (local)");
-			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Calculate Embeddings");
+			props.setProperty(TITLE, "t-SNE (local)");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.New cell plot");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
@@ -151,7 +151,7 @@ public class CyActivator extends AbstractCyActivator {
 			RemoteUMAPTaskFactory calcUMAP = new RemoteUMAPTaskFactory(scNVManager);
 			Properties props = new Properties();
 			props.setProperty(TITLE, "UMAP");
-			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Calculate Embeddings");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.New cell plot");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
@@ -167,7 +167,7 @@ public class CyActivator extends AbstractCyActivator {
 			RemoteGraphTaskFactory calcGraph = new RemoteGraphTaskFactory(scNVManager);
 			Properties props = new Properties();
 			props.setProperty(TITLE, "Graph layout");
-			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Calculate Embeddings");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.New cell plot");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
@@ -183,7 +183,7 @@ public class CyActivator extends AbstractCyActivator {
 			RemoteTSNETaskFactory calcTSNE = new RemoteTSNETaskFactory(scNVManager);
 			Properties props = new Properties();
 			props.setProperty(TITLE, "t-SNE (on server)");
-			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Calculate Embeddings");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.New cell plot");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
