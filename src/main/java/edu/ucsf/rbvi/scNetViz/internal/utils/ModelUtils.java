@@ -322,8 +322,8 @@ public class ModelUtils {
 		colorMapping.addPoint (minMax[1], new BoundaryRangeValues<Paint>(colors[1], colors[1], colors[0]));
 
 		newStyle.addVisualMappingFunction(colorMapping);
-		// vizMapManager.addVisualStyle(newStyle);
 		vizMapManager.setVisualStyle(newStyle, view);
+		// vizMapManager.addVisualStyle(newStyle);
 	}
 
 	public static VisualStyle getVisualStyle(ScNVManager manager, String name) {
