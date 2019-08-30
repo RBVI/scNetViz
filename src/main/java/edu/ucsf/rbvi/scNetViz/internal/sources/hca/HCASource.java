@@ -76,7 +76,7 @@ public class HCASource implements Source {
 			props.put(PREFERRED_MENU, "Apps.scNetViz");
 			props.setProperty(IN_TOOL_BAR, "TRUE");
 			props.setProperty(TOOL_BAR_GRAVITY, "100f");
-			props.setProperty(TOOLTIP, "Show Experiments Table");
+			props.setProperty(TOOLTIP, "Browse the Human Cell Atlas");
 			String ebiLogoURL = getClass().getResource("/images/hca.png").toString();
 			props.setProperty(LARGE_ICON_URL, ebiLogoURL);
 			scNVManager.registerService(new HCAShowEntriesTaskFactory(manager, this), TaskFactory.class, props);

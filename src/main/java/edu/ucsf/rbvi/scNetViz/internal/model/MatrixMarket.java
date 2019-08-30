@@ -652,8 +652,6 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			writer.write(" "+nonZeros);
 		writer.write("\n");
 
-		System.out.println("nonZeros = "+nonZeros);
-
 		// Output data
 		if (format == MTXFORMAT.ARRAY) {
 			for (int col = 0; col < nCols; col++) {
@@ -666,7 +664,6 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				}
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
-			System.out.println("Format = coordinate, type = "+type+", nonZeros = "+nonZeros);
 			for (int index = 0; index < nonZeros; index++) {
 				int row = intMatrix[index][0]+1;
 				int col = intMatrix[index][1]+1;
@@ -674,10 +671,6 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 					writer.write(row+" "+col+" "+intMatrix[index][2]+"\n");
 				} else {
 					writer.write(row+" "+col+" "+doubleArray[index]+"\n");
-				}
-
-				if ((index+1) == nonZeros) {
-					System.out.println("Last line = "+row+","+col);
 				}
 			}
 		}

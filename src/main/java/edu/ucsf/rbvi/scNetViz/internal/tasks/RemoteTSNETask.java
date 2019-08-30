@@ -38,6 +38,7 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 
 	@Tunable (description="Initial dimensions", 
 	          tooltip="The number of principal components to use.",
+	          format="#",
 	          longDescription="The number of principal components to use.")
 	public int n_pcs = 0;
 
