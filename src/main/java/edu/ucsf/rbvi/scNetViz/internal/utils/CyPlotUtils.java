@@ -68,7 +68,7 @@ public class CyPlotUtils {
 
 	public static void createHeatMap(ScNVManager manager, String rowLabels, String columnLabels,
 	                                 String data, String title, 
-	                                 String xlabel, String ylabel, String accession) {
+	                                 String xlabel, String ylabel, String accession, boolean posOnly) {
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("rowLabels", rowLabels);
 		argMap.put("columnLabels", columnLabels);
@@ -78,6 +78,8 @@ public class CyPlotUtils {
 		argMap.put("yLabel",ylabel);
 		argMap.put("title",title);
 		argMap.put("id",accession);
+		if (posOnly)
+			argMap.put("palette", "Viridis Sequential Viridis perceptually balanced palette");
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "heat", argMap);
 	}

@@ -115,15 +115,17 @@ public class HeatMapTask extends AbstractTask {
 			// System.out.println("fc.length = "+fc.length);
 
 			List<String> newGeneList = new ArrayList<String>();
-			for (int topGene = 0; (topGene < count) && (topGene+start < fc.length); topGene++) {
-				// System.out.println("Adding gene: "+geneNames.get(sort[topGene+start]));
-				geneList.add(geneNames.get(sort[topGene+start]));
+			for (int topGene = (fc.length-1); (topGene > (fc.length-count-1)) && (topGene >= 0); topGene--) {
+				// System.out.println("Adding + gene: "+geneNames.get(sort[topGene])+"="+fc[sort[topGene]]);
+				geneList.add(geneNames.get(sort[topGene]));
 			}
 
 			if (!posOnly && count < fc.length) {
-				for (int topGene = fc.length-count; topGene < fc.length; topGene++) {
-					// System.out.println("Adding gene: "+geneNames.get(sort[topGene]));
-					geneList.add(geneNames.get(sort[topGene]));
+				int first = start+count;
+				if (first > fc.length) first = fc.length;
+				for (int topGene = first; topGene > start; topGene--) {
+					// System.out.println("Adding - gene: "+geneNames.get(sort[topGene])+"="+fc[sort[topGene]]);
+					geneList.add(geneNames.get(sort[topGene+start]));
 				}
 			}
 		}
@@ -146,7 +148,8 @@ public class HeatMapTask extends AbstractTask {
 		String data = CyPlotUtils.mapToData(sortedData);
 		String accession = exp.getMetadata().get(Metadata.ACCESSION).toString();
 		String title = exp.getSource().toString()+" "+ accession+ " Differential Expression";
-		CyPlotUtils.createHeatMap(manager, CyPlotUtils.listToCSV(geneList), columnLabels, data, title, "Category", "Log(FC)", accession);
+		CyPlotUtils.createHeatMap(manager, CyPlotUtils.listToCSV(geneList), columnLabels, 
+		                          data, title, "Category", "Log(FC)", accession, posOnly);
 	}
 
 }
