@@ -12,8 +12,17 @@ import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class CyPlotUtils {
-	public static void createViolinPlot(ScNVManager manager, String names, String data, String groups, String title, 
-	                                    String xlabel, String ylabel, String accession) {
+	public static void createViolinPlot(ScNVManager manager, String names, String data, 
+	                                    String groups, String title, 
+	                                    String xlabel, String ylabel, String accession, 
+	                                    boolean showAll) {
+		createViolinPlot(manager, names, data, groups, title, xlabel, ylabel, accession, showAll, 0.0);
+	}
+
+	public static void createViolinPlot(ScNVManager manager, String names, String data, 
+	                                    String groups, String title, 
+	                                    String xlabel, String ylabel, String accession, 
+	                                    boolean showAll, double jitter) {
 		// System.out.println("createViolinPlot");
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("data", data);
@@ -24,6 +33,9 @@ public class CyPlotUtils {
 		argMap.put("names",names);
 		argMap.put("groups",groups);
 		argMap.put("id",accession);
+		if (showAll)
+			argMap.put("showAll","true");
+		argMap.put("jitter",jitter);
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "violin", argMap);
 	}

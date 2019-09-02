@@ -3,6 +3,7 @@ package edu.ucsf.rbvi.scNetViz.internal.tasks;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,27 @@ public class HeatMapTask extends AbstractTask {
 	int heatMapCount = -1;
 	final String selectedColumn;
 
+	public HeatMapTask(final ScNVManager manager, final Category currentCategory, 
+	                   final DifferentialExpression diffExp, boolean posOnly, int count,
+										 String selectedColumn) {
+		this.manager = manager;
+		this.posOnly = posOnly;
+		this.heatMapCount = count;
+		this.category = currentCategory;
+		this.selectedColumn = selectedColumn;
+
+		dataMap = new LinkedHashMap<>();
+		columnOrder = new ArrayList<>();
+		for (Object cat: diffExp.getLogGERMap().keySet()) {
+			double[] logGER = diffExp.getLogGER(cat, posOnly);
+			if (logGER != null) {
+				dataMap.put(category.mkLabel(cat), logGER);
+				columnOrder.add(category.mkLabel(cat));
+			}
+		}
+		geneNames = diffExp.getRowLabels();
+	}
+
 	public HeatMapTask(final ScNVManager manager, final Category currentCategory, final List<String> rowLabels,
 	                   final Map<String, double[]> dataMap, final List<String> columnOrder, boolean posOnly,
 										 int count, final String column) {
@@ -45,6 +67,7 @@ public class HeatMapTask extends AbstractTask {
 		this.posOnly = posOnly;
 		this.heatMapCount = count;
 		this.selectedColumn = column;
+
 	}
 
 	// cyplot heat rowLabels="a,b,c,d,e,f" columnLabels="A,B,C" data="{\"A\":[1,2,3,4,5,6],\"B\":[-1,-2,-3,-4,-5,-6],\"C\":[0,1,-1,0,1,-1]}" title="Text Plot" xLabel="Upper" yLabel="Lower" editor=false

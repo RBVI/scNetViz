@@ -478,7 +478,7 @@ public class ScNVCytoPanel extends JPanel
 					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 					String title = experiment.getSource().toString()+" "+ accession+ " Differential Expression";
 					CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], 
-					                             CyPlotUtils.listToCSV(categoryNames), title, "", "Log(FC)", accession);
+					                             CyPlotUtils.listToCSV(categoryNames), title, "", "Log(FC)", accession, false);
 				}
 				break;
 				

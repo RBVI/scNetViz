@@ -139,15 +139,13 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		} else if (obsTask instanceof CalculateDETask) {
 			DifferentialExpression diffExp = obsTask.getResults(DifferentialExpression.class);
 			if (diffExp == null) {
-				System.out.println("diffExp = null!");
-				/*
+				// System.out.println("diffExp = null!");
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
 						JOptionPane.showMessageDialog(expFrame, "Differential expression calculation failed", 
 						                              "DE Failure", JOptionPane.ERROR_MESSAGE);
 					}
 				});
-				*/
 				diffExpButton.setEnabled(true);
 				return;
 			}
@@ -298,19 +296,6 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		
 		JPanel buttonsPanelRight = new JPanel(new GridLayout(2,2));
 		{
-		/*
-			JButton importCategory = new JButton("Add Category");
-			importCategory.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      importCategory.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					// We need to use the File importer for this
-					TaskFactory importCategory = 
-									new FileCategoryTaskFactory(manager, (FileSource)manager.getSource("file"), experiment);
-					manager.executeTasks(importCategory, thisComponent);
-				}
-			});
-			*/
-
 			JButton export = new JButton("Export CSV");
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
       export.addActionListener(new ActionListener() {
@@ -332,7 +317,6 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			buttonsPanelRight.add(ViewUtils.createPlotMenu(manager, experiment, thisComponent));
 			buttonsPanelRight.add(cellPlotButton);
 			buttonsPanelRight.add(ViewUtils.createCategoryMenu(manager, experiment));
-			// buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
 		}
 
