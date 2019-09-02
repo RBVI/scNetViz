@@ -965,7 +965,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				{
 					ZipEntry colEntry = new ZipEntry(source+"/"+accession+"/barcodes.tsv");
 					outStream.putNextEntry(colEntry);
-					CSVWriter.writeCSV(outStream, colTable);
+					CSVWriter.writeCSV(outStream, colTable, 1);
 					outStream.closeEntry();
 				}
 				outStream.close();

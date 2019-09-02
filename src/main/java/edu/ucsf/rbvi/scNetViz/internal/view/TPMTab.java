@@ -22,6 +22,7 @@ import javax.swing.table.TableModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -119,37 +120,11 @@ public class TPMTab extends JPanel implements TaskObserver {
 
 
 		{
-			String[] plotTypes = {"New Cell Plot", "t-SNE", "UMAP", "Draw graph", "Local t-SNE"};
-			JComboBox<String> plotMenu = new JComboBox<String>(plotTypes);
-			plotMenu.setFont(new Font("SansSerif", Font.PLAIN, 10));
-			plotMenu.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					final String type = (String)plotMenu.getSelectedItem();
-					SwingUtilities.invokeLater(new Runnable() {
-							public void run() {
-								if ("Local t-SNE".equals(type)) {
-									Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
-									manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
-								} else if ("UMAP".equals(type)) {
-									Task umapTask = new RemoteUMAPTask(manager, accession);
-									manager.executeTasks(new TaskIterator(umapTask), thisComponent);
-								} else if ("t-SNE".equals(type)) {
-									Task tsneTask = new RemoteTSNETask(manager, accession);
-									manager.executeTasks(new TaskIterator(tsneTask), thisComponent);
-								} else if ("Draw graph".equals(type)) {
-									Task graphTask = new RemoteGraphTask(manager, accession);
-									manager.executeTasks(new TaskIterator(graphTask), thisComponent);
-								} else
-									return;
-							}
-					});
-					plotMenu.setSelectedIndex(0);
-				}
-			});
-			buttonsPanelRight.add(plotMenu);
+			buttonsPanelRight.add(ViewUtils.createPlotMenu(manager, experiment, thisComponent));
 		}
 
 		{
+			// TODO: convert to pull down with "Plots", "Cell Plot", "Gene Plot"
 			cellPlotButton = new JButton("View Cell Plot");
 			cellPlotButton.setEnabled(false);
 			cellPlotButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
@@ -162,17 +137,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 		}
 		
 		{
-			JButton importCategory = new JButton("Import Category");
-			importCategory.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      importCategory.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					// We need to use the File importer for this
-					TaskFactory importCategory = 
-									new FileCategoryTaskFactory(manager, (FileSource)manager.getSource("file"), experiment);
-					manager.executeTasks(importCategory, thisComponent);
-				}
-			});
-			buttonsPanelRight.add(importCategory);
+			buttonsPanelRight.add(ViewUtils.createCategoryMenu(manager, experiment));
 		}
 
 		{

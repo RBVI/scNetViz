@@ -139,12 +139,15 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		} else if (obsTask instanceof CalculateDETask) {
 			DifferentialExpression diffExp = obsTask.getResults(DifferentialExpression.class);
 			if (diffExp == null) {
+				System.out.println("diffExp = null!");
+				/*
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
 						JOptionPane.showMessageDialog(expFrame, "Differential expression calculation failed", 
 						                              "DE Failure", JOptionPane.ERROR_MESSAGE);
 					}
 				});
+				*/
 				diffExpButton.setEnabled(true);
 				return;
 			}
@@ -295,6 +298,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		
 		JPanel buttonsPanelRight = new JPanel(new GridLayout(2,2));
 		{
+		/*
 			JButton importCategory = new JButton("Add Category");
 			importCategory.setFont(new Font("SansSerif", Font.PLAIN, 10));
       importCategory.addActionListener(new ActionListener() {
@@ -305,6 +309,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 					manager.executeTasks(importCategory, thisComponent);
 				}
 			});
+			*/
 
 			JButton export = new JButton("Export CSV");
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
@@ -315,34 +320,6 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 				}
 			});
 			
-			String[] plotTypes = {"New Cell Plot", "t-SNE", "UMAP", "Draw graph", "Local t-SNE"};
-			JComboBox<String> plotMenu = new JComboBox<String>(plotTypes);
-			plotMenu.setFont(new Font("SansSerif", Font.PLAIN, 10));
-			plotMenu.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					final String type = (String)plotMenu.getSelectedItem();
-					SwingUtilities.invokeLater(new Runnable() {
-							public void run() {
-								if ("Local t-SNE".equals(type)) {
-									Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
-									manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
-								} else if ("UMAP".equals(type)) {
-									Task umapTask = new RemoteUMAPTask(manager, accession);
-									manager.executeTasks(new TaskIterator(umapTask), thisComponent);
-								} else if ("t-SNE".equals(type)) {
-									Task tsneTask = new RemoteTSNETask(manager, accession);
-									manager.executeTasks(new TaskIterator(tsneTask), thisComponent);
-								} else if ("Draw graph".equals(type)) {
-									Task graphTask = new RemoteGraphTask(manager, accession);
-									manager.executeTasks(new TaskIterator(graphTask), thisComponent);
-								} else
-									return;
-							}
-					});
-					plotMenu.setSelectedIndex(0);
-				}
-			});
-
 			cellPlotButton = new JButton("View Cell Plot");
 			cellPlotButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
 			cellPlotButton.setEnabled(false);
@@ -352,9 +329,10 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 				}
 			});
 
-			buttonsPanelRight.add(plotMenu);
+			buttonsPanelRight.add(ViewUtils.createPlotMenu(manager, experiment, thisComponent));
 			buttonsPanelRight.add(cellPlotButton);
-			buttonsPanelRight.add(importCategory);
+			buttonsPanelRight.add(ViewUtils.createCategoryMenu(manager, experiment));
+			// buttonsPanelRight.add(importCategory);
 			buttonsPanelRight.add(export);
 		}
 

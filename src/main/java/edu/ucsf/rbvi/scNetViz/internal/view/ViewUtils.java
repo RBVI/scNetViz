@@ -37,6 +37,13 @@ import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
+import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteLeidenTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteLouvainTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteTSNETask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteUMAPTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteGraphTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 
@@ -169,6 +176,31 @@ public class ViewUtils {
 			CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, null, 
 			                              title, type+" 1", type+" 2", accession);
 		}
+	}
+
+	public static JComboBox<String> createPlotMenu(final ScNVManager manager, 
+	                                               final Experiment experiment, 
+	                                               final TaskObserver observer) {
+		Map<String, Task> map = new LinkedHashMap<>();
+		String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
+		map.put("t-SNE", new RemoteTSNETask(manager, accession));
+		map.put("UMAP", new RemoteUMAPTask(manager, accession));
+		map.put("Draw graph", new RemoteGraphTask(manager, accession));
+		map.put("Local t-SNE", new tSNETask((DoubleMatrix)experiment.getMatrix()));
+		return new PullDownMenu(manager, "New Cell Plot", map, observer);
+	}
+
+	public static JComboBox<String> createCategoryMenu(final ScNVManager manager, 
+	                                                   final Experiment experiment) {
+		String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
+		Map<String, Task> map = new LinkedHashMap<>();
+		map.put("Import from file...",
+		        new FileCategoryTask(manager, (FileSource)manager.getSource("file"), experiment));
+		map.put("Calculate Louvain clustering...",
+		        new RemoteLouvainTask(manager, accession));
+		map.put("Calculate Leiden clustering...",
+		        new RemoteLeidenTask(manager, accession));
+		return new PullDownMenu(manager, "Add Category", map, null);
 	}
 
 }

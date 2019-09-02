@@ -84,9 +84,6 @@ public class HCAExperiment implements Experiment {
 	public List<String[]> getColumnLabels() { return colTable; }
 	public List<String[]> getRowLabels() { return rowTable; }
 
-	// public HCACluster getClusters() { return hcaCluster; }
-	// public HCADesign getDesign() { return hcaDesign; }
-
 	public List<Category> getCategories() { return categories; }
 
 	public Category getCategory(String categoryName) { 
