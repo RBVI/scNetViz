@@ -35,6 +35,8 @@ public class CyPlotUtils {
 		argMap.put("id",accession);
 		if (showAll)
 			argMap.put("showAll","true");
+		else
+			argMap.put("showAll","false");
 		argMap.put("jitter",jitter);
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "violin", argMap);
@@ -44,7 +46,6 @@ public class CyPlotUtils {
 	                                     String zValues,
 	                                     String title, 
 	                                     String xlabel, String ylabel, String accession) {
-		// System.out.println("createViolinPlot");
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("xValues", xValues);
 		argMap.put("yValues", yValues);
