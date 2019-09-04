@@ -51,17 +51,22 @@ public class RemoteUMAPTask extends AbstractEmbeddingTask implements ObservableT
 	                          " result in tighter groupings and more distance between groups")
 	public double min_dist = 0.5;
 
+	@ContainsTunables
+	public AdvancedRemoteParameters advancedParameters = null;
+
 	public RemoteUMAPTask(final ScNVManager manager, final String acc) {
 		super(manager);
 		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
 		accession = new ListSingleSelection<>(new ArrayList<String>(manager.getExperimentAccessions()));
 		accession.setSelectedValue(acc);
+		advancedParameters = new AdvancedRemoteParameters();
 	}
 
 	public RemoteUMAPTask(final ScNVManager manager) {
 		super(manager);
 		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
 		accession = new ListSingleSelection<>(new ArrayList<String>(manager.getExperimentAccessions()));
+		advancedParameters = new AdvancedRemoteParameters();
 	}
 
 	public String getShortName() { return SHORTNAME; }
@@ -88,7 +93,9 @@ public class RemoteUMAPTask extends AbstractEmbeddingTask implements ObservableT
 			createCache(mmtx, exp);
 		}
 		File expFile = mmtx.getMatrixCache();
-		String url = HTTPUtils.getWebServicesURL("umap", exp, "n_neighbors="+n_neighbors+"&min_dist="+min_dist);
+		String url = HTTPUtils.getWebServicesURL("umap", exp, 
+		                                         "n_neighbors="+n_neighbors+"&min_dist="+min_dist+
+		                                         "&"+advancedParameters.getArgs());
 
 		// Do the query
 		try {

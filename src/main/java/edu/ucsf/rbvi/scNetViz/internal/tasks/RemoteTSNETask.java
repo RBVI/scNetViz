@@ -66,6 +66,9 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 	                          "stuck in a bad local minimum increasing the learning rate helps sometimes.")
 	public double learning_rate = 1000.0;
 
+	@ContainsTunables
+	public AdvancedRemoteParameters advancedParameters = null;
+
 	public RemoteTSNETask(final ScNVManager manager, final String acc) {
 		super(manager);
 		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
@@ -105,6 +108,7 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 		File expFile = mmtx.getMatrixCache();
 		String query = "perplexity="+perplexity+"&early_exaggeration="+early_exaggeration;
 		if (n_pcs > 0) query += "&n_pcs="+n_pcs;
+		query += "&"+advancedParameters.getArgs();
 		String url = HTTPUtils.getWebServicesURL("tsne", exp, query);
 
 		// Do the query

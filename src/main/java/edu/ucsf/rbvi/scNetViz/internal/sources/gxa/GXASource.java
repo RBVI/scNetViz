@@ -71,10 +71,11 @@ public class GXASource implements Source {
 		// Register our task factories
 		{
 			Properties props = new Properties();
-			props.put(TITLE, "Browse Single Cell Expression Atlas");
-			props.put(PREFERRED_MENU, "Apps.scNetViz");
+			props.setProperty(TITLE, "From Single Cell Expression Atlas...");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Load Experiment[10.1]");
 			props.setProperty(IN_TOOL_BAR, "TRUE");
 			props.setProperty(TOOL_BAR_GRAVITY, "100f");
+			props.setProperty(MENU_GRAVITY, "10.0");
 			props.setProperty(TOOLTIP, "Browse EBI Single Cell Expression Atlas");
 			String ebiLogoURL = getClass().getResource("/images/sc_atlas_logo.png").toString();
 			props.setProperty(LARGE_ICON_URL, ebiLogoURL);

@@ -65,25 +65,27 @@ public class FileSource implements Source {
 		// Register our task factories
 		{
 			Properties props = new Properties();
-			props.put(TITLE, "Import Experiment from File");
-			props.put(PREFERRED_MENU, "Apps.scNetViz");
+			props.setProperty(TITLE, "Import from file...");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Load Experiment[10.1]");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
-			props.put(COMMAND_NAMESPACE, "scnetviz");
-			props.put(COMMAND_DESCRIPTION, "Load an experiment from a file");
-			props.put(COMMAND, "load experiment");
+			props.setProperty(MENU_GRAVITY, "30.0");
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND_DESCRIPTION, "Load an experiment from a file");
+			props.setProperty(COMMAND, "load experiment file");
 			scNVManager.registerService(new FileExperimentTaskFactory(manager, this), TaskFactory.class, props);
 		}
 
 		{
 			Properties props = new Properties();
-			props.put(TITLE, "Add category to an experiment");
-			props.put(PREFERRED_MENU, "Apps.scNetViz");
+			props.put(TITLE, "Import from file...");
+			props.put(PREFERRED_MENU, "Apps.scNetViz.Add Category[100.1]");
 			props.setProperty(IN_TOOL_BAR, "FALSE");
 			props.setProperty(IN_MENU_BAR, "TRUE");
-			props.put(COMMAND_NAMESPACE, "scnetviz");
-			props.put(COMMAND_DESCRIPTION, "Add a category to an experiment from a file");
-			props.put(COMMAND, "load category");
+			props.setProperty(MENU_GRAVITY, "100.0");
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND_DESCRIPTION, "Add a category to an experiment from a file");
+			props.setProperty(COMMAND, "add file category");
 			scNVManager.registerService(new FileCategoryTaskFactory(manager, this), TaskFactory.class, props);
 		}
 		

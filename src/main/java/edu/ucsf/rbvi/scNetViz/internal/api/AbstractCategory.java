@@ -50,6 +50,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	Map<Object, int[]> countMap = null;
 	Map<Object, double[]> mtdcMap = null;
 	Map<Object, double[]> drMap = null;
+	// Add pct1 and pct2 maps?
 	Map<Object, List<Integer>> catMap = null;
 
 	protected final String name;

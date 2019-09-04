@@ -72,10 +72,11 @@ public class HCASource implements Source {
 		// Register our task factories
 		{
 			Properties props = new Properties();
-			props.put(TITLE, "Browse the Human Cell Atlas");
-			props.put(PREFERRED_MENU, "Apps.scNetViz");
+			props.setProperty(TITLE, "From the Human Cell Atlas...");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Load Experiment[10.1]");
 			props.setProperty(IN_TOOL_BAR, "TRUE");
-			props.setProperty(TOOL_BAR_GRAVITY, "100f");
+			props.setProperty(TOOL_BAR_GRAVITY, "100.0");
+			props.setProperty(MENU_GRAVITY, "20.0");
 			props.setProperty(TOOLTIP, "Browse the Human Cell Atlas");
 			String ebiLogoURL = getClass().getResource("/images/hca.png").toString();
 			props.setProperty(LARGE_ICON_URL, ebiLogoURL);

@@ -47,6 +47,9 @@ public class RemoteLouvainTask extends AbstractEmbeddingTask implements Observab
 	                   "the broader context of the data.</html>")
 	public int n_neighbors = 15;
 
+	@ContainsTunables
+	public AdvancedRemoteParameters advancedParameters = null;
+
 	public RemoteLouvainTask(final ScNVManager manager, final String acc) {
 		super(manager);
 		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
@@ -85,7 +88,9 @@ public class RemoteLouvainTask extends AbstractEmbeddingTask implements Observab
 		}
 		File expFile = mmtx.getMatrixCache();
 
-		String url = HTTPUtils.getWebServicesURL("louvain", exp, "n_neighbors="+n_neighbors);
+		String url = HTTPUtils.getWebServicesURL("louvain", exp, 
+		                                         "n_neighbors="+n_neighbors+
+		                                         "&"+advancedParameters.getArgs());
 
 		// Do the query
 		try {

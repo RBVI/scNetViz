@@ -77,7 +77,7 @@ public class ViolinGeneTask extends AbstractTask {
 	public void run(TaskMonitor monitor) {
 		String[] dataAndNames = CyPlotUtils.mapToDataAndNames(dataMap, cellNames, columnOrder);
 		CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], 
-		                             CyPlotUtils.listToCSV(columnOrder), title, "", "Log(FC)", accession, false, 0.7);
+		                             CyPlotUtils.listToCSV(columnOrder), title, "", "TPM", accession, false, 0.7);
 	}
 
 }

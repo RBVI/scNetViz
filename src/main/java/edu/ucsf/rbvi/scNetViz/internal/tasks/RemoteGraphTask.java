@@ -48,6 +48,9 @@ public class RemoteGraphTask extends AbstractEmbeddingTask implements Observable
 	                  "<li>‘rt’ (Reingold Tilford tree layout)</li></ul></body></html>")
 	public ListSingleSelection<String> layout = new ListSingleSelection<>(layouts);
 
+	@ContainsTunables
+	public AdvancedRemoteParameters advancedParameters = null;
+
 	public RemoteGraphTask(final ScNVManager manager, final String acc) {
 		super(manager);
 		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
@@ -89,7 +92,8 @@ public class RemoteGraphTask extends AbstractEmbeddingTask implements Observable
 		// Split off the explanatory text
 		String type = layout.getSelectedValue().split(" ")[0];
 
-		String url = HTTPUtils.getWebServicesURL("drawgraph", exp, "layout="+type);
+		String url = HTTPUtils.getWebServicesURL("drawgraph", exp, "layout="+type+
+		                                         "&"+advancedParameters.getArgs());
 
 		// Do the query
 		try {
