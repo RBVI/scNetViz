@@ -55,12 +55,14 @@ public class RemoteLeidenTask extends AbstractEmbeddingTask implements Observabl
 		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
 		accession = new ListSingleSelection<>(new ArrayList<String>(manager.getExperimentAccessions()));
 		accession.setSelectedValue(acc);
+		advancedParameters = new AdvancedRemoteParameters();
 	}
 
 	public RemoteLeidenTask(final ScNVManager manager) {
 		super(manager);
 		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
 		accession = new ListSingleSelection<>(new ArrayList<String>(manager.getExperimentAccessions()));
+		advancedParameters = new AdvancedRemoteParameters();
 	}
 
 	public String getShortName() { return SHORTNAME; }

@@ -55,12 +55,14 @@ public class RemoteLouvainTask extends AbstractEmbeddingTask implements Observab
 		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
 		accession = new ListSingleSelection<>(new ArrayList<String>(manager.getExperimentAccessions()));
 		accession.setSelectedValue(acc);
+		advancedParameters = new AdvancedRemoteParameters();
 	}
 
 	public RemoteLouvainTask(final ScNVManager manager) {
 		super(manager);
 		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
 		accession = new ListSingleSelection<>(new ArrayList<String>(manager.getExperimentAccessions()));
+		advancedParameters = new AdvancedRemoteParameters();
 	}
 
 	public String getShortName() { return SHORTNAME; }
