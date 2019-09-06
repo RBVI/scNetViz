@@ -411,7 +411,8 @@ public class DiffExpTab extends JPanel {
 				});
 				return;
 			}
-			Task vgeneTask = new ViolinGeneTask(manager, currentCategory, selectedCategory, rows[0]);
+			int index = diffExpTable.convertRowIndexToModel(rows[0]);
+			Task vgeneTask = new ViolinGeneTask(manager, currentCategory, selectedCategory, index);
 			insertTasksAfterCurrentTask(vgeneTask);
 		}
 	}
