@@ -60,7 +60,7 @@ public class GXAExperiment implements Experiment {
 	GXAMetadata gxaMetadata = null;
 	List<Category> categories;
 	double[][] tSNE;
-	String plotType = "t-SNE";
+	String plotType = null;
 
 	final ScNVManager scNVManager;
 	final GXAExperiment gxaExperiment;

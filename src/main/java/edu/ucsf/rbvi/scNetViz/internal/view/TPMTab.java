@@ -96,6 +96,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 		if (obsTask instanceof FileCategoryTask) {
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
 		} else if (obsTask instanceof AbstractEmbeddingTask) {
+			System.out.println("AbstractEmbeddingTask!");
 			double[][] embedding = ((AbstractEmbeddingTask)obsTask).getResults();
 			if (embedding == null)
 				return;
@@ -107,6 +108,9 @@ public class TPMTab extends JPanel implements TaskObserver {
 			if (cTab != null) {
 				cTab.cellPlotButton.setEnabled(true);
 				cTab.cellPlotButton.setText("View "+experiment.getPlotType());
+			}
+			if (manager.getCytoPanel() != null) {
+				manager.getCytoPanel().updatePlotMenu();
 			}
 		}
 		expFrame.toFront();

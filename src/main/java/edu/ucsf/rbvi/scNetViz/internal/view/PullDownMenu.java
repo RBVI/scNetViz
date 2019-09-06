@@ -16,9 +16,11 @@ import org.cytoscape.work.TaskObserver;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class PullDownMenu extends JComboBox<String> {
-	final Map<String, Task> menuItems;
+	Map<String, Task> menuItems;
 	final TaskObserver observer;
 	final ScNVManager manager;
+	final String title;
+	boolean updating=false;
 
 	public PullDownMenu(final ScNVManager manager, final String title,
 	                    final Map<String, Task> menuItems, final TaskObserver observer) {
@@ -26,7 +28,11 @@ public class PullDownMenu extends JComboBox<String> {
 		this.manager = manager;
 		this.menuItems = menuItems;
 		this.observer = observer;
+		this.title = title;
+		init();
+	}
 
+	private void init() {
 		addItem(title);
 		for (String item: menuItems.keySet()) {
 			addItem(item);
@@ -35,6 +41,7 @@ public class PullDownMenu extends JComboBox<String> {
 		setFont(new Font("SansSerif", Font.PLAIN, 10));
 		addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				if (updating) return;
 				final String type = (String)getSelectedItem();
 				if (menuItems.containsKey(type) && menuItems.get(type) != null) {
 					final Task t = menuItems.get(type);
@@ -47,5 +54,13 @@ public class PullDownMenu extends JComboBox<String> {
 				setSelectedIndex(0);
 			}
 		});
+	}
+
+	public void updateMenu(Map<String, Task> menuItems) {
+		this.menuItems = menuItems;
+		updating = true;
+		removeAllItems();
+		updating = false;
+		init();
 	}
 }

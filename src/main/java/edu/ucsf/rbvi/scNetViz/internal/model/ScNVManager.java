@@ -18,9 +18,11 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.command.AvailableCommands;
 import org.cytoscape.command.CommandExecutorTaskFactory;
+import org.cytoscape.model.CyNetwork;
 import org.cytoscape.property.CyProperty;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.session.events.SessionAboutToBeSavedEvent;
@@ -28,6 +30,7 @@ import org.cytoscape.session.events.SessionAboutToBeSavedListener;
 import org.cytoscape.session.events.SessionLoadedEvent;
 import org.cytoscape.session.events.SessionLoadedListener;
 import org.cytoscape.work.SynchronousTaskManager;
+import org.cytoscape.work.Task;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskManager;
@@ -37,7 +40,9 @@ import org.cytoscape.work.TaskObserver;
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowResultsPanelTask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
+import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 import edu.ucsf.rbvi.scNetViz.internal.view.ExperimentFrame;
 import edu.ucsf.rbvi.scNetViz.internal.view.ScNVCytoPanel;
 
@@ -258,11 +263,11 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 		for (Object exp: experiments) {
 			JSONObject jsonExp = (JSONObject) exp;
 			Experiment experiment = getExperimentFromSession(jsonExp, fileMap);
-			System.out.println("Loaded expermient: "+experiment);
+			// System.out.println("Loaded expermient: "+experiment);
 			if (experiment == null) continue;
 
 			if (jsonExp.containsKey(CATEGORIES)) {
-				System.out.println("Getting categories");
+				// System.out.println("Getting categories");
 				JSONArray categories = (JSONArray) jsonExp.get(CATEGORIES);
 				for (Object cat: categories) {
 					Category category = getCategoryFromSession((JSONObject)cat, experiment, fileMap);
@@ -272,6 +277,14 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 			if (jsonExp.containsKey(DIFFEXP)) {
 				getDiffExpFromSession((JSONObject)jsonExp.get(DIFFEXP), experiment, fileMap);
 			}
+		}
+
+		CyNetwork network = getService(CyApplicationManager.class).getCurrentNetwork();
+		Experiment exp = ModelUtils.getExperimentFromNetwork(this, network);
+		if (exp != null) {
+			// Now, show the results panel
+			Task resultsPanelTask = new ShowResultsPanelTask(this, exp);
+			executeTasks(new TaskIterator(resultsPanelTask));
 		}
 	}
 

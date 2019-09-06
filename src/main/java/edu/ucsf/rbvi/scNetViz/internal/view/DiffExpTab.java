@@ -309,44 +309,30 @@ public class DiffExpTab extends JPanel {
 
 		}
 
-		JPanel buttonsPanelRight = new JPanel(/*new GridLayout(3, 1)*/);
-		buttonsPanelRight.setLayout(new BoxLayout(buttonsPanelRight, BoxLayout.PAGE_AXIS));
+		JPanel buttonsPanelRight = new JPanel(new GridLayout(3, 1));
+		buttonsPanelRight.setBorder(BorderFactory.createEmptyBorder(0,0,0,10));
+		// buttonsPanelRight.setLayout(new BoxLayout(buttonsPanelRight, BoxLayout.PAGE_AXIS));
 		{
-			/*
-			JButton viewHeatMap = new JButton("View Heatmap");
-			viewHeatMap.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      viewHeatMap.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					Map<String, double[]> dataMap = new HashMap<>();
-					List<String> columns = new ArrayList<>();
-					boolean posOnly = positiveOnly.isSelected();
-					for (Object cat: diffExp.getLogGERMap().keySet()) {
-						double[] logGER = diffExp.getLogGER(cat, posOnly);
-						if (logGER != null) {
-							dataMap.put(currentCategory.mkLabel(cat), logGER);
-							columns.add(currentCategory.mkLabel(cat));
-						}
-					}
-					// Use a separate task for this since we've got some options...
-					HeatMapTask task = new HeatMapTask(manager, currentCategory, diffExp.getRowLabels(), 
-					                                   dataMap, columns, posOnly, -1, null);
-					manager.executeTasks(new TaskIterator(task));
-				}
-			});
-			*/
+			// buttonsPanelRight.add(Box.createVerticalGlue());
 			buttonsPanelRight.add(new JLabel(" "));
 
 			{
+				// buttonsPanelRight.add(Box.createHorizontalGlue());
 				Map<String, Task> map = new LinkedHashMap<>();
 				map.put("Heatmap", new HeatMapTaskWrapper());
 				map.put("Violin (diff exp)", new ViolinDiffExpTaskWrapper());
 				map.put("Violin (gene)", new ViolinGeneTaskWrapper());
-				buttonsPanelRight.add(new PullDownMenu(manager, "View Plots", map, null));
+				PullDownMenu plotMenu = new PullDownMenu(manager, "View Plots", map, null);
+				// plotMenu.setPreferredSize(new Dimension(100, 25));
+				// plotMenu.setMaximumSize(new Dimension(100, 25));
+				buttonsPanelRight.add(plotMenu);
 			}
 
 			{
 				JButton export = new JButton("Export CSV");
 				export.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				// export.setPreferredSize(new Dimension(100, 25));
+				// export.setMinimumSize(new Dimension(100, 25));
  	  	   export.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						ExportCSVTask task = new ExportCSVTask(manager, diffExp);
@@ -354,34 +340,8 @@ public class DiffExpTab extends JPanel {
 					}
 				});
 				buttonsPanelRight.add(export);
+				// buttonsPanelRight.add(Box.createHorizontalGlue());
 			}
-
-			/*
-			JButton viewViolin = new JButton("View Violin Plot");
-			viewViolin.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      viewViolin.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					Map<String, double[]> dataMap = new HashMap<>();
-					List<String> columns = new ArrayList<>();
-					for (Object cat: diffExp.getLogGERMap().keySet()) {
-						double[] logGER = diffExp.getLogGER(cat, positiveOnly.isSelected());
-						if (logGER != null) {
-							dataMap.put(currentCategory.mkLabel(cat), logGER);
-							columns.add(currentCategory.mkLabel(cat));
-						}
-					}
-					String[] dataAndNames = CyPlotUtils.mapToDataAndNames(dataMap, diffExp.getRowLabels(), columns);
-					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
-					String title = experiment.getSource().toString()+" "+ accession+ " Differential Expression";
-					CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], 
-					                             CyPlotUtils.listToCSV(columns), title, "", "Log(FC)", accession);
-				}
-			});
-
-			buttonsPanelRight.add(viewHeatMap);
-			buttonsPanelRight.add(viewViolin);
-			buttonsPanelRight.add(export);
-			*/
 		}
 
 		JPanel topPanel = new JPanel(new BorderLayout());

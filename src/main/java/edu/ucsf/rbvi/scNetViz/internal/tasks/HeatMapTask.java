@@ -7,6 +7,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cytoscape.model.CyNetwork;
+import org.cytoscape.model.CyNode;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
@@ -21,6 +23,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 import edu.ucsf.rbvi.scNetViz.internal.utils.MatrixUtils;
+import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 
 // Tunable to choose experiment?
 
@@ -132,6 +135,8 @@ public class HeatMapTask extends AbstractTask {
 
 		// Reverse the geneList
 		Collections.reverse(geneList);
+
+		System.out.println("geneList.size = "+geneList.size());
 
 		// Now we have the list of genes that we want to use 
 		Map<String, double[]> sortedData = new HashMap<>();

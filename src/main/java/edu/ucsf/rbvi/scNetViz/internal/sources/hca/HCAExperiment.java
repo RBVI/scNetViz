@@ -57,7 +57,7 @@ public class HCAExperiment implements Experiment {
 	HCAMetadata hcaMetadata = null;
 	List<Category> categories;
 	double[][] tSNE;
-	String plotType = "t-SNE";
+	String plotType = null;
 
 	final ScNVManager scNVManager;
 	final HCAExperiment hcaExperiment;

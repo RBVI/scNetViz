@@ -28,9 +28,9 @@ public class HelpButton extends JButton {
 				args.put("id","scNetViz");
 				args.put("title", "scNetViz Help");
 				if (subPart != null) {
-					args.put("url", "http://preview.rbvi.ucsf.edu/cytoscape/scNetViz/index.shtml#"+subPart);
+					args.put("url", "http://www.rbvi.ucsf.edu/cytoscape/scNetViz/index.shtml#"+subPart);
 				} else {
-					args.put("url", "http://preview.rbvi.ucsf.edu/cytoscape/scNetViz/index.shtml");
+					args.put("url", "http://www.rbvi.ucsf.edu/cytoscape/scNetViz/index.shtml");
 				}
 				scManager.executeCommand("cybrowser", "dialog", args, false);
 			}

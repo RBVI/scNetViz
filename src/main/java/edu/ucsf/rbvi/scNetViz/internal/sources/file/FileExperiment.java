@@ -52,7 +52,7 @@ public class FileExperiment implements Experiment {
 	MatrixMarket mtx = null;
 	final List<Category> categories;
 	double[][] tSNE;
-	String plotType = "t-SNE";
+	String plotType = null;
 	// GXACluster fileCluster = null;
 	// GXAIDF fileIDF = null;
 	// GXADesign fileDesign = null;
