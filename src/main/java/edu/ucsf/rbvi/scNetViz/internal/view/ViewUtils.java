@@ -189,7 +189,7 @@ public class ViewUtils {
 	                                               final TaskObserver observer) {
 		Map<String, Task> map = new LinkedHashMap<>();
 		String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
-		map.put("t-SNE (local)", new tSNETask((DoubleMatrix)experiment.getMatrix()));
+		map.put("t-SNE (local)", new tSNETask(experiment));
 		map.put("UMAP", new RemoteUMAPTask(manager, accession));
 		map.put("Graph layout", new RemoteGraphTask(manager, accession));
 		map.put("t-SNE (on server)", new RemoteTSNETask(manager, accession));
