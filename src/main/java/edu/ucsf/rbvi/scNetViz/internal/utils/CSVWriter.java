@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 import org.cytoscape.application.CyUserLog;
@@ -16,6 +17,36 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Matrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.StringMatrix;
 
 public class CSVWriter {
+
+	public static void writeCSV(OutputStream output, List<String[]> table, int nCols) throws IOException {
+		for (String[] line: table) {
+			if (nCols < 0) nCols = line.length;
+			int count = nCols;
+			for (String txt: line) {
+				output.write(txt.getBytes());
+				if (count-- > 1)
+					output.write("\t".getBytes());
+				else
+					break;
+			}
+			output.write("\n".getBytes());
+		}
+	}
+
+	public static void writeCSV(OutputStream output, List<String[]> table) throws IOException {
+		writeCSV(output, table, -1);
+		/*
+		for (String[] line: table) {
+			int count = line.length;
+			for (String txt: line) {
+				output.write(txt.getBytes());
+				if (count-- > 1)
+					output.write("\t".getBytes());
+			}
+			output.write("\n".getBytes());
+		}
+		*/
+	}
 
 	public static void writeCSV(File file, List<String[]> table) throws IOException {
 		BufferedWriter output = new BufferedWriter(new FileWriter(file));

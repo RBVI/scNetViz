@@ -6,8 +6,12 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.swing.Box;
@@ -33,6 +37,13 @@ import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
+import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
+import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteLeidenTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteLouvainTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteTSNETask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteUMAPTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteGraphTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 
@@ -100,33 +111,16 @@ public class ViewUtils {
 	                            final Category category, final int catRow, 
 	                            final int geneRow, final String title) {
 		double[][] tSNEresults = exp.getTSNE();
+		String type = exp.getPlotType();
 
 		if (tSNEresults == null) {
-			System.out.println("Creating tSNE task");
-			Task tSNETask = new tSNETask((DoubleMatrix)exp.getMatrix());
-			manager.executeTasks(new TaskIterator(tSNETask), new TaskObserver() {
-				@Override
-				public void allFinished(FinishStatus status) {
-				}
-
-				@Override
-				public void taskFinished(ObservableTask obsTask) {
-					System.out.println("task finished");
-					if (obsTask instanceof tSNETask) {
-						double[][] tSNEResults = ((tSNETask)obsTask).getResults();
-						if (tSNEResults == null) return;
-						exp.setTSNE(tSNEResults);
-						showtSNE(manager, exp, category, catRow, geneRow, title);
-					}
-				}
-			});
 			return;
 		}
 
 		String accession = (String)exp.getMetadata().get(Metadata.ACCESSION);
 		String ttl = title;
 		if (ttl == null)
-			ttl = "tSNE Plot for "+accession;
+			ttl = type+" Plot for "+accession;
 
 		if (category == null) {
 			// See if a gene is selected and provide a color trace if it is
@@ -134,12 +128,14 @@ public class ViewUtils {
 			String xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
 			String yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
 			String zValues = null;
-			if (geneRow >= 0)
+			if (geneRow >= 0) {
 				zValues = "{\"trace\": "+
 								CyPlotUtils.valuesToJSON((DoubleMatrix)exp.getMatrix(), geneRow)+"}";
 
+			}
+
 			CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, zValues, 
-			                              ttl, "t-SNE 1", "t-SNE 2", accession);
+			                              ttl, type+" 1", type+" 2", accession);
 		} else {
 			String names;
 			String xValues;
@@ -147,12 +143,33 @@ public class ViewUtils {
 			if (category != null && catRow >= 0) {
 				Map<Object, List<Integer>> catMap = category.getCatMap(catRow);
 				// Reformat the catmap so we have reasonable labels
-				Map<Object, List<Integer>> newMap = new HashMap<>();
+				Map<Object, List<Integer>> newMap = new LinkedHashMap<>();
+
+				List sortedKeys = new ArrayList(catMap.keySet());
+
+				// Avoid cast errors
+				if (sortedKeys.contains("unused"))
+					sortedKeys.remove("unused");
+
 				for (Object key: catMap.keySet()) {
-					if (key.toString().equals("unused"))
-						continue;
+					System.out.println("Key "+key.toString()+" is type "+key.getClass().getName());
+				}
+				Collections.sort(sortedKeys);
+
+				for (Object key: sortedKeys) {
 					newMap.put(category.mkLabel(key), catMap.get(key));
 				}
+
+				// Sort the keys now.  We need to do this now because clusters are integers and this
+				// will automatically do a numeric sort.  If we waited until after we made them labels, it
+				// would wind up as an alphabetical sort
+				// Collections.sort(sortedKeys);
+
+				// Now make the keys labels
+				// List<String> sortedLabels = new ArrayList<String>(sortedKeys.size());
+				// for (Object key: sortedKeys) {
+				// 	sortedLabels.add(category.mkLabel(key));
+				// }
 				names = CyPlotUtils.listToMap(newMap, exp.getMatrix().getColLabels());
 				xValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 0);
 				yValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 1);
@@ -163,8 +180,33 @@ public class ViewUtils {
 			}
 
 			CyPlotUtils.createScatterPlot(manager, names, xValues, yValues, null, 
-			                              title, "t-SNE 1", "t-SNE 2", accession);
+			                              title, type+" 1", type+" 2", accession);
 		}
+	}
+
+	public static JComboBox<String> createPlotMenu(final ScNVManager manager, 
+	                                               final Experiment experiment, 
+	                                               final TaskObserver observer) {
+		Map<String, Task> map = new LinkedHashMap<>();
+		String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
+		map.put("t-SNE (local)", new tSNETask((DoubleMatrix)experiment.getMatrix()));
+		map.put("UMAP", new RemoteUMAPTask(manager, accession));
+		map.put("Graph layout", new RemoteGraphTask(manager, accession));
+		map.put("t-SNE (on server)", new RemoteTSNETask(manager, accession));
+		return new PullDownMenu(manager, "New Cell Plot", map, observer);
+	}
+
+	public static JComboBox<String> createCategoryMenu(final ScNVManager manager, 
+	                                                   final Experiment experiment) {
+		String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
+		Map<String, Task> map = new LinkedHashMap<>();
+		map.put("Import from file...",
+		        new FileCategoryTask(manager, (FileSource)manager.getSource("file"), experiment));
+		map.put("Calculate Louvain clustering...",
+		        new RemoteLouvainTask(manager, accession));
+		map.put("Calculate Leiden clustering...",
+		        new RemoteLeidenTask(manager, accession));
+		return new PullDownMenu(manager, "Add Category", map, null);
 	}
 
 }

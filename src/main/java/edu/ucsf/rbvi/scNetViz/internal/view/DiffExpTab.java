@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,18 +23,23 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 
+import org.cytoscape.work.AbstractTask;
+import org.cytoscape.work.Task;
 import org.cytoscape.work.TaskIterator;
+import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
@@ -45,6 +51,8 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.HeatMapTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ViolinDiffExpTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ViolinGeneTask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 
@@ -301,63 +309,39 @@ public class DiffExpTab extends JPanel {
 
 		}
 
-		JPanel buttonsPanelRight = new JPanel(/*new GridLayout(3, 1)*/);
-		buttonsPanelRight.setLayout(new BoxLayout(buttonsPanelRight, BoxLayout.PAGE_AXIS));
+		JPanel buttonsPanelRight = new JPanel(new GridLayout(3, 1));
+		buttonsPanelRight.setBorder(BorderFactory.createEmptyBorder(0,0,0,10));
+		// buttonsPanelRight.setLayout(new BoxLayout(buttonsPanelRight, BoxLayout.PAGE_AXIS));
 		{
-			JButton viewHeatMap = new JButton("View Heatmap");
-			viewHeatMap.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      viewHeatMap.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					Map<String, double[]> dataMap = new HashMap<>();
-					List<String> columns = new ArrayList<>();
-					boolean posOnly = positiveOnly.isSelected();
-					for (Object cat: diffExp.getLogGERMap().keySet()) {
-						double[] logGER = diffExp.getLogGER(cat, posOnly);
-						if (logGER != null) {
-							dataMap.put(currentCategory.mkLabel(cat), logGER);
-							columns.add(currentCategory.mkLabel(cat));
-						}
+			// buttonsPanelRight.add(Box.createVerticalGlue());
+			buttonsPanelRight.add(new JLabel(" "));
+
+			{
+				// buttonsPanelRight.add(Box.createHorizontalGlue());
+				Map<String, Task> map = new LinkedHashMap<>();
+				map.put("Heatmap", new HeatMapTaskWrapper());
+				map.put("Violin (diff exp)", new ViolinDiffExpTaskWrapper());
+				map.put("Violin (gene)", new ViolinGeneTaskWrapper());
+				PullDownMenu plotMenu = new PullDownMenu(manager, "View Plots", map, null);
+				// plotMenu.setPreferredSize(new Dimension(100, 25));
+				// plotMenu.setMaximumSize(new Dimension(100, 25));
+				buttonsPanelRight.add(plotMenu);
+			}
+
+			{
+				JButton export = new JButton("Export CSV");
+				export.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				// export.setPreferredSize(new Dimension(100, 25));
+				// export.setMinimumSize(new Dimension(100, 25));
+ 	  	   export.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						ExportCSVTask task = new ExportCSVTask(manager, diffExp);
+						manager.executeTasks(new TaskIterator(task));
 					}
-					// Use a separate task for this since we've got some options...
-					HeatMapTask task = new HeatMapTask(manager, currentCategory, diffExp.getRowLabels(), 
-					                                   dataMap, columns, posOnly, -1, null);
-					manager.executeTasks(new TaskIterator(task));
-				}
-			});
-
-			JButton export = new JButton("Export CSV");
-			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      export.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					ExportCSVTask task = new ExportCSVTask(manager, diffExp);
-					manager.executeTasks(new TaskIterator(task));
-				}
-			});
-
-			JButton viewViolin = new JButton("View Violin Plot");
-			viewViolin.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      viewViolin.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					Map<String, double[]> dataMap = new HashMap<>();
-					List<String> columns = new ArrayList<>();
-					for (Object cat: diffExp.getLogGERMap().keySet()) {
-						double[] logGER = diffExp.getLogGER(cat, positiveOnly.isSelected());
-						if (logGER != null) {
-							dataMap.put(currentCategory.mkLabel(cat), logGER);
-							columns.add(currentCategory.mkLabel(cat));
-						}
-					}
-					String[] dataAndNames = CyPlotUtils.mapToDataAndNames(dataMap, diffExp.getRowLabels(), columns);
-					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
-					String title = experiment.getSource().toString()+" "+ accession+ " Differential Expression";
-					CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], 
-					                             CyPlotUtils.listToCSV(columns), title, "", "Log(FC)", accession);
-				}
-			});
-
-			buttonsPanelRight.add(viewHeatMap);
-			buttonsPanelRight.add(viewViolin);
-			buttonsPanelRight.add(export);
+				});
+				buttonsPanelRight.add(export);
+				// buttonsPanelRight.add(Box.createHorizontalGlue());
+			}
 		}
 
 		JPanel topPanel = new JPanel(new BorderLayout());
@@ -395,5 +379,40 @@ public class DiffExpTab extends JPanel {
 	String[] getComparisons() {
 		String[] comparisonTypes = {"Each vs. Others"};
 		return comparisonTypes;
+	}
+
+	class HeatMapTaskWrapper extends AbstractTask {
+		public void run(TaskMonitor monitor) {
+			boolean posOnly = positiveOnly.isSelected();
+			Task heatTask = new HeatMapTask(manager, currentCategory, diffExp, posOnly, -1, null);
+			insertTasksAfterCurrentTask(heatTask);
+		}
+	}
+
+	class ViolinDiffExpTaskWrapper extends AbstractTask {
+		public void run(TaskMonitor monitor) {
+			boolean posOnly = positiveOnly.isSelected();
+			Task vdeTask = new ViolinDiffExpTask(manager, currentCategory, diffExp, posOnly);
+			insertTasksAfterCurrentTask(vdeTask);
+		}
+	}
+
+	class ViolinGeneTaskWrapper extends AbstractTask {
+		public void run(TaskMonitor monitor) {
+			int selectedCategory = diffExp.getCategoryRow();
+			int[] rows = diffExpTable.getSelectedRows();
+			if (rows == null || rows.length == 0) {
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						JOptionPane.showMessageDialog(expFrame, "Gene row must be selected!", 
+						                              "No gene", JOptionPane.ERROR_MESSAGE);
+					}
+
+				});
+				return;
+			}
+			Task vgeneTask = new ViolinGeneTask(manager, currentCategory, selectedCategory, rows[0]);
+			insertTasksAfterCurrentTask(vgeneTask);
+		}
 	}
 }

@@ -8,18 +8,21 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +43,11 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAExperiment;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.AbstractEmbeddingTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteTSNETask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteUMAPTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteGraphTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
@@ -50,11 +57,14 @@ public class TPMTab extends JPanel implements TaskObserver {
 	final Experiment experiment;
 	final TPMTab thisComponent;
 	final ExperimentFrame expFrame;
+	final String accession;
 	JTable experimentTable;
+	public JButton cellPlotButton;
 
 	public TPMTab(final ScNVManager manager, final Experiment experiment, final ExperimentFrame expFrame) {
 		this.manager = manager;
 		this.experiment = experiment;
+		this.accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 
 		this.setLayout(new BorderLayout());
 		thisComponent = this;	// Access to inner classes
@@ -74,7 +84,6 @@ public class TPMTab extends JPanel implements TaskObserver {
 			experimentTable.getSelectionModel().addSelectionInterval(index, index);
 			experimentTable.scrollRectToVisible(new Rectangle(experimentTable.getCellRect(index, 0, true)));
 		}
-		String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 		ModelUtils.selectNodes(manager, accession, geneList);
 	}
 
@@ -85,20 +94,26 @@ public class TPMTab extends JPanel implements TaskObserver {
 	@Override
 	public void taskFinished(ObservableTask obsTask) {
 		if (obsTask instanceof FileCategoryTask) {
-			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
-		} else if (obsTask instanceof tSNETask) {
-			double[][] tSNEResults = ((tSNETask)obsTask).getResults();
-			experiment.setTSNE(tSNEResults);
-			int geneRow = experimentTable.getSelectedRow();
-			String title = null;
-			if (geneRow >= 0) {
-				String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-				geneRow = experimentTable.convertRowIndexToModel(geneRow);
-				title = accession+" Gene "+experimentTable.getModel().getValueAt(geneRow, 0);
+		} else if (obsTask instanceof AbstractEmbeddingTask) {
+			System.out.println("AbstractEmbeddingTask!");
+			double[][] embedding = ((AbstractEmbeddingTask)obsTask).getResults();
+			if (embedding == null)
+				return;
+			experiment.setTSNE(embedding);
+			showPlot();
+			cellPlotButton.setEnabled(true);
+			cellPlotButton.setText("View "+experiment.getPlotType());
+			CategoriesTab cTab = expFrame.getCategoriesTab();
+			if (cTab != null) {
+				cTab.cellPlotButton.setEnabled(true);
+				cTab.cellPlotButton.setText("View "+experiment.getPlotType());
 			}
-			ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
+			if (manager.getCytoPanel() != null) {
+				manager.getCytoPanel().updatePlotMenu();
+			}
 		}
+		expFrame.toFront();
 	}
 	
 	private void init() {
@@ -106,6 +121,29 @@ public class TPMTab extends JPanel implements TaskObserver {
 		// JLabel experimentLabel = new ExperimentLabel(experiment);
 
 		JPanel buttonsPanelRight = new JPanel();
+
+
+		{
+			buttonsPanelRight.add(ViewUtils.createPlotMenu(manager, experiment, thisComponent));
+		}
+
+		{
+			// TODO: convert to pull down with "Plots", "Cell Plot", "Gene Plot"
+			cellPlotButton = new JButton("View Cell Plot");
+			cellPlotButton.setEnabled(false);
+			cellPlotButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+      cellPlotButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					showPlot();
+				}
+			});
+			buttonsPanelRight.add(cellPlotButton);
+		}
+		
+		{
+			buttonsPanelRight.add(ViewUtils.createCategoryMenu(manager, experiment));
+		}
+
 		{
 			JButton export = new JButton("Export CSV");
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
@@ -116,50 +154,6 @@ public class TPMTab extends JPanel implements TaskObserver {
 				}
 			});
 			buttonsPanelRight.add(export);
-		}
-
-		{
-			JButton tsne = new JButton("View tSNE");
-			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      tsne.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					String title = null;
-					int geneRow = experimentTable.getSelectedRow();
-					if (geneRow >= 0) {
-						String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-						geneRow = experimentTable.convertRowIndexToModel(geneRow);
-						title = accession+" Expression for "+experimentTable.getModel().getValueAt(geneRow, 0);
-					}
-					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
-				}
-			});
-			buttonsPanelRight.add(tsne);
-		}
-
-		{
-			JButton tsne = new JButton("(Re)calculate tSNE");
-			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      tsne.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					Task tSNETask = new tSNETask((DoubleMatrix)experiment.getMatrix());
-					manager.executeTasks(new TaskIterator(tSNETask), thisComponent);
-				}
-			});
-			buttonsPanelRight.add(tsne);
-		}
-		
-		{
-			JButton importCategory = new JButton("Import Category");
-			importCategory.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      importCategory.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					// We need to use the File importer for this
-					TaskFactory importCategory = 
-									new FileCategoryTaskFactory(manager, (FileSource)manager.getSource("file"), experiment);
-					manager.executeTasks(importCategory, thisComponent);
-				}
-			});
-			buttonsPanelRight.add(importCategory);
 		}
 		
 		JPanel topPanel = new JPanel(new BorderLayout());
@@ -181,7 +175,6 @@ public class TPMTab extends JPanel implements TaskObserver {
 				for (int row: rows) {
 					geneList.add(experimentTable.getValueAt(row, 0).toString());
 				}
-				String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
 				ModelUtils.selectNodes(manager, accession, geneList);
 			}
 		});
@@ -191,6 +184,16 @@ public class TPMTab extends JPanel implements TaskObserver {
 		this.add(scrollPane, BorderLayout.CENTER);
 		this.revalidate();
 		this.repaint();
+	}
+
+	private void showPlot() {
+		String title = null;
+		int geneRow = experimentTable.getSelectedRow();
+		if (geneRow >= 0) {
+			geneRow = experimentTable.convertRowIndexToModel(geneRow);
+			title = accession+" Expression for "+experimentTable.getModel().getValueAt(geneRow, 0);
+		}
+		ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
 	}
 
 }

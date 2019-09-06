@@ -50,8 +50,12 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.FileSource;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTask;
 import edu.ucsf.rbvi.scNetViz.internal.sources.file.tasks.FileCategoryTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.AbstractEmbeddingTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CalculateDETask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteTSNETask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteUMAPTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteGraphTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 
@@ -67,6 +71,8 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 	JTextField dDRThreshold;
 	JComboBox<String> categories;
 	JButton diffExpButton;
+	public JButton cellPlotButton;
+	final String accession;
 
 	Category currentCategory = null;
 	JScrollPane categoryPane;
@@ -85,6 +91,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		this.setLayout(new BorderLayout());
 		thisComponent = this;	// Access to inner classes
 		this.expFrame = expFrame;
+		this.accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
 		init();
 	}
 
@@ -132,6 +139,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		} else if (obsTask instanceof CalculateDETask) {
 			DifferentialExpression diffExp = obsTask.getResults(DifferentialExpression.class);
 			if (diffExp == null) {
+				// System.out.println("diffExp = null!");
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
 						JOptionPane.showMessageDialog(expFrame, "Differential expression calculation failed", 
@@ -144,7 +152,21 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			DiffExpTab diffETab = new DiffExpTab(manager, experiment, expFrame, currentCategory, diffExp);
 			expFrame.addDiffExpContent("Diff Exp", diffETab);
 			diffExpButton.setEnabled(true);
+		} else if (obsTask instanceof AbstractEmbeddingTask) {
+			double[][] embedding = ((AbstractEmbeddingTask)obsTask).getResults();
+			if (embedding == null)
+				return;
+			experiment.setTSNE(embedding);
+			showPlot();
+			cellPlotButton.setEnabled(true);
+			cellPlotButton.setText("View "+experiment.getPlotType());
+			TPMTab tpmTab = expFrame.getTPMTab();
+			if (tpmTab != null) {
+				tpmTab.cellPlotButton.setEnabled(true);
+				tpmTab.cellPlotButton.setText("View "+experiment.getPlotType());
+			}
 		}
+		expFrame.toFront();
 	}
 
 	public void changeCategory(Category newCategory, int newRow) {
@@ -274,17 +296,6 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		
 		JPanel buttonsPanelRight = new JPanel(new GridLayout(2,2));
 		{
-			JButton importCategory = new JButton("Add Category");
-			importCategory.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      importCategory.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					// We need to use the File importer for this
-					TaskFactory importCategory = 
-									new FileCategoryTaskFactory(manager, (FileSource)manager.getSource("file"), experiment);
-					manager.executeTasks(importCategory, thisComponent);
-				}
-			});
-
 			JButton export = new JButton("Export CSV");
 			export.setFont(new Font("SansSerif", Font.PLAIN, 10));
       export.addActionListener(new ActionListener() {
@@ -293,35 +304,19 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 					manager.executeTasks(new TaskIterator(task));
 				}
 			});
-
-			JButton tsne = new JButton("View tSNE");
-			tsne.setFont(new Font("SansSerif", Font.PLAIN, 10));
-      tsne.addActionListener(new ActionListener() {
+			
+			cellPlotButton = new JButton("View Cell Plot");
+			cellPlotButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+			cellPlotButton.setEnabled(false);
+      cellPlotButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-					String title = null;
-					Category cat = currentCategory;
-					int catRow = -1;
-					if (cat != null) {
-						title = "tSNE Plot for "+accession+" Category "+cat.toString();
-						catRow = cat.getSelectedRow();
-						if (catRow < 0)
-							catRow = cat.getDefaultRow();
-						if (catRow >= 0) {
-							System.out.println("cat row = "+catRow);
-							System.out.println("Current category = "+cat);
-							List<String> rowLabels = cat.getMatrix().getRowLabels();
-							title += " ("+rowLabels.get(catRow)+")";
-						}
-					}
-					ViewUtils.showtSNE(manager, experiment, cat, catRow, -1, title);
+					showPlot();
 				}
 			});
 
-			// buttonsPanelRight.add(new JLabel(""));
-			buttonsPanelRight.add(new JLabel(""));
-			buttonsPanelRight.add(tsne);
-			buttonsPanelRight.add(importCategory);
+			buttonsPanelRight.add(ViewUtils.createPlotMenu(manager, experiment, thisComponent));
+			buttonsPanelRight.add(cellPlotButton);
+			buttonsPanelRight.add(ViewUtils.createCategoryMenu(manager, experiment));
 			buttonsPanelRight.add(export);
 		}
 
@@ -361,6 +356,23 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		});
 		categoryTables.put(category, categoryTable);
 		return categoryTable;
+	}
+
+	private void showPlot() {
+		String title = null;
+		Category cat = currentCategory;
+		int catRow = -1;
+		if (cat != null) {
+			title = experiment.getPlotType()+" Plot for "+accession+" Category "+cat.toString();
+			catRow = cat.getSelectedRow();
+			if (catRow < 0)
+				catRow = cat.getDefaultRow();
+			if (catRow >= 0) {
+				List<String> rowLabels = cat.getMatrix().getRowLabels();
+				title += " ("+rowLabels.get(catRow)+")";
+			}
+		}
+		ViewUtils.showtSNE(manager, experiment, cat, catRow, -1, title);
 	}
 
 }

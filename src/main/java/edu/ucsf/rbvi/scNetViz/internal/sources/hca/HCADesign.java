@@ -53,7 +53,7 @@ public class HCADesign extends AbstractCategory implements StringMatrix {
 		super(scManager, experiment, "Design/Factors", 0, 0);
 		logger = Logger.getLogger(CyUserLog.NAME);
 		source = scManager.getSource("HCA");
-		hdrCols = 0;
+		hdrCols = 1;
 	}
 
 	@Override
@@ -147,8 +147,9 @@ public class HCADesign extends AbstractCategory implements StringMatrix {
 		// For HCA, the design information is encoded in the cell table.
 		if (input == null || input.size() < 2) return;
 
-		nCols = input.size()+hdrCols;
+		nCols = input.size();
 		nRows = input.get(0).length-1;
+		// System.out.println("HCA fetchDesign: nCols = "+nCols+", nRows = "+nRows);
 
 		setRowLabels(stripArray(input.get(0), 1));
 		categories = new String[nRows][nCols];
@@ -172,6 +173,7 @@ public class HCADesign extends AbstractCategory implements StringMatrix {
 			col++;
 
 		}
+		// System.out.println("colLabels.size() = "+colLabels.size());
 		setColLabels(colLabels);
 
 		LogUtils.log(monitor, TaskMonitor.Level.INFO, "Read "+nRows+

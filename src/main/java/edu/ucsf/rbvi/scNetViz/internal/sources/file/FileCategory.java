@@ -46,6 +46,8 @@ public class FileCategory extends AbstractCategory implements Category {
 
 	Source source = null;
 
+	boolean zeroRelative = false;
+
 	public FileCategory(final ScNVManager scManager, 
 	                    final Experiment experiment, final String name,
 	                    final String type, int nRows, int nCols) {
@@ -83,7 +85,10 @@ public class FileCategory extends AbstractCategory implements Category {
 	public String getCategoryType() { return name;}
 
 	@Override
-	public int getDefaultRow() { return -1;}
+	public int getDefaultRow() { 
+		if (nRows == 1) return 0;
+		return -1;
+	}
 
 	@Override
 	public Experiment getExperiment() { return experiment;}
@@ -116,9 +121,11 @@ public class FileCategory extends AbstractCategory implements Category {
 	public void setValue(int row, int col, String value) {
 		if (dataType.equals("text"))
 			stringCategories[col][row] = value;
-		else if (dataType.equals("integer"))
+		else if (dataType.equals("integer")) {
 			intCategories[col][row] = Integer.parseInt(value);
-		else if (dataType.equals("float"))
+			if (zeroRelative)
+				intCategories[col][row]++;
+		} else if (dataType.equals("float"))
 			doubleCategories[col][row] = Double.parseDouble(value);
 	}
 
@@ -140,6 +147,7 @@ public class FileCategory extends AbstractCategory implements Category {
 
 	public static FileCategory fetchCategory(ScNVManager scManager, Experiment experiment,
 	                                         File file, String dataCategory, boolean transpose, int hdrCols,
+	                                         boolean zeroRelative,
 	                                         TaskMonitor monitor) throws Exception {
 
 		List<String[]> input = CSVReader.readCSV(monitor, file);
@@ -147,25 +155,36 @@ public class FileCategory extends AbstractCategory implements Category {
 			// System.out.println("No input!");
 			return null;
 		}
+		return createCategory(scManager, experiment, file.getName(), dataCategory, input,
+		                      transpose, hdrCols, zeroRelative, monitor);
+	}
 
-		int nRows = input.size()-1; // Rows don't include the header
-		int nCols = input.get(0).length-hdrCols;
+	public static FileCategory createCategory(ScNVManager scManager, Experiment experiment,
+	                                          String name, String dataCategory, List<String[]> lines,
+	                                          boolean transpose, int hdrCols,
+	                                          boolean zeroRelative, TaskMonitor monitor) {
+
+		int nRows = lines.size()-1; // Rows don't include the header
+		int nCols = lines.get(0).length-hdrCols;
 		if (transpose) {
 			int x = nCols;
 			nCols = nRows;
 			nRows = x;
 		}
 
-		FileCategory fileCategory = new FileCategory(scManager, experiment, file.getName(), dataCategory, nRows, nCols);
+		// System.out.println("nCols = "+nCols+", nRows = "+nRows);
+
+		FileCategory fileCategory = new FileCategory(scManager, experiment, name, dataCategory, nRows, nCols);
 		fileCategory.hdrCols = hdrCols;
+		fileCategory.zeroRelative = zeroRelative;
 
 		List<String> labels;
 
 		if (!transpose) {
-			fileCategory.setColLabels(Arrays.asList(input.get(0)));
+			fileCategory.setColLabels(Arrays.asList(lines.get(0)));
 			labels = new ArrayList<String>(fileCategory.nRows);
 		} else {
-			String[] colLabels = input.get(0);
+			String[] colLabels = lines.get(0);
 			String[] newLabels = Arrays.copyOfRange(colLabels, 1, colLabels.length);
 			fileCategory.setRowLabels(Arrays.asList(newLabels));
 			labels = new ArrayList<String>(fileCategory.nCols);
@@ -175,7 +194,7 @@ public class FileCategory extends AbstractCategory implements Category {
 
 		boolean first = true;
 		int lineNumber = 0;
-		for (String[] line: input) {
+		for (String[] line: lines) {
 			if (first) {
 				first = false;
 			} else {

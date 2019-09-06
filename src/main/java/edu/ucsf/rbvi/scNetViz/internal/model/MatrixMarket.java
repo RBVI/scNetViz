@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -17,7 +18,12 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import org.apache.log4j.Logger;
+
+import org.cytoscape.application.CyUserLog;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.model.CyTable;
 import org.cytoscape.model.CyTableFactory;
@@ -27,6 +33,7 @@ import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.api.IntegerMatrix;
+import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 import edu.ucsf.rbvi.scNetViz.internal.utils.FileUtils;
 import edu.ucsf.rbvi.scNetViz.internal.utils.MatrixUtils;
 
@@ -135,12 +142,17 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	// We only support real and integer at this point
 	private int[][] intMatrix;
 	private double[][] doubleMatrix;
+	private double[] doubleArray;
 
 	private int[] colIndex;
 
 	private List<String[]> rowTable;
 	private List<String[]> colTable;
 	private BitSet controls;
+
+	private File cacheFile = null;
+	private boolean haveCache = false;
+	private boolean cacheCreateInProgress = false;
 
 	public MatrixMarket(final ScNVManager manager) {
 		this(manager, null, null);
@@ -151,6 +163,9 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		super(manager, rowLabels, colLabels);
 		rowMap = new HashMap<>();
 		colMap = new HashMap<>();
+		intMatrix = null;
+		doubleMatrix = null;
+		doubleArray = null;
 	}
 
 	public MTXFORMAT getFormat() {
@@ -192,6 +207,15 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		return Double.class;
 	}
 
+	public boolean hasCache() { return haveCache; }
+	public File getMatrixCache() { return cacheFile; }
+
+	public void createCache(String source, String accession) {
+		if (cacheCreateInProgress) return;
+		Thread t = new Thread(new CreateMTXCache(source, accession));
+		t.start();
+	}
+
 	public void setRowTable(List<String[]> rowTable) {
 		this.rowTable = rowTable;
 		if (rowTable != null)
@@ -204,7 +228,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void setRowTable(List<String[]> rowTable, int index) {
 		rowKey = index;
 		setRowTable(rowTable);
-		System.out.println("rowLabel(1) = "+rowLabels.get(1)+", rowTable[1][0] = "+rowTable.get(1)[rowKey]);
+		// System.out.println("rowLabel(1) = "+rowLabels.get(1)+", rowTable[1][0] = "+rowTable.get(1)[rowKey]);
 	}
 
 	public void setColumnTable(List<String[]> colTable, int index) {
@@ -222,6 +246,32 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		}
 	}
 
+	// peak allows us to pre-allocate all of the necessary memory
+	public void peak(TaskMonitor taskMonitor, InputStream stream, String mmInputName) throws FileNotFoundException, IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
+		String[] dims = getDims(reader);
+
+		if (format == MTXFORMAT.ARRAY) {
+			if (type == MTXTYPE.REAL) {
+				doubleMatrix = new double[nRows][nCols];
+			} else if (type == MTXTYPE.INTEGER) {
+				intMatrix = new int[nRows][nCols];
+			}
+		} else if (format == MTXFORMAT.COORDINATE) {
+			nonZeros = Integer.parseInt(dims[2]);
+			colIndex = new int[nCols+1];
+			Arrays.fill(colIndex, -1);
+			colIndex[nCols] = nonZeros; // Point to the end
+			if (type == MTXTYPE.INTEGER) {
+				intMatrix = new int[nonZeros][3];
+			} else if (type == MTXTYPE.REAL) {
+				intMatrix = new int[nonZeros][2];
+				doubleArray = new double[nonZeros];
+			}
+		}
+		Runtime.getRuntime().gc(); // Get this done before we try the actual reads
+	}
+
 	public void readMTX(TaskMonitor taskMonitor, File mmInputName) throws FileNotFoundException, IOException {
 		FileInputStream inputStream = new FileInputStream(mmInputName);
 		readMTX(taskMonitor, inputStream, mmInputName.getName());
@@ -230,44 +280,28 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void readMTX(TaskMonitor taskMonitor, InputStream stream, String mmInputName) throws FileNotFoundException, IOException {
 		this.name = mmInputName;
 		boolean invert = false;
+		boolean debug = false;
 
 		if (FileUtils.isGzip(mmInputName)) {
-			System.out.println("Getting gzip stream");
 			stream = FileUtils.getGzipStream(stream);
 		}
 
 		// System.out.println("Reading "+name);
 
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+		// BufferedReader reader = new BufferedReader(new InputStreamReader(stream), 1024);
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
+		// MyBufferedReader reader = new MyBufferedReader(stream);
 		// Read the first line
-		String header = reader.readLine();
-		parseHeader(header);
-
-		// System.out.println("Got header");
-
-		// Now, read until we find the dimensions
-		comments = new ArrayList<>();
-		String line = reader.readLine();
-		while (line.startsWith(COMMENT) || line.trim().length() == 0) {
-			if (line.startsWith(COMMENT))
-				comments.add(line);
-			line = reader.readLine();
-		}
-
-		System.out.println("Header line = "+line);
-
-		// at this point, line should have our dimensions.
-		// if we have a coordinate, we want three values, otherwise we want two
-		String[] dims = line.split("\\s+");
-		nRows = Integer.parseInt(dims[0]);
-		nCols = Integer.parseInt(dims[1]);
+		String[] dims = getDims(reader);
 		// System.out.println("nRows = "+nRows);
 		// System.out.println("nCols = "+nCols);
 		if (format == MTXFORMAT.ARRAY) {
 			if (type == MTXTYPE.REAL) {
-				doubleMatrix = new double[nRows][nCols];
+				if (doubleMatrix == null)
+					doubleMatrix = new double[nRows][nCols];
 			} else if (type == MTXTYPE.INTEGER) {
-				intMatrix = new int[nRows][nCols];
+				if (intMatrix == null)
+					intMatrix = new int[nRows][nCols];
 			}
 
 			for (int col = 0; col < nCols; col++) {
@@ -277,28 +311,36 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			}
 		} else if (format == MTXFORMAT.COORDINATE) {
 			nonZeros = Integer.parseInt(dims[2]);
-			System.out.println("nonZeros = "+nonZeros);
-			colIndex = new int[nCols+1];
-			Arrays.fill(colIndex, -1);
+			if (colIndex == null) {
+				colIndex = new int[nCols+1];
+				Arrays.fill(colIndex, -1);
+			}
 			colIndex[nCols] = nonZeros; // Point to the end
 			if (type == MTXTYPE.INTEGER) {
-				intMatrix = new int[nonZeros][3];
+				if (intMatrix == null)
+					intMatrix = new int[nonZeros][3];
 			} else if (type == MTXTYPE.REAL) {
-				intMatrix = new int[nonZeros][2]; // indices
-				doubleMatrix = new double[nonZeros][1]; // actual data
+				if (intMatrix == null)
+					intMatrix = new int[nonZeros][2];
+				if (doubleArray == null)
+					doubleArray = new double[nonZeros];
 			}
+
 			for (int index = 0; index < nonZeros; index++) {
-				if (invert) {
-					readCoordinateLine(nonZeros-index-1, reader);
-				} else {
-					readCoordinateLine(index, reader);
+				try {
+					if (invert) {
+						readCoordinateLine(nonZeros-index-1, reader);
+					} else {
+						readCoordinateLine(index, reader);
+					}
+				} catch (Exception e) {
+					System.out.println("Exception "+e+" on line "+index);
+					throw e;
 				}
-				/*
-				if (index == 1) {
-					System.out.println("intMatrix[0][0] = "+intMatrix[0][0]);
-					System.out.println("intMatrix[1][0] = "+intMatrix[1][0]);
-				}
-				*/
+				// if (index == 1) {
+				// 	System.out.println("intMatrix[0][0] = "+intMatrix[0][0]);
+				// 	System.out.println("intMatrix[1][0] = "+intMatrix[1][0]);
+				// }
 				if (index == 1 && intMatrix[0][0] > intMatrix[1][0]) {
 					// Ugh.  It's inverted.
 					invert = true;
@@ -311,12 +353,14 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 						intMatrix[nonZeros-1][2] = intMatrix[0][2];
 						intMatrix[nonZeros-2][2] = intMatrix[1][2];
 					} else {
-						doubleMatrix[nonZeros-1][0] = doubleMatrix[0][0];
-						doubleMatrix[nonZeros-2][0] = doubleMatrix[1][0];
+						doubleArray[nonZeros-1] = doubleArray[0];
+						doubleArray[nonZeros-2] = doubleArray[1];
 					}
 				}
 			}
 		}
+		if (taskMonitor != null)
+			taskMonitor.showMessage(TaskMonitor.Level.INFO, "MTX read complete");
 	}
 
 	public void mergeTable(CyTable table, String mergeColumn) {
@@ -423,7 +467,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				if (type == MTXTYPE.INTEGER)
 					newArray[row][col] = intMatrix[index][2];
 				else if (type == MTXTYPE.REAL)
-					newArray[row][col] = (int)Math.round(doubleMatrix[index][0]);
+					newArray[row][col] = (int)Math.round(doubleArray[index]);
 			}
 			return newArray;
 		}
@@ -442,7 +486,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			int index = findIndex(row, col);
 			if (index >= 0) {
 				if (type == MTXTYPE.REAL)
-					return (int)Math.round(doubleMatrix[index][0]);
+					return (int)Math.round(doubleArray[index]);
 				else if (type == MTXTYPE.INTEGER)
 					return intMatrix[index][2];
 			}
@@ -464,7 +508,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			// System.out.println("findIndex = "+index);
 			if (index >= 0) {
 				if (type == MTXTYPE.REAL) {
-					return doubleMatrix[index][0];
+					return doubleArray[index];
 				} else if (type == MTXTYPE.INTEGER) {
 					// System.out.println("value for "+row+","+col+"="+(double)intMatrix[index][2]);
 					return (double)intMatrix[index][2];
@@ -561,7 +605,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 					// System.out.println("newArray["+row+"]["+col+"] = "+intMatrix[index][2]+", skippedRows = "+skippedRows);
 				} else if (type == MTXTYPE.REAL) {
 					// System.out.println("newArray["+row+"]["+col+"] = "+doubleMatrix[index][0]+", skippedRows = "+skippedRows);
-					newArray[row][col] = doubleMatrix[index][0];
+					newArray[row][col] = doubleArray[index];
 				}
 			}
 			return newArray;
@@ -593,7 +637,12 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 	public void saveFile(File file) throws IOException {
 		FileOutputStream fos = new FileOutputStream(file);
-		OutputStreamWriter osw = new OutputStreamWriter(fos, "utf-8");
+		writeMTX(null, fos);
+		fos.close();
+	}
+
+	public void writeMTX(TaskMonitor taskMonitor, OutputStream stream) throws IOException {
+		OutputStreamWriter osw = new OutputStreamWriter(stream, "utf-8");
 		BufferedWriter writer = new BufferedWriter(osw);
 
 		// Output header
@@ -621,13 +670,14 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				if (type.equals(MTXTYPE.INTEGER)) {
 					writer.write(row+" "+col+" "+intMatrix[index][2]+"\n");
 				} else {
-					writer.write(row+" "+col+" "+doubleMatrix[index][0]+"\n");
+					writer.write(row+" "+col+" "+doubleArray[index]+"\n");
 				}
 			}
 		}
-		writer.close();
-		osw.close();
-		fos.close();
+		writer.flush();
+		osw.flush();
+		// writer.close();
+		// osw.close();
 	}
 
 	private void parseHeader(String header) throws IOException {
@@ -676,9 +726,13 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		// Skip over blank lines
 		while (line.trim().length() == 0)
 			line = reader.readLine();
+		// if (true) return;
 
 		// We should have exactly three value: row, col, value
 		String[] vals = line.split("\\s+");
+		// if (vals.length != 3) {
+		// 	throw new RuntimeException("Bad coordinate line ("+index+"): "+line);
+		// }
 
 		// Subtract 1 to make everything 0 relative
 		intMatrix[index][0] = Integer.parseInt(vals[0])-1;
@@ -690,7 +744,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			intMatrix[index][2] = Integer.parseInt(vals[2]);
 			// System.out.println("value["+intMatrix[index][0]+"]["+intMatrix[index][1]+"] = "+intMatrix[index][2]);
 		} else if (type == MTXTYPE.REAL) {
-			doubleMatrix[index][0] = Double.parseDouble(vals[2]);
+			doubleArray[index] = Double.parseDouble(vals[2]);
 			// System.out.println("value["+intMatrix[index][0]+"]["+intMatrix[index][1]+"] = "+doubleMatrix[index][0]);
 		}
 	}
@@ -712,7 +766,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				CyRow cyRow = table.getRow(rowLabel);
 				String colLabel = "MTX::"+colLabels.get(col);
 				if (type == MTXTYPE.REAL) {
-					double v = doubleMatrix[index][0];
+					double v = doubleArray[index];
 					cyRow.set(colLabel, Double.valueOf(v));
 				} else if (type == MTXTYPE.INTEGER) {
 					int v = intMatrix[index][2];
@@ -798,6 +852,31 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			return new double[nRows-excludeSize][nCols];
 	}
 
+	private String[] getDims(BufferedReader reader) throws IOException {
+		String header = reader.readLine();
+		parseHeader(header);
+
+		// System.out.println("Got header");
+
+		// Now, read until we find the dimensions
+		comments = new ArrayList<>();
+		String line = reader.readLine();
+		while (line.startsWith(COMMENT) || line.trim().length() == 0) {
+			if (line.startsWith(COMMENT))
+				comments.add(line);
+			line = reader.readLine();
+		}
+
+		System.out.println("Header line = "+line);
+
+		// at this point, line should have our dimensions.
+		// if we have a coordinate, we want three values, otherwise we want two
+		String[] dims = line.split("\\s+");
+		nRows = Integer.parseInt(dims[0]);
+		nCols = Integer.parseInt(dims[1]);
+		return dims;
+	}
+
 	private int[][] getIntegerMatrix(boolean transpose, BitSet excludeRows) {
 		int excludeSize = 0;
 		if (excludeRows != null)
@@ -806,5 +885,97 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			return new int[nCols][nRows-excludeSize];
 		else
 			return new int[nRows-excludeSize][nCols];
+	}
+
+	class MyBufferedReader {
+		InputStream in;
+		int count = -1;
+		int offset = 0;
+		byte[] buffer = new byte[8192];
+
+		public MyBufferedReader(InputStream in) {
+			this.in = in;
+		}
+
+		public String readLine() throws IOException {
+			// System.out.println("readLine");
+			if (count < 0) {
+				count = in.read(buffer);
+				if (count < 0) return null;
+				offset = 0;
+			}
+
+			byte[] buff2 = new byte[8192];
+			int charOffset = 0;
+			while (true) {
+				while (offset < count) {
+					if (buffer[offset] == '\n' || buffer[offset] == '\r') {
+						String line = new String(Arrays.copyOfRange(buff2, 0, charOffset));
+						offset++;
+						return line;
+					}
+					buff2[charOffset++] = buffer[offset++];
+				}
+				// We ran out of characters, so get some more
+				buffer = new byte[8192];
+				count = in.read(buffer);
+				if (count < 0) return null;
+				offset = 0;
+			}
+		}
+
+		public void printBuffer() {
+			System.out.println("Buffer: '"+(new String(buffer))+"'");
+		}
+	}
+
+	class CreateMTXCache implements Runnable {
+		String source;
+		String accession;
+		public CreateMTXCache(String source, String accession) {
+			this.source = source;
+			this.accession = accession;
+		}
+
+		public void run() {
+			cacheCreateInProgress = true;
+			Logger logger = Logger.getLogger(CyUserLog.NAME);
+			try {
+				// Create temp file (set to remove on exit)
+				cacheFile = File.createTempFile("scNetViz-", ".tmp.zip");
+				cacheFile.deleteOnExit();
+	
+				// Create zip stream
+				ZipOutputStream outStream  = new ZipOutputStream(new FileOutputStream(cacheFile));
+				// write our mtx file
+				{
+					ZipEntry mtxEntry = new ZipEntry(source+"/"+accession+"/matrix.mtx");
+					outStream.putNextEntry(mtxEntry);
+					writeMTX(null, outStream);
+					outStream.closeEntry();
+				}
+				// write our row file
+				{
+					ZipEntry rowEntry = new ZipEntry(source+"/"+accession+"/genes.tsv");
+					outStream.putNextEntry(rowEntry);
+					CSVWriter.writeCSV(outStream, rowTable);
+					outStream.closeEntry();
+				}
+				// write our column file
+				{
+					ZipEntry colEntry = new ZipEntry(source+"/"+accession+"/barcodes.tsv");
+					outStream.putNextEntry(colEntry);
+					CSVWriter.writeCSV(outStream, colTable, 1);
+					outStream.closeEntry();
+				}
+				outStream.close();
+				logger.info("Created matrix cache file: "+cacheFile.toString());
+
+				haveCache = true;
+			} catch (Exception e) {
+				logger.error("Unable to create cache file: "+e.toString());
+			}
+			cacheCreateInProgress = false;
+		}
 	}
 }

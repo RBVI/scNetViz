@@ -72,11 +72,12 @@ public class HCASource implements Source {
 		// Register our task factories
 		{
 			Properties props = new Properties();
-			props.put(TITLE, "Browse the Human Cell Atlas");
-			props.put(PREFERRED_MENU, "Apps.scNetViz");
+			props.setProperty(TITLE, "From the Human Cell Atlas...");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Load Experiment[10.1]");
 			props.setProperty(IN_TOOL_BAR, "TRUE");
-			props.setProperty(TOOL_BAR_GRAVITY, "100f");
-			props.setProperty(TOOLTIP, "Show Experiments Table");
+			props.setProperty(TOOL_BAR_GRAVITY, "100.0");
+			props.setProperty(MENU_GRAVITY, "20.0");
+			props.setProperty(TOOLTIP, "Browse the Human Cell Atlas");
 			String ebiLogoURL = getClass().getResource("/images/hca.png").toString();
 			props.setProperty(LARGE_ICON_URL, ebiLogoURL);
 			scNVManager.registerService(new HCAShowEntriesTaskFactory(manager, this), TaskFactory.class, props);
@@ -110,13 +111,17 @@ public class HCASource implements Source {
 
 	public void loadHCAEntries(TaskMonitor taskMonitor) {
 		if (metadataMap.size() > 0) return;
-		String query = "&filters="+URLEncoder.encode("{'file':{'fileFormat':{'is':['matrix']}}}");
+		// String query = "filters="+URLEncoder.encode("{\"file\":{\"fileFormat\":{\"is\":[\"matrix\"]}}}");
+		String query = "filters="+URLEncoder.encode("{\"fileFormat\":{\"is\":[\"matrix\"]}}");
 		try {
 			JSONObject json = HTTPUtils.fetchJSON(HCA_PROJECT_URL+query, taskMonitor);
 			JSONArray hits = (JSONArray) json.get("hits");
 			for (Object hit: hits) {
-				HCAMetadata entry = new HCAMetadata((JSONObject)hit);
-				metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);
+				// For some reason, even though we only ask for projects with matrix files, we get others also
+				if (HCAMetadata.hasMatrix((JSONObject)hit)) {
+					HCAMetadata entry = new HCAMetadata((JSONObject)hit);
+					metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);
+				}
 			}
 		} catch (Exception e) {
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Exception reading HCA experiment list: "+e.getMessage());

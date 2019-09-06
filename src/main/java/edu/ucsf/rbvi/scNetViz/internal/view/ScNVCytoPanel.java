@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,8 +45,10 @@ import org.cytoscape.model.events.RowSetRecord;
 import org.cytoscape.model.events.RowsSetEvent;
 import org.cytoscape.model.events.RowsSetListener;
 import org.cytoscape.util.swing.IconManager;
+import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.Task;
 import org.cytoscape.work.TaskIterator;
+import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
@@ -55,6 +58,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.HeatMapTask;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ViolinDiffExpTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CyPlotUtils;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
@@ -92,6 +96,8 @@ public class ScNVCytoPanel extends JPanel
 	private boolean positiveOnly = false;
 
 	private boolean tSNEShown = false;
+
+	private PullDownMenu plotMenu;
 
 	public ScNVCytoPanel(final ScNVManager manager, final Experiment experiment) {
 		this.manager = manager;
@@ -192,14 +198,30 @@ public class ScNVCytoPanel extends JPanel
 		return "ScNetViz";
 	}
 
+	public void updatePlotMenu() {
+		plotMenu.updateMenu(getPlotMap());
+	}
+
+	private Map<String, Task> getPlotMap() {
+		Map<String, Task> menu = new LinkedHashMap<>();
+		String plotType = experiment.getPlotType();
+		if (plotType != null) {
+			menu.put(plotType, new CellPlot());
+		}
+		menu.put("Heatmap", new HeatMapWrapperTask());
+		menu.put("Violin", new ViolinWrapperTask());
+		return menu;
+	}
+
+
 	private JPanel createLabelPanel() {
 		JPanel labelPanel = new JPanel();
 		labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.PAGE_AXIS));
-		labelPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
+		// labelPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
 		{
 			JPanel pnl = new JPanel();
 			pnl.setLayout(new BoxLayout(pnl, BoxLayout.LINE_AXIS));
-			experimentLabel = new ExperimentLabel(experiment, pnl.getBackground());
+			experimentLabel = new ExperimentLabel(experiment, pnl.getBackground(), 150);
 			pnl.add(Box.createRigidArea(new Dimension(2,0)));
 			pnl.add(experimentLabel);
 			labelPanel.add(pnl);
@@ -216,12 +238,26 @@ public class ScNVCytoPanel extends JPanel
 
 	private JPanel createViewPanel() {
 		JPanel viewPanel = new JPanel();
+		Dimension size = new Dimension(200,25);
 		viewPanel.setLayout(new BoxLayout(viewPanel, BoxLayout.PAGE_AXIS));
 		viewPanel.add(Box.createHorizontalGlue());
-		viewPanel.add(ViewUtils.addButton(this, "View tSNE Plot", "tSNEPlot"));
-		viewPanel.add(ViewUtils.addButton(this, "View TPM Table", "tpmTable"));
-		viewPanel.add(ViewUtils.addButton(this, "View Categories", "catTable"));
-		viewPanel.add(Box.createHorizontalGlue());
+		Map<String, Task> menuMap = new LinkedHashMap<>();
+		menuMap.put("TPM Table", new ShowExperimentTableTask(manager, experiment, "tpmTable"));
+		menuMap.put("Category Table", new ShowExperimentTableTask(manager, experiment, "catTable"));
+		menuMap.put("DE Table", new ShowExperimentTableTask(manager, experiment, "DETable"));
+		PullDownMenu tableMenu = new PullDownMenu(manager, "Tables", menuMap, null);
+		tableMenu.setPreferredSize(size);
+		tableMenu.setMaximumSize(size);
+		tableMenu.setMinimumSize(size);
+		viewPanel.add(tableMenu);
+
+		plotMenu = new PullDownMenu(manager, "Plots", getPlotMap(), null);
+		plotMenu.setPreferredSize(size);
+		plotMenu.setMaximumSize(size);
+		plotMenu.setMinimumSize(size);
+		viewPanel.add(plotMenu);
+		// viewPanel.add(Box.createHorizontalGlue());
+		viewPanel.add(Box.createVerticalGlue());
 		return new CollapsablePanel(iconFont, "View", viewPanel, false);
 	}
 
@@ -243,8 +279,11 @@ public class ScNVCytoPanel extends JPanel
 
 			{
 				JPanel panel = new JPanel();
-				panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-				panel.add(Box.createRigidArea(new Dimension(5,0)));
+				panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+				// JPanel panel = new JPanel();
+				// panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+				// panel.add(Box.createRigidArea(new Dimension(5,0)));
+				panel.add(Box.createHorizontalGlue());
 
 				List<String> labels = new ArrayList<>();
 				for (List<String> lbl: categoryLabelMap.values())
@@ -256,22 +295,20 @@ public class ScNVCytoPanel extends JPanel
 				JComboBox<String> categoryBox = 
 					new JComboBox<String>(labels.toArray(new String[1]));
 
-				// categoryBox.setSelectedItem(selectedLabel);
+				String categoryRow = ModelUtils.getCategoryRowFromNetwork(manager, network);
+				System.out.println("CurrentCategoryColumn="+categoryRow);
 
-			 	Dimension size = new Dimension(150,25);
+				categoryBox.setSelectedItem(categoryRow);
+
+			 	Dimension size = new Dimension(200,25);
 				categoryBox.setPreferredSize(size);
 				categoryBox.setMaximumSize(new Dimension(250,25));
 				categoryBox.setSize(size);
 				categoryBox.setFont(new Font("SansSerif", Font.PLAIN, 10));
-				// categoryBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+				categoryBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 				panel.add(categoryBox);
 				panel.add(Box.createHorizontalGlue());
-				comparePanel.add(panel);
-			}
-
-			{
-				JPanel panel = new JPanel();
-				panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+				// panel.add(Box.createHorizontalGlue());
 				panel.add(Box.createRigidArea(new Dimension(5,0)));
 
 				JComboBox comparison = new JComboBox(getComparisons());
@@ -279,14 +316,14 @@ public class ScNVCytoPanel extends JPanel
 					public void actionPerformed(ActionEvent e) {
 					}
 				});
-			 	Dimension size = new Dimension(150,25);
 				comparison.setPreferredSize(size);
 				comparison.setMaximumSize(new Dimension(250,25));
 				comparison.setSize(size);
 				comparison.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				comparison.setAlignmentX(Component.LEFT_ALIGNMENT);
 				panel.add(comparison);
-				panel.add(Box.createHorizontalGlue());
 				comparePanel.add(panel);
+				// panel.add(Box.createHorizontalGlue());
 			}
 
 			pValue = ViewUtils.addLabeledField(comparePanel, "pValue:", 
@@ -299,10 +336,9 @@ public class ScNVCytoPanel extends JPanel
 			                                     manager.getSetting(SETTING.MAX_GENES));
 			comparePanel.add(ViewUtils.addJCheckBox(this, "Positive only", "positiveOnlyComp", positiveOnly));
 			comparePanel.add(ViewUtils.addButton(this, "Create Networks", "createNetworks"));
-			comparePanel.add(Box.createRigidArea(new Dimension(0, 15)));
-			comparePanel.add(ViewUtils.addButton(this, "View DE Table", "DETable"));
-			comparePanel.add(ViewUtils.addButton(this, "View Heatmap", "viewHeatmap"));
-			comparePanel.add(ViewUtils.addButton(this, "View Violin Plot", "viewViolin"));
+			// comparePanel.add(Box.createRigidArea(new Dimension(0, 15)));
+			// comparePanel.add(ViewUtils.addButton(this, "View Heatmap", "viewHeatmap"));
+			// comparePanel.add(ViewUtils.addButton(this, "View Violin Plot", "viewViolin"));
 		}
 
 		return new CollapsablePanel(iconFont, "Reanalyze", comparePanel, false);
@@ -409,79 +445,6 @@ public class ScNVCytoPanel extends JPanel
 				}
 				break;
 
-			case "tpmTable":
-			case "catTable":
-			case "DETable":
-				{
-					// System.out.println("Experiment = "+experiment);
-					ShowExperimentTableTask t = new ShowExperimentTableTask(manager, experiment, command);
-					manager.executeTasks(new TaskIterator(t));
-				}
-				break;
-
-			case "tSNEPlot":
-				{
-					List<CyNode> selectedNodes = ModelUtils.getSelectedNodes(network);
-					int geneRow = ModelUtils.getRowFromNode(experiment, network, selectedNodes);
-					String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
-					String title = "tSNE Plot for "+accession;
-					if (selectedNodes != null && selectedNodes.size() > 0)
-						title = accession+" Expression for "+ModelUtils.getGeneNameFromNode(network, selectedNodes.get(0));
-					ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
-					// Set flag that tSNE is up?
-					tSNEShown = true;
-				}
-				break;
-
-			case "viewHeatmap":
-				{
-					// Get the category
-					Category currentCategory = ModelUtils.getCategoryFromNetwork(manager, network);
-					List<String> categoryNames = ModelUtils.getCategoryNamesFromNetwork(network);
-
-					// Get the selected nodes (if any)
-					List<CyNode> selectedNodes = ModelUtils.getSelectedNodes(network);
-					if (selectedNodes == null || selectedNodes.size() == 0)
-						selectedNodes = network.getNodeList();
-
-					List<String> geneNames = ModelUtils.getGeneNamesFromNetwork(network, selectedNodes);
-					Map<String, double[]> dataMap = new HashMap<>();
-					for (String cat: categoryNames) {
-						dataMap.put(cat, ModelUtils.getDataFromNetwork(network, cat+" log2FC", selectedNodes));
-					}
-
-					// Use a separate task for this since we've got some options...
-					HeatMapTask task = new HeatMapTask(manager, currentCategory, geneNames, dataMap, categoryNames, 
-					                                   positiveOnly, selectedNodes.size(), currentCategoryColumn);
-					manager.executeTasks(new TaskIterator(task));
-				}
-				break;
-
-			case "viewViolin":
-				{
-				// Get the category
-					Category currentCategory = ModelUtils.getCategoryFromNetwork(manager, network);
-					List<String> categoryNames = ModelUtils.getCategoryNamesFromNetwork(network);
-
-					// Get the selected nodes (if any)
-					List<CyNode> selectedNodes = ModelUtils.getSelectedNodes(network);
-					if (selectedNodes == null || selectedNodes.size() == 0)
-						selectedNodes = network.getNodeList();
-
-					List<String> geneNames = ModelUtils.getGeneNamesFromNetwork(network, selectedNodes);
-					Map<String, double[]> dataMap = new HashMap<>();
-					for (String cat: categoryNames) {
-						dataMap.put(cat, ModelUtils.getDataFromNetwork(network, cat+" log2FC", selectedNodes));
-					}
-
-					String[] dataAndNames = CyPlotUtils.mapToDataAndNames(dataMap, geneNames, categoryNames);
-					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
-					String title = experiment.getSource().toString()+" "+ accession+ " Differential Expression";
-					CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], 
-					                             CyPlotUtils.listToCSV(categoryNames), title, "", "Log(FC)", accession);
-				}
-				break;
-				
 			case "createNetworks":
 				{
 					DifferentialExpression diffExp = experiment.getDiffExp();
@@ -512,5 +475,69 @@ public class ScNVCytoPanel extends JPanel
 	String[] getComparisons() {
 		String[] comparisonTypes = {"Each vs. Others"};
 		return comparisonTypes;
+	}
+
+	class CellPlot extends AbstractTask {
+		public void run(TaskMonitor monitor) {
+			List<CyNode> selectedNodes = ModelUtils.getSelectedNodes(network);
+			int geneRow = ModelUtils.getRowFromNode(experiment, network, selectedNodes);
+			String accession = (String)experiment.getMetadata().get(Metadata.ACCESSION);
+			String plotType = experiment.getPlotType();
+			if (plotType == null)
+				return; // Shouldn't happen!
+			String title = plotType+" Plot for "+accession;
+			if (selectedNodes != null && selectedNodes.size() > 0)
+				title = accession+" Expression for "+ModelUtils.getGeneNameFromNode(network, selectedNodes.get(0));
+			ViewUtils.showtSNE(manager, experiment, null, -1, geneRow, title);
+		}
+	}
+
+	class HeatMapWrapperTask extends AbstractTask {
+		public void run(TaskMonitor monitor) {
+			// Get the category
+			Category currentCategory = ModelUtils.getCategoryFromNetwork(manager, network);
+			List<String> categoryNames = ModelUtils.getCategoryNamesFromNetwork(network);
+
+			// Get the selected nodes (if any)
+			List<CyNode> selectedNodes = ModelUtils.getSelectedNodes(network);
+			if (selectedNodes == null || selectedNodes.size() == 0)
+				selectedNodes = network.getNodeList();
+
+			List<String> geneNames = ModelUtils.getGeneNamesFromNetwork(network, selectedNodes);
+			Map<String, double[]> dataMap = new HashMap<>();
+			for (String cat: categoryNames) {
+				dataMap.put(cat, ModelUtils.getDataFromNetwork(network, cat+" log2FC", selectedNodes));
+			}
+
+			// Use a separate task for this since we've got some options...
+			HeatMapTask task = new HeatMapTask(manager, currentCategory, geneNames, dataMap, categoryNames, 
+			                                   positiveOnly, selectedNodes.size(), currentCategoryColumn);
+			manager.executeTasks(new TaskIterator(task));
+		}
+	}
+
+	class ViolinWrapperTask extends AbstractTask {
+		public void run(TaskMonitor monitor) {
+			// Get the category
+			Category currentCategory = ModelUtils.getCategoryFromNetwork(manager, network);
+			List<String> categoryNames = ModelUtils.getCategoryNamesFromNetwork(network);
+
+			// Get the selected nodes (if any)
+			List<CyNode> selectedNodes = ModelUtils.getSelectedNodes(network);
+			if (selectedNodes == null || selectedNodes.size() == 0)
+				selectedNodes = network.getNodeList();
+
+			List<String> geneNames = ModelUtils.getGeneNamesFromNetwork(network, selectedNodes);
+			Map<String, double[]> dataMap = new HashMap<>();
+			for (String cat: categoryNames) {
+				dataMap.put(cat, ModelUtils.getDataFromNetwork(network, cat+" log2FC", selectedNodes));
+			}
+
+			String[] dataAndNames = CyPlotUtils.mapToDataAndNames(dataMap, geneNames, categoryNames);
+			String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
+			String title = experiment.getSource().toString()+" "+ accession+ " Differential Expression";
+			CyPlotUtils.createViolinPlot(manager, dataAndNames[0], dataAndNames[1], 
+			                             CyPlotUtils.listToCSV(categoryNames), title, "", "Log(FC)", accession, false);
+		}
 	}
 }

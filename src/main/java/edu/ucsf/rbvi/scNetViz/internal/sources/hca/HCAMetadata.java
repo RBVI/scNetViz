@@ -35,10 +35,13 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
 	public HCAMetadata(JSONObject json) {
 		super();
 
+		try {
 		put(Metadata.ACCESSION, (String)json.get("entryId"));
 		getProtocols((JSONArray)json.get("protocols"));
 		getProjects((JSONArray)json.get("projects"));
-		getSummary((JSONObject)json.get("projectSummary"));
+		getDonors((JSONArray)json.get("donorOrganisms"));
+		getSuspensions((JSONArray)json.get("cellSuspensions"));
+		} catch (Exception e) { e.printStackTrace(); }
 	}
 
 	private void getProtocols(JSONArray protocols) {
@@ -57,12 +60,15 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
 		put(LABORATORY, getArray((JSONArray)project.get("laboratory")));
 	}
 
-	private void getSummary(JSONObject summary) {
-		//  'projectSummary': {'donorCount': 8, 'totalCellCount': 2544.0, 'organTypes': ['pancreas'], 'cellCountSummaries': [{'organType': ['pancreas'], 'countOfDocsWithOrganType': 1, 'totalCellCountByOrgan': 2544.0}], 'genusSpecies': ['Homo sapiens'], 'libraryConstructionApproach': ['Smart-seq2'], 'disease': ['normal']}
-		put(ASSAYS, ((Double)summary.get("totalCellCount")).longValue());
-		put(Metadata.SPECIES, (String)((JSONArray)summary.get("genusSpecies")).get(0));
-		put(Metadata.TYPE, (String)((JSONArray)summary.get("libraryConstructionApproach")).get(0));
-		put(ORGANS, getArray((JSONArray)summary.get("organTypes")));
+	private void getDonors(JSONArray donors) {
+		JSONObject donor = (JSONObject) donors.get(0);
+		put(Metadata.SPECIES, (String)((JSONArray)donor.get("genusSpecies")).get(0));
+	}
+
+	private void getSuspensions(JSONArray suspensions) {
+		JSONObject suspension = (JSONObject)suspensions.get(0); // TODO: what do we do if there is more than one suspension?
+		put(ASSAYS, ((Long)suspension.get("totalCells")).longValue());
+		put(ORGANS, getArray((JSONArray)suspension.get("organ")));
 	}
 
 	private List<String> getArray(JSONArray jsonArray) {
@@ -71,6 +77,18 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
 			array.add((String)obj);
 		}
 		return array;
+	}
+
+	public static boolean hasMatrix(JSONObject json) {
+		if (json.containsKey("fileTypeSummaries")) {
+			JSONArray fileTypes = (JSONArray)json.get("fileTypeSummaries");
+			for (Object obj: fileTypes) {
+				JSONObject fileType = (JSONObject)obj;
+				if (fileType.containsKey("fileType") && fileType.get("fileType").equals("matrix"))
+					return true;
+			}
+		}
+		return false;
 	}
 
 	public String toHTML() {

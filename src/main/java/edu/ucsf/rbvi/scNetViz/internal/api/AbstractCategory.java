@@ -50,6 +50,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	Map<Object, int[]> countMap = null;
 	Map<Object, double[]> mtdcMap = null;
 	Map<Object, double[]> drMap = null;
+	// Add pct1 and pct2 maps?
 	Map<Object, List<Integer>> catMap = null;
 
 	protected final String name;
@@ -120,20 +121,38 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		int [] totalCount = new int[geneRows];
 		Arrays.fill(totalCount, 0);
 
+		ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()-1);
+		List<Callable<Map<Object,Map<String, Object>>>> processes = new ArrayList<>();
 		for (Object key: catMap.keySet()) {
 			// Skip over the unused categories -- they probably didn't pass QC
 			if (key.toString().equals(Category.UNUSED_CAT))
 				continue;
 
-			calculateMeans(key, dMat, iMat, mtx.getNRows(), totalCount);
+			// processes.add(new GetLogGER(category, cat, dDRthreshold, log2FCCutoff));
+			processes.add(new GetMeans(key, dMat, iMat, mtx.getNRows(), totalCount));
 		}
+
+		try {
+			List<Future<Map<Object, Map<String, Object>>>> futures = threadPool.invokeAll(processes);
+			for (Future<Map<Object, Map<String, Object>>> future: futures) {
+				Map<Object, Map<String, Object>> meansMap = future.get();
+				for (Object key: meansMap.keySet()) {
+					means.put(key, (double[])meansMap.get(key).get("mean"));
+					countMap.put(key, (int[])meansMap.get(key).get("count"));
+					mtdcMap.put(key, (double[])meansMap.get(key).get("mtdc"));
+				}
+			}
+		} catch (Exception e) {}
+
 		countMap.put("Total", totalCount); // Remember the total counts for each gene
 		lastCategory = category;
 		return means;
 	}
 
-	public void calculateMeans(Object key, DoubleMatrix dMat, IntegerMatrix iMat, int rowCount, int[] totalCount) {
+	public Map<String, Object> calculateMeans(Object key, DoubleMatrix dMat, IntegerMatrix iMat, 
+	                                          int rowCount, int[] totalCount) {
 		// System.out.println("Category: "+key);
+		
 		List<Integer> arrays = catMap.get(key);
 		double[] catMean = new double[geneRows];
 		int[] catCount = new int[geneRows];
@@ -167,9 +186,12 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			catMTDC[rowNumber] = mean/(double)foundCount;
 			rowNumber++;
 		}
-		means.put(key, catMean);
-		countMap.put(key, catCount);
-		mtdcMap.put(key, catMTDC);
+
+		Map<String, Object> returnMap = new HashMap<>();
+		returnMap.put("mean", catMean);
+		returnMap.put("count", catCount);
+		returnMap.put("mtdc", catMTDC);
+		return returnMap;
 	}
 	
 
@@ -499,6 +521,30 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		excludeRows = ((MatrixMarket)experiment.getMatrix()).findControls();
 		geneRows = experiment.getMatrix().getNRows() - excludeRows.cardinality();
 	}
+	
+	class GetMeans implements Callable <Map <Object, Map <String, Object>>> {
+		Object cat;
+		IntegerMatrix iMat;
+		DoubleMatrix dMat;
+		int rowCount;
+		int[] totalCount;
+
+		public GetMeans(Object cat, DoubleMatrix dMat, IntegerMatrix iMat, int rowCount, int[] totalCount) {
+			this.cat = cat;
+			this.dMat = dMat;
+			this.iMat = iMat;
+			this.rowCount = rowCount;
+			this.totalCount = totalCount;
+		}
+
+		public Map <Object, Map <String, Object>> call() {
+			// System.out.println("Starting GetLogGER for "+cat+" "+category);
+			Map<Object, Map<String, Object>> returnMap = new HashMap<>();;
+			returnMap.put(cat, calculateMeans(cat, dMat, iMat, rowCount, totalCount));
+			// System.out.println("Finished GetLogGER for "+cat+" "+category);
+			return returnMap;
+		}
+	}
 
 	class GetLogGER implements Callable <Map <Object, Map <String, double[]>>> {
 		int category;
@@ -513,8 +559,10 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		}
 
 		public Map <Object, Map <String, double[]>> call() {
+			// System.out.println("Starting GetLogGER for "+cat+" "+category);
 			Map<Object, Map<String, double[]>> returnMap = new HashMap<>();;
 			returnMap.put(cat, getLogGER(category, cat, dDRthreshold, log2FCCutoff));
+			// System.out.println("Finished GetLogGER for "+cat+" "+category);
 			return returnMap;
 		}
 	}

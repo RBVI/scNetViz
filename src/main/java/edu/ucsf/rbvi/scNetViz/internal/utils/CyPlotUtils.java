@@ -12,8 +12,17 @@ import edu.ucsf.rbvi.scNetViz.internal.api.DoubleMatrix;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class CyPlotUtils {
-	public static void createViolinPlot(ScNVManager manager, String names, String data, String groups, String title, 
-	                                    String xlabel, String ylabel, String accession) {
+	public static void createViolinPlot(ScNVManager manager, String names, String data, 
+	                                    String groups, String title, 
+	                                    String xlabel, String ylabel, String accession, 
+	                                    boolean showAll) {
+		createViolinPlot(manager, names, data, groups, title, xlabel, ylabel, accession, showAll, 0.0);
+	}
+
+	public static void createViolinPlot(ScNVManager manager, String names, String data, 
+	                                    String groups, String title, 
+	                                    String xlabel, String ylabel, String accession, 
+	                                    boolean showAll, double jitter) {
 		// System.out.println("createViolinPlot");
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("data", data);
@@ -24,6 +33,11 @@ public class CyPlotUtils {
 		argMap.put("names",names);
 		argMap.put("groups",groups);
 		argMap.put("id",accession);
+		if (showAll)
+			argMap.put("showAll","true");
+		else
+			argMap.put("showAll","false");
+		argMap.put("jitter",jitter);
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "violin", argMap);
 	}
@@ -32,7 +46,6 @@ public class CyPlotUtils {
 	                                     String zValues,
 	                                     String title, 
 	                                     String xlabel, String ylabel, String accession) {
-		// System.out.println("createViolinPlot");
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("xValues", xValues);
 		argMap.put("yValues", yValues);
@@ -56,7 +69,7 @@ public class CyPlotUtils {
 
 	public static void createHeatMap(ScNVManager manager, String rowLabels, String columnLabels,
 	                                 String data, String title, 
-	                                 String xlabel, String ylabel, String accession) {
+	                                 String xlabel, String ylabel, String accession, boolean posOnly) {
 		Map<String, Object> argMap = new HashMap<>();
 		argMap.put("rowLabels", rowLabels);
 		argMap.put("columnLabels", columnLabels);
@@ -66,6 +79,8 @@ public class CyPlotUtils {
 		argMap.put("yLabel",ylabel);
 		argMap.put("title",title);
 		argMap.put("id",accession);
+		if (posOnly)
+			argMap.put("palette", "Viridis Sequential Viridis perceptually balanced palette");
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" genes=%s");
 		manager.executeCommand("cyplot", "heat", argMap);
 	}

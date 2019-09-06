@@ -137,12 +137,21 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			super.nRows = super.nRows - ((MatrixMarket)mtx).findControls().cardinality();
 		}
 
+		long start = System.currentTimeMillis();
+
 		Map<Object, double[]> means = category.getMeans(categoryRow);
+		System.out.println("getMeans took "+(System.currentTimeMillis()-start));
+		long mid = System.currentTimeMillis();
 		Map<Object, double[]> drMap = category.getDr(categoryRow);
+		System.out.println("getDr took "+(System.currentTimeMillis()-mid));
+		mid = System.currentTimeMillis();
 		Map<Object, double[]> mtdcMap = category.getMTDC(categoryRow);
+		System.out.println("mtdcMap took "+(System.currentTimeMillis()-mid));
 		// fdrMap = new HashMap<>();
 
+		mid = System.currentTimeMillis();
 		logGERMap = category.getLogGER(categoryRow, dDRCutoff-.001, log2FCCutoff);
+		System.out.println("getLogGER took "+(System.currentTimeMillis()-mid));
 		super.nCols = means.keySet().size()*6; // 6 columns for each category/cluster
 		if (means.containsKey(Category.UNUSED_CAT))
 			super.nCols = super.nCols - 6;  // We don't want to show the "unused" category
@@ -195,6 +204,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			}
 			col += 6;
 		}
+		System.out.println("Total time: "+(System.currentTimeMillis()-start));
 	}
 
 	public Experiment getExperiment() { return experiment; }

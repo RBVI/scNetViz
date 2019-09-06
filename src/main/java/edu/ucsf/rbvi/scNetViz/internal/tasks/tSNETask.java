@@ -25,7 +25,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 // TODO: Consider random subsampling?
 // TODO: Expose filter criteria
-public class tSNETask extends AbstractTask implements ObservableTask {
+public class tSNETask extends AbstractEmbeddingTask implements ObservableTask {
 	public static String SHORTNAME = "tsne";
 	public static String NAME = "t-Distributed Stochastic Neighbor";
 	public final static String GROUP_ATTRIBUTE = "__tSNE.SUID";
@@ -36,11 +36,9 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 	@ContainsTunables
 	public tSNEContext context = null;
 	private DoubleMatrix matrix; 
-	private double[][] tsneResult;
-	final ScNVManager manager;
 		
 	public tSNETask(final ScNVManager manager) {
-		this.manager = manager;
+		super(manager);
 		this.context = new tSNEContext();
 		List<String> accessions = new ArrayList<String>(manager.getExperimentAccessions());
 		accession = new ListSingleSelection<>(new ArrayList<String>(manager.getExperimentAccessions()));
@@ -48,9 +46,9 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 	}
 
 	public tSNETask(DoubleMatrix matrix) {
+		super(null);
 		this.context = new tSNEContext();
 		this.matrix = matrix;
-		manager = null;
 	}
 
 	public String getShortName() { return SHORTNAME; }
@@ -153,8 +151,8 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 
 		if (context.cancelled) return;
 
-		tsneResult = tsne.tsne(context, monitor);
-		if (tsneResult == null && context.cancelled) {
+		embedding = tsne.tsne(context, monitor);
+		if (embedding == null && context.cancelled) {
 			monitor.setStatusMessage("Cancelled by user");
 			return;
 		}
@@ -163,15 +161,14 @@ public class tSNETask extends AbstractTask implements ObservableTask {
 
 	public void cancel() {
 		context.cancelled = true;
-		System.out.println("Cancelling task");
 	}
 
-	public double[][] getResults() { return tsneResult; }
+	public double[][] getResults() { return embedding; }
 
 	@Override
 	public <R> R getResults(Class<? extends R> type) {
-		if(tsneResult == null)
+		if(embedding == null)
 			return null;
-		return (R) tsneResult;
+		return (R) embedding;
 	}
 }

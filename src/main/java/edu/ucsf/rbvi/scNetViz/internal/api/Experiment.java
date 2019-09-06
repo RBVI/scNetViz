@@ -26,6 +26,8 @@ public interface Experiment {
 
 	public double[][] getTSNE();
 	public void setTSNE(double[][] tnse);
+	public String getPlotType();
+	public void setPlotType(String type);
 
 	// For efficiency purposes, sometimes implementations
 	// of Experiment might want to provide their own

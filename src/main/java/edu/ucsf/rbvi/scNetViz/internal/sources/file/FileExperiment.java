@@ -52,6 +52,7 @@ public class FileExperiment implements Experiment {
 	MatrixMarket mtx = null;
 	final List<Category> categories;
 	double[][] tSNE;
+	String plotType = null;
 	// GXACluster fileCluster = null;
 	// GXAIDF fileIDF = null;
 	// GXADesign fileDesign = null;
@@ -113,6 +114,12 @@ public class FileExperiment implements Experiment {
 		return tSNE;
 	}
 
+	@Override
+	public void setPlotType(String type) { this.plotType = type; }
+
+	@Override
+	public String getPlotType() { return plotType; }
+
 	public Metadata getMetadata() { return fileMetadata; }
 
 	public Source getSource() { return source; }
@@ -171,6 +178,8 @@ public class FileExperiment implements Experiment {
 					}
 				}
 				tarStream.close();
+			} else {
+				readFile(monitor, mtxFile, skipFirst);
 			}
 		} catch(IOException e) {}
 

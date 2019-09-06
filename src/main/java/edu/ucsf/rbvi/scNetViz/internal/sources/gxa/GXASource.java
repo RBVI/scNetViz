@@ -71,12 +71,13 @@ public class GXASource implements Source {
 		// Register our task factories
 		{
 			Properties props = new Properties();
-			props.put(TITLE, "Browse Single Cell Expression Atlas");
-			props.put(PREFERRED_MENU, "Apps.scNetViz");
+			props.setProperty(TITLE, "From Single Cell Expression Atlas...");
+			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Load Experiment[10.1]");
 			props.setProperty(IN_TOOL_BAR, "TRUE");
 			props.setProperty(TOOL_BAR_GRAVITY, "100f");
-			props.setProperty(TOOLTIP, "Show Experiments Table");
-			String ebiLogoURL = getClass().getResource("/images/EMBL-EBI-Logo-36x36.png").toString();
+			props.setProperty(MENU_GRAVITY, "10.0");
+			props.setProperty(TOOLTIP, "Browse EBI Single Cell Expression Atlas");
+			String ebiLogoURL = getClass().getResource("/images/sc_atlas_logo.png").toString();
 			props.setProperty(LARGE_ICON_URL, ebiLogoURL);
 			scNVManager.registerService(new GXAShowEntriesTaskFactory(manager, this), TaskFactory.class, props);
 		}
@@ -84,7 +85,7 @@ public class GXASource implements Source {
 		// Register our commands
 		{
 			Properties props = new Properties();
-			props.setProperty(COMMAND_DESCRIPTION, "List all Gene Expression Atlas (GXA) entries available");
+			props.setProperty(COMMAND_DESCRIPTION, "List all Single Cell Expression Atlas (GXA) entries available");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "list gxa entries");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
@@ -96,7 +97,7 @@ public class GXASource implements Source {
 		{
 			Properties props = new Properties();
 			props.put(COMMAND_NAMESPACE, "scnetviz");
-			props.put(COMMAND_DESCRIPTION, "Load an experiment from the EBI Gene Expression Atlas");
+			props.put(COMMAND_DESCRIPTION, "Load an experiment from the EBI Single Cell Expression Atlas");
 			props.put(COMMAND, "load gxa experiment");
 			props.put(COMMAND_SUPPORTS_JSON, "true");
 			scNVManager.registerService(new GXALoadExperimentTaskFactory(manager, this), TaskFactory.class, props);

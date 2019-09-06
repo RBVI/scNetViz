@@ -130,6 +130,12 @@
 		</dependency>
 		<dependency>
 			<groupId>org.cytoscape</groupId>
+			<artifactId>layout-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
 			<artifactId>work-api</artifactId>
 			<version>${cytoscape.api.version}</version>
 			<scope>provided</scope>
@@ -161,7 +167,13 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
-			<version>4.5</version>
+			<version>4.5.9</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpmime</artifactId>
+			<version>4.5.9</version>
 			<optional>true</optional>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-compress -->

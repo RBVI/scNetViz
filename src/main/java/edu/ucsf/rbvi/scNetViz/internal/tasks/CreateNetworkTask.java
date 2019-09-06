@@ -10,7 +10,11 @@ import java.util.Set;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.event.CyEventHelper;
 import org.cytoscape.model.CyNetwork;
+import org.cytoscape.model.CyNode;
+import org.cytoscape.view.layout.CyLayoutAlgorithm;
+import org.cytoscape.view.layout.CyLayoutAlgorithmManager;
 import org.cytoscape.view.model.CyNetworkView;
+import org.cytoscape.view.model.View;
 import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.FinishStatus;
@@ -20,6 +24,7 @@ import org.cytoscape.work.TaskIterator;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.TaskObserver;
 import org.cytoscape.work.Tunable;
+import org.cytoscape.work.TunableSetter;
 import org.cytoscape.work.json.JSONResult;
 import org.cytoscape.work.util.ListSingleSelection;
 
@@ -219,8 +224,21 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 				// Add our information to the network tables: source, experiment accession, category, category row
 				ModelUtils.addNetworkColumns(manager, network);
 				ModelUtils.updateNetworkData(manager, network, experiment, category, categoryRow);
+
+				// And re-lay it out
+				CyLayoutAlgorithm alg = manager.getService(CyLayoutAlgorithmManager.class).getLayout("force-directed");
+				Object context = alg.createLayoutContext();
+				TunableSetter setter = manager.getService(TunableSetter.class);
+				Map<String, Object> layoutArgs = new HashMap<>();
+				layoutArgs.put("defaultNodeMass", 10.0);
+				setter.applyTunables(context, layoutArgs);
+				Set<View<CyNode>> nodeViews = new HashSet<>(networkView.getNodeViews());
+
 				Task resultsPanelTask = new ShowResultsPanelTask(manager, experiment);
-				manager.executeTasks(new TaskIterator(resultsPanelTask));
+				TaskIterator ti = new TaskIterator();
+				ti.append(alg.createTaskIterator(networkView, context, nodeViews, "score"));
+				ti.append(resultsPanelTask);
+				manager.executeTasks(ti);
 			} else {
 				monitor.setTitle("Adding data to network for: "+name);
 				unionNetwork = network;

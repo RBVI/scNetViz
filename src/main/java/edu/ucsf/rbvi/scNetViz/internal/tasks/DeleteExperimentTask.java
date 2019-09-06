@@ -37,7 +37,7 @@ public class DeleteExperimentTask extends AbstractTask implements ObservableTask
 	}
 
 	@ProvidesTitle
-	public String title() { return "Deleete Experiments"; }
+	public String title() { return "Delete Experiments"; }
 
 	@Override
 	public List<Class<?>> getResultClasses() {

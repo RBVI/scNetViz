@@ -10,9 +10,15 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 
 public class ExperimentLabel extends JTextPane {
+	int width;
 
 	public ExperimentLabel(final Experiment experiment, final Color background) {
+		this(experiment, background, 250);
+	}
+
+	public ExperimentLabel(final Experiment experiment, final Color background, int width) {
 		super();
+		this.width = width;
 		setContentType("text/html");
 		setEditable(false);
 		setBackground(background);
@@ -20,18 +26,18 @@ public class ExperimentLabel extends JTextPane {
 		// putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
 		setMaximumSize(new Dimension(250,75));
 
-		setText(createLabelText(experiment.getSource(), experiment.getMetadata(),background));
+		setText(createLabelText(experiment.getSource(), experiment.getMetadata(),background, width));
 	}
 
 	public void updateText(Experiment experiment) {
-		setText(createLabelText(experiment.getSource(), experiment.getMetadata(),getBackground()));
+		setText(createLabelText(experiment.getSource(), experiment.getMetadata(),getBackground(), width));
 	}
 
-	private static String createLabelText(Source source, Metadata meta, Color background) {
+	private static String createLabelText(Source source, Metadata meta, Color background, int width) {
 		String bg = "background-color:rgb("+background.getRed()+
 		            ","+background.getGreen()+","+background.getBlue()+")";
 		String title = "<html><body style=\"text-align:center;font-size:10pt;"+bg+"\">";
-		title += "<div style=\"width:250px\">";
+		title += "<div style=\"width:"+width+"px\">";
 		title += source.toString()+" <b>"+meta.get(Metadata.ACCESSION)+"</b><br/>";
 		title += "<i>"+meta.get(Metadata.DESCRIPTION)+"</i>";
 		title += "</div></body></html>";
