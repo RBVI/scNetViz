@@ -121,7 +121,6 @@ public class TPMTab extends JPanel implements TaskObserver {
 
 		JPanel buttonsPanelRight = new JPanel();
 
-
 		{
 			buttonsPanelRight.add(ViewUtils.createPlotMenu(manager, experiment, thisComponent));
 		}

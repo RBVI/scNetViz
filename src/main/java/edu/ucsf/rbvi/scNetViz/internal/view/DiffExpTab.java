@@ -273,7 +273,7 @@ public class DiffExpTab extends JPanel {
 			}
 
 			{
-				JButton createNetwork = new JButton("Create Network");
+				JButton createNetwork = new JButton("Create Networks");
 				createNetwork.setFont(new Font("SansSerif", Font.BOLD, 10));
 				createNetwork.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {

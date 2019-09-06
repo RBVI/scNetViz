@@ -9,7 +9,7 @@ public class AdvancedRemoteParameters {
 	          tooltip="Filter cells that don't have at least this number of genes")
 	public int min_genes=100;
 
-	@Tunable (description="Minimum number of cells expressed by a gene",
+	@Tunable (description="Minimum number of cells/gene",
 	          groups={"Advanced preprocessing parameters"},params="displayState=collapsed",
 	          tooltip="Filter genes not expressed in at least this number of cells")
 	public int min_cells=1;

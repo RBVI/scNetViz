@@ -202,9 +202,9 @@ public class ViewUtils {
 		Map<String, Task> map = new LinkedHashMap<>();
 		map.put("Import from file...",
 		        new FileCategoryTask(manager, (FileSource)manager.getSource("file"), experiment));
-		map.put("Calculate Louvain clustering...",
+		map.put("Louvain clustering...",
 		        new RemoteLouvainTask(manager, accession));
-		map.put("Calculate Leiden clustering...",
+		map.put("Leiden clustering...",
 		        new RemoteLeidenTask(manager, accession));
 		return new PullDownMenu(manager, "Add Category", map, null);
 	}
