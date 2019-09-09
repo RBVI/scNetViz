@@ -29,12 +29,16 @@ public class MatrixUtils {
 		return newList;
 	}
 
-	public static Integer[] indexSort(double[] tData, int nVals) {
+	public static Integer[] indexSort(double[] tData, int nVals, boolean abs) {
     Integer[] index = new Integer[nVals];
     for (int i = 0; i < nVals; i++) index[i] = i;
-    IndexComparator iCompare = new IndexComparator(tData);
+    IndexComparator iCompare = new IndexComparator(tData, abs);
     Arrays.sort(index, iCompare);
     return index;
+	}
+
+	public static Integer[] indexSort(double[] tData, int nVals) {
+		return indexSort(tData, nVals, false);
   }
 
 	public static Integer[] indexSort(int[] tData, int nVals) {
@@ -58,10 +62,16 @@ public class MatrixUtils {
     double[] data = null;
     int[] intData = null;
     String[] stringData = null;
+		boolean abs = false;
 
     public IndexComparator(String[] data) { this.stringData = data; }
 
     public IndexComparator(double[] data) { this.data = data; }
+
+    public IndexComparator(double[] data, boolean abs) { 
+			this.data = data; 
+			this.abs = abs;
+		}
 
     public IndexComparator(int[] data) { this.intData = data; }
 
@@ -75,8 +85,13 @@ public class MatrixUtils {
 				if (Double.isNaN(data[o2]))
 					return 1;
 
-        if (data[o1] < data[o2]) return -1;
-        if (data[o1] > data[o2]) return 1;
+				if (abs) {
+        	if (Math.abs(data[o1]) < Math.abs(data[o2])) return -1;
+        	if (Math.abs(data[o1]) > Math.abs(data[o2])) return 1;
+				} else {
+        	if (data[o1] < data[o2]) return -1;
+        	if (data[o1] > data[o2]) return 1;
+				}
         return 0;
       } else if (intData != null) {
         if (intData[o1] < intData[o2]) return -1;
