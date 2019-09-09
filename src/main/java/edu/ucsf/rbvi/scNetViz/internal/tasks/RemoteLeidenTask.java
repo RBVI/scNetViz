@@ -90,7 +90,7 @@ public class RemoteLeidenTask extends AbstractEmbeddingTask implements Observabl
 		}
 		File expFile = mmtx.getMatrixCache();
 
-		String url = HTTPUtils.getWebServicesURL("louvain", exp, 
+		String url = HTTPUtils.getWebServicesURL("leiden", exp, 
 		                                         "n_neighbors="+n_neighbors+
 		                                         "&"+advancedParameters.getArgs());
 
@@ -112,8 +112,15 @@ public class RemoteLeidenTask extends AbstractEmbeddingTask implements Observabl
 				input.add(tokens);
 				lineNumber++;
 			}
+
+			String categoryName = "Leiden Clusters";
+			int index = 1;
+			while (exp.getCategory(categoryName) != null) {
+				categoryName = "Leiden Clusters - "+index;
+				index++;
+			}
 			FileCategory louvainCategory = FileCategory.createCategory(manager, exp,
-	                                                               "Leiden Clusters", "integer", input,
+	                                                               categoryName, "integer", input,
 	                                                               true, 1, true, monitor);
 			exp.addCategory(louvainCategory);
 			ExperimentFrame expFrame = manager.getExperimentFrame(exp);

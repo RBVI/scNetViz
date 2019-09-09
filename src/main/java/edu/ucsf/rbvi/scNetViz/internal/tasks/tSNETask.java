@@ -36,6 +36,8 @@ public class tSNETask extends AbstractEmbeddingTask implements ObservableTask {
 	@ContainsTunables
 	public tSNEContext context = null;
 	private DoubleMatrix matrix; 
+
+	private Experiment experiment;
 		
 	public tSNETask(final ScNVManager manager) {
 		super(manager);
@@ -45,10 +47,11 @@ public class tSNETask extends AbstractEmbeddingTask implements ObservableTask {
 		matrix = null;
 	}
 
-	public tSNETask(DoubleMatrix matrix) {
+	public tSNETask(Experiment experiment) {
 		super(null);
 		this.context = new tSNEContext();
-		this.matrix = matrix;
+		this.matrix = (DoubleMatrix)experiment.getMatrix();
+		this.experiment = experiment;
 	}
 
 	public String getShortName() { return SHORTNAME; }
@@ -66,7 +69,7 @@ public class tSNETask extends AbstractEmbeddingTask implements ObservableTask {
 			monitor.showMessage(TaskMonitor.Level.ERROR, "Matrix is null");
 			return;
 		} else if (matrix == null) {
-			Experiment experiment = manager.getExperiment(accession.getSelectedValue());
+			this.experiment = manager.getExperiment(accession.getSelectedValue());
 			matrix = (DoubleMatrix)experiment.getMatrix();
 		}
 
@@ -155,6 +158,9 @@ public class tSNETask extends AbstractEmbeddingTask implements ObservableTask {
 		if (embedding == null && context.cancelled) {
 			monitor.setStatusMessage("Cancelled by user");
 			return;
+		}
+		if (experiment != null) {
+			experiment.setPlotType("tSNE");
 		}
 		monitor.showMessage(TaskMonitor.Level.INFO, "tSNE complete in "+(System.currentTimeMillis()-start)/1000+" seconds");
 	}

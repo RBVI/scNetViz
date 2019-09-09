@@ -55,7 +55,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	int nGenes;
 	int nCategories;
 
-	public DifferentialExpression(final ScNVManager manager, final Experiment experiment, JSONObject json, File file) {
+	public DifferentialExpression(final ScNVManager manager, final Experiment experiment, 
+	                              JSONObject json, File file) {
 		super(manager);
 		this.experiment = experiment;
 
@@ -105,19 +106,23 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		for (Object cat: category.getMeans(categoryRow).keySet()) {
 			double[] logGer = new double[nRows];
 			double[] pValue = new double[nRows];
+			double[] FDR = new double[nRows];
 
 			int gerColumn = getColumn(cat, "log2FC");
 			int pVColumn = getColumn(cat, "pValue");
+			int fdrColumn = getColumn(cat, "FDR");
 
 			for (int row = 0; row < nRows; row++) {
 				// System.out.println("log2FC = "+getDoubleValue(row, gerColumn)+", pValue = "+getDoubleValue(row, pVColumn));
 				logGer[row] = getDoubleValue(row, gerColumn-1);
 				pValue[row] = getDoubleValue(row, pVColumn-1);
+				FDR[row] = getDoubleValue(row, fdrColumn-1);
 			}
 			
 			HashMap<String, double[]> logCatMap = new HashMap<>();
 			logCatMap.put("logFC", logGer);
 			logCatMap.put("pValue", pValue);
+			logCatMap.put("FDR", FDR);
 			logGERMap.put(cat, logCatMap);
 
 		}
@@ -192,6 +197,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			double[] logGER = logGERMap.get(cat).get("logFC");
 			double[] pValue = logGERMap.get(cat).get("pValue");
 			double[] FDR = adjustPValues(pValue);
+			logGERMap.get(cat).put("FDR", FDR);
 			// fdrMap.put(cat, FDR);
 
 			for (int row = 0; row < nRows; row++) {
@@ -264,44 +270,39 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return null;
 	}
 
-	public List<String> getGeneList(Object cat, double pvCutoff, double log2FCCutoff, int nGenes, 
+	public List<String> getMarkerGenes(Object cat, double ddRCutoff, double log2FCCutoff, int minCells) {
+		return null;
+	}
+
+	public List<String> getGeneList(Object cat, double fdrCutoff, double log2FCCutoff, int nGenes, 
 	                                boolean positiveOnly, int maxGenes) {
 		double[] logGER = logGERMap.get(cat).get("logFC");
-		double[] pValues = logGERMap.get(cat).get("pValue");
-		// double[] fdr = fdrMap.get(cat);
+		double[] fdr = logGERMap.get(cat).get("FDR");
 		//
 		// System.out.println("getGeneList: nGenes = "+nGenes+", maxGenes = "+maxGenes+", positiveOnly = "+positiveOnly);
 
-		if (nGenes > 0) {
-			return getTopGenes(null, pValues, nGenes);
-		} else {
-			// Should this be pValue or fdr?
-			double pV[] = new double[nRows];
-			Arrays.fill(pV, Double.NaN);
-			int count = 0;
-			/*
-			for (int row = 0; row < nRows; row++) {
-				if (Math.abs(logGER[row]) > log2FCCutoff && fdr[row] < fdrCutoff) {
-					geneList.add(getRowLabel(row));
-					pV[count++] = pValues[row];
-				}
+		if (nGenes > 0)
+			return getTopGenes(null, logGER, nGenes);
+
+		double fc[] = new double[nRows];
+		Arrays.fill(fc, Double.NaN);
+		int count = 0;
+
+		List<String> geneList = new ArrayList<String>();
+		for (int row = 0; row < nRows; row++) {
+			double thisfc = logGER[row];
+			if (!positiveOnly)
+				thisfc = Math.abs(thisfc);
+
+			if (thisfc > log2FCCutoff && fdr[row] < fdrCutoff) {
+				geneList.add(getRowLabel(row));
+				fc[count++] = logGER[row];
 			}
-			*/
-			List<String> geneList = new ArrayList<String>();
-			for (int row = 0; row < nRows; row++) {
-				double fc = logGER[row];
-				if (!positiveOnly)
-					fc = Math.abs(fc);
-				if (fc > log2FCCutoff && pValues[row] < pvCutoff) {
-					geneList.add(getRowLabel(row));
-					pV[count++] = pValues[row];
-				}
-			}
-			if (count > maxGenes) {
-				return getTopGenes(geneList, pV, maxGenes);
-			}
-			return geneList;
 		}
+		if (count > maxGenes) {
+			return getTopGenes(geneList, fc, maxGenes);
+		}
+		return geneList;
 	}
 
 	public Category getCurrentCategory() {
@@ -345,25 +346,38 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return Math.min(1.0, pValue*(double)testCount);
 	}
 
-	private List<String> getTopGenes(List<String> geneList, double[] pValues, int nGenes) {
+	private List<String> getTopGenes(List<String> geneList, double[] fc, int nGenes) {
 		// Sort
-		Integer[] sortedPValues = MatrixUtils.indexSort(pValues, pValues.length);
+		Integer[] sortedFC = MatrixUtils.indexSort(fc, fc.length, true);
 
+		/*
 		// Skip over the NaN's
 		int start = 0;
-		for (start = 0; start < pValues.length; start++) {
-			if (!Double.isNaN(pValues[sortedPValues[start]]))
+		for (start = 0; start < fc.length; start++) {
+			if (!Double.isNaN(fc[sortedFC[start]]))
 				break;
 		}
 
 		List<String> newGeneList = new ArrayList<String>();
 		if (geneList == null) {
 			for (int topGene = 0; topGene < nGenes; topGene++) {
-				newGeneList.add(getRowLabel(sortedPValues[topGene+start]));
+				newGeneList.add(getRowLabel(sortedFC[topGene+start]));
 			}
 		} else {
 			for (int topGene = 0; topGene < nGenes; topGene++) {
-				newGeneList.add(geneList.get(sortedPValues[topGene+start]));
+				newGeneList.add(geneList.get(sortedFC[topGene+start]));
+			}
+		}
+		*/
+		List<String> newGeneList = new ArrayList<String>();
+		if (geneList == null) {
+			for (int topGene = 0; topGene < nGenes; topGene++) {
+				System.out.println(getRowLabel(sortedFC[sortedFC.length-topGene-1])+" = "+fc[sortedFC[sortedFC.length-topGene-1]]);
+				newGeneList.add(getRowLabel(sortedFC[sortedFC.length-topGene-1]));
+			}
+		} else {
+			for (int topGene = 0; topGene < nGenes; topGene++) {
+				newGeneList.add(geneList.get(sortedFC[sortedFC.length-topGene-1]));
 			}
 		}
 		return newGeneList;

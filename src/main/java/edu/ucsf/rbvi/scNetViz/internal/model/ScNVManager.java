@@ -19,6 +19,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import org.cytoscape.application.CyApplicationManager;
+import org.cytoscape.application.events.SetCurrentNetworkListener;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.command.AvailableCommands;
 import org.cytoscape.command.CommandExecutorTaskFactory;
@@ -237,6 +238,12 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 
 	// See if we have data in the session, and load it if we do
 	public void handleEvent(SessionLoadedEvent e) {
+		// First, if we have a results panel, unregister it
+		if (cytoPanel != null) {
+			unregisterService(cytoPanel, CytoPanelComponent.class);
+			unregisterService(cytoPanel, SetCurrentNetworkListener.class);
+			cytoPanel = null;
+		}
 		Map<String,List<File>> appFiles = e.getLoadedSession().getAppFileListMap();
 		if (!appFiles.containsKey(APP_NAME))
 			return;

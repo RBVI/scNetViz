@@ -189,7 +189,7 @@ public class ViewUtils {
 	                                               final TaskObserver observer) {
 		Map<String, Task> map = new LinkedHashMap<>();
 		String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
-		map.put("t-SNE (local)", new tSNETask((DoubleMatrix)experiment.getMatrix()));
+		map.put("t-SNE (local)", new tSNETask(experiment));
 		map.put("UMAP", new RemoteUMAPTask(manager, accession));
 		map.put("Graph layout", new RemoteGraphTask(manager, accession));
 		map.put("t-SNE (on server)", new RemoteTSNETask(manager, accession));
@@ -202,9 +202,9 @@ public class ViewUtils {
 		Map<String, Task> map = new LinkedHashMap<>();
 		map.put("Import from file...",
 		        new FileCategoryTask(manager, (FileSource)manager.getSource("file"), experiment));
-		map.put("Calculate Louvain clustering...",
+		map.put("Louvain clustering...",
 		        new RemoteLouvainTask(manager, accession));
-		map.put("Calculate Leiden clustering...",
+		map.put("Leiden clustering...",
 		        new RemoteLeidenTask(manager, accession));
 		return new PullDownMenu(manager, "Add Category", map, null);
 	}

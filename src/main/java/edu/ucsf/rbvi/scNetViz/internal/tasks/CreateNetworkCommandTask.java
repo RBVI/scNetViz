@@ -40,8 +40,8 @@ public class CreateNetworkCommandTask extends AbstractTask {
 	@Tunable (description="Experiment accession")
 	public ListSingleSelection<Experiment> accession;
 
-	@Tunable (description="pValue cutoff")
-	public double pValue;
+	@Tunable (description="FDR cutoff")
+	public double fdrCutoff;
 
 	@Tunable (description="Log2FC cutoff")
 	public double log2FCCutoff;
@@ -60,7 +60,7 @@ public class CreateNetworkCommandTask extends AbstractTask {
 		this.manager = manager;
 		cyEventHelper = manager.getService(CyEventHelper.class);
 		accession = new ListSingleSelection<>(manager.getExperiments());
-		pValue = Double.parseDouble(manager.getSetting(SETTING.NET_PV_CUTOFF));
+		fdrCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_PV_CUTOFF));
 		log2FCCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_FC_CUTOFF));
 		if (manager.getSetting(SETTING.TOP_GENES) != "")
 			topGenes = Integer.parseInt(manager.getSetting(SETTING.TOP_GENES));
@@ -79,6 +79,6 @@ public class CreateNetworkCommandTask extends AbstractTask {
 			}
 		}
 
-		insertTasksAfterCurrentTask(new CreateNetworkTask(manager, diffExp, pValue, log2FCCutoff, topGenes, positiveOnly, maxGenes));
+		insertTasksAfterCurrentTask(new CreateNetworkTask(manager, diffExp, fdrCutoff, log2FCCutoff, topGenes, positiveOnly, maxGenes));
 	}
 }

@@ -212,7 +212,7 @@ public class CyActivator extends AbstractCyActivator {
 		{
 			ShowExperimentTableTaskFactory show = new ShowExperimentTableTaskFactory(scNVManager);
 			Properties props = new Properties();
-			props.setProperty(TITLE, "Show experiment tables");
+			props.setProperty(TITLE, "Show Experiment Tables");
 			props.setProperty(PREFERRED_MENU, "Apps.scNetViz");
 			props.setProperty(MENU_GRAVITY, "299.0");
 			props.setProperty(IN_TOOL_BAR, "FALSE");

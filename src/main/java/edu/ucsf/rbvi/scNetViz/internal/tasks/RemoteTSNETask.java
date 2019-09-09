@@ -37,10 +37,11 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 	public double perplexity = 20;
 
 	@Tunable (description="Initial dimensions", 
-	          tooltip="The number of principal components to use.",
+	          tooltip="The number of principal components to use.  -1 chooses is the same as scanpy's"+
+	                  "	'None', and 0 means don't do PCA.",
 	          format="#",
 	          longDescription="The number of principal components to use.")
-	public int n_pcs = 0;
+	public int n_pcs = -1;
 
 	@Tunable (description="Early exaggeration", 
 	          tooltip="<html>Controls how tight natural clusters in the original space "+
@@ -109,7 +110,7 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 		}
 		File expFile = mmtx.getMatrixCache();
 		String query = "perplexity="+perplexity+"&early_exaggeration="+early_exaggeration;
-		if (n_pcs > 0) query += "&n_pcs="+n_pcs;
+		if (n_pcs >= 0) query += "&n_pcs="+n_pcs;
 		query += "&"+advancedParameters.getArgs();
 		String url = HTTPUtils.getWebServicesURL("tsne", exp, query);
 

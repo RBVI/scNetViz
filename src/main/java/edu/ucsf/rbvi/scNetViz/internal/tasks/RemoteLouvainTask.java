@@ -111,8 +111,14 @@ public class RemoteLouvainTask extends AbstractEmbeddingTask implements Observab
 				input.add(tokens);
 				lineNumber++;
 			}
+			String categoryName = "Louvain Clusters";
+			int index = 1;
+			while (exp.getCategory(categoryName) != null) {
+				categoryName = "Louvain Clusters - "+index;
+				index++;
+			}
 			FileCategory louvainCategory = FileCategory.createCategory(manager, exp,
-	                                                               "Louvain Clusters", "integer", input,
+	                                                               categoryName, "integer", input,
 	                                                               true, 1, true, monitor);
 			exp.addCategory(louvainCategory);
 			ExperimentFrame expFrame = manager.getExperimentFrame(exp);
