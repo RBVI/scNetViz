@@ -24,13 +24,8 @@ public class SettingsTask extends AbstractTask {
 	@Tunable(description="Log2FC cutoff", groups={"Network Creation Settings"})
 	public double netLogFCCutoff = 1.0;
 
-	@Tunable(description="pValue cutoff", groups={"Network Creation Settings"})
-	public double netPvCutoff = 0.05;
-
-	@Tunable(description="Top n genes", 
-	         tooltip="<html>This will select the <i>n</i> most significant genes</html>",
-	         groups={"Network Creation Settings"})
-	public int topGenes = 0;
+	@Tunable(description="FDR cutoff", groups={"Network Creation Settings"})
+	public double netFDRCutoff = 0.05;
 
 	@Tunable(description="Maximum Genes", 
 	         tooltip="<html>Limits the number of genes per category to use for network creation</html>",
@@ -69,7 +64,7 @@ public class SettingsTask extends AbstractTask {
 		maxGenes = Integer.parseInt(manager.getSetting(SETTING.MAX_GENES));
 		deLogFCCutoff = Double.parseDouble(manager.getSetting(SETTING.DE_FC_CUTOFF));
 		deMinPctCutoff = Double.parseDouble(manager.getSetting(SETTING.DE_MIN_PCT_CUTOFF));
-		netPvCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_PV_CUTOFF));
+		netFDRCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_PV_CUTOFF));
 		netLogFCCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_FC_CUTOFF));
 		positiveOnly = Boolean.parseBoolean(manager.getSetting(SETTING.POSITIVE_ONLY));
 		heatMapCount = Integer.parseInt(manager.getSetting(SETTING.HEATMAP_COUNT));
@@ -86,7 +81,7 @@ public class SettingsTask extends AbstractTask {
 
 		manager.setSetting(SETTING.DE_FC_CUTOFF, deLogFCCutoff);
 		manager.setSetting(SETTING.DE_MIN_PCT_CUTOFF, deMinPctCutoff);
-		manager.setSetting(SETTING.NET_PV_CUTOFF, netPvCutoff);
+		manager.setSetting(SETTING.NET_PV_CUTOFF, netFDRCutoff);
 		manager.setSetting(SETTING.NET_FC_CUTOFF, netLogFCCutoff);
 		if (doubleClickAction.getSelectedValue().equals("View Data"))
 			manager.setSetting(SETTING.DONT_ANALYZE, "true");

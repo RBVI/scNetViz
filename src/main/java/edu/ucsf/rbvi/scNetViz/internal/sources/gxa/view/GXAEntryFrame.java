@@ -145,7 +145,7 @@ public class GXAEntryFrame extends JFrame {
 						Map<String, Object> args = new HashMap<>();
 						args.put("id","scNetViz");
 						args.put("title", "scNetViz Help");
-						args.put("url", "http://preview.rbvi.ucsf.edu/cytoscape/scNetViz/index.shtml");
+						args.put("url", "http://www.rbvi.ucsf.edu/cytoscape/scNetViz/index.shtml");
 						scNVManager.executeCommand("cybrowser", "dialog", args, false);
 					}
 				});
