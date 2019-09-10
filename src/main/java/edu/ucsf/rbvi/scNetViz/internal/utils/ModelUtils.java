@@ -86,11 +86,12 @@ public class ModelUtils {
 		createColumnIfNeeded(nodeTable, NAMESPACE, label+" log2FC", Double.class);
 		createColumnIfNeeded(nodeTable, NAMESPACE, label+" pValue", Double.class);
 		createColumnIfNeeded(nodeTable, NAMESPACE, label+" FDR", Double.class);
+		createColumnIfNeeded(nodeTable, NAMESPACE, label+" Rank", Integer.class);
 	}
 
 	public static void updateDEData(ScNVManager manager, CyNetwork network, 
 	                                List<String> geneList, DifferentialExpression diffExp, 
-	                                String label) {
+	                                String label, List<String> rankedGenes) {
 		Map<String, CyRow> queryMap = createQueryMap(network);
 		for (String gene: geneList) {
 			CyRow row = queryMap.get(gene);
@@ -102,6 +103,14 @@ public class ModelUtils {
 			updateValues(network, row, diffExp, gene, label+" log2FC");
 			updateValues(network, row, diffExp, gene, label+" pValue");
 			updateValues(network, row, diffExp, gene, label+" FDR");
+		}
+
+		int rank = 1;
+		for (String gene: rankedGenes) {
+			CyRow row = queryMap.get(gene);
+			if (row == null) continue;
+			row.set(NAMESPACE, label+" Rank", rank);
+			rank++;
 		}
 	}
 

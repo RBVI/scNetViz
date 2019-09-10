@@ -86,7 +86,7 @@ public class ScNVCytoPanel extends JPanel
 
 	private JTextField log2FC;
 	private JTextField pValue;
-	private JTextField topNGenes;
+	// private JTextField topNGenes;
 	private JTextField maxGenes;
 	private JTextField FDRCutoff;
 	private ExperimentLabel experimentLabel;
@@ -330,8 +330,10 @@ public class ScNVCytoPanel extends JPanel
 			                                   manager.getSetting(SETTING.NET_PV_CUTOFF));
 			log2FC = ViewUtils.addLabeledField(comparePanel, "log2FC:", 
 			                                   manager.getSetting(SETTING.NET_FC_CUTOFF));
-			topNGenes = ViewUtils.addLabeledField(comparePanel, "Top n genes:", 
+			/*
+			topNGenes = ViewUtils.addLabeledField(comparePanel, "Max genes:", 
 			                                      manager.getSetting(SETTING.TOP_GENES));
+			*/
 			maxGenes = ViewUtils.addLabeledField(comparePanel, "Max genes:", 
 			                                     manager.getSetting(SETTING.MAX_GENES));
 			comparePanel.add(ViewUtils.addJCheckBox(this, "Positive only", "positiveOnlyComp", positiveOnly));
@@ -455,8 +457,10 @@ public class ScNVCytoPanel extends JPanel
 					double pV = Double.parseDouble(pValue.getText());
 					double log2FCCutoff = Double.parseDouble(log2FC.getText());
 					int nGenes = -1;
+					/*
 				 	if (topNGenes.getText() != null && !topNGenes.getText().equals(""))
 						nGenes = Integer.parseInt(topNGenes.getText());
+					*/
 					int maxG = Integer.parseInt(maxGenes.getText());
 					Task createNetworks = new CreateNetworkTask(manager, diffExp, pV, log2FCCutoff, 
 					                                            nGenes, positiveOnly, maxG); 

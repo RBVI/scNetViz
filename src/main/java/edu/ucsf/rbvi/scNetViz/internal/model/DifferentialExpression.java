@@ -274,21 +274,20 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return null;
 	}
 
-	public List<String> getGeneList(Object cat, double fdrCutoff, double log2FCCutoff, int nGenes, 
-	                                boolean positiveOnly, int maxGenes) {
+	public double[] getGeneList(Object cat, double fdrCutoff, double log2FCCutoff, int nGenes, 
+                                  boolean positiveOnly, int maxGenes, final List<String> geneList) {
 		double[] logGER = logGERMap.get(cat).get("logFC");
 		double[] fdr = logGERMap.get(cat).get("FDR");
 		//
 		// System.out.println("getGeneList: nGenes = "+nGenes+", maxGenes = "+maxGenes+", positiveOnly = "+positiveOnly);
 
-		if (nGenes > 0)
-			return getTopGenes(null, logGER, nGenes);
+		// if (nGenes > 0)
+		// 	return getTopGenes(null, logGER, nGenes);
 
 		double fc[] = new double[nRows];
 		Arrays.fill(fc, Double.NaN);
 		int count = 0;
 
-		List<String> geneList = new ArrayList<String>();
 		for (int row = 0; row < nRows; row++) {
 			double thisfc = logGER[row];
 			if (!positiveOnly)
@@ -301,8 +300,9 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		}
 		if (count > maxGenes) {
 			return getTopGenes(geneList, fc, maxGenes);
+		} else {
+			return getTopGenes(geneList, fc, count);
 		}
-		return geneList;
 	}
 
 	public Category getCurrentCategory() {
@@ -346,7 +346,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return Math.min(1.0, pValue*(double)testCount);
 	}
 
-	private List<String> getTopGenes(List<String> geneList, double[] fc, int nGenes) {
+	private double[] getTopGenes(List<String> geneList, double[] fc, int nGenes) {
 		// Sort
 		Integer[] sortedFC = MatrixUtils.indexSort(fc, fc.length, true);
 
@@ -369,18 +369,15 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			}
 		}
 		*/
+		double[] returnFC = new double[nGenes];
 		List<String> newGeneList = new ArrayList<String>();
-		if (geneList == null) {
-			for (int topGene = 0; topGene < nGenes; topGene++) {
-				System.out.println(getRowLabel(sortedFC[sortedFC.length-topGene-1])+" = "+fc[sortedFC[sortedFC.length-topGene-1]]);
-				newGeneList.add(getRowLabel(sortedFC[sortedFC.length-topGene-1]));
-			}
-		} else {
-			for (int topGene = 0; topGene < nGenes; topGene++) {
-				newGeneList.add(geneList.get(sortedFC[sortedFC.length-topGene-1]));
-			}
+		for (int topGene = 0; topGene < nGenes; topGene++) {
+			newGeneList.add(geneList.get(sortedFC[sortedFC.length-topGene-1]));
+			returnFC[topGene] = fc[sortedFC[sortedFC.length-topGene-1]];
 		}
-		return newGeneList;
+		geneList.clear();
+		geneList.addAll(newGeneList);
+		return returnFC;
 	}
 
 	// Calculate the FDR using Benjamini Hochberg

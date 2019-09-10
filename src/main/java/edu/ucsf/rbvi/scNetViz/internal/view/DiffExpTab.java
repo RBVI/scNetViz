@@ -67,7 +67,7 @@ public class DiffExpTab extends JPanel {
 	final Map<Category, List<String>> categoryLabelMap;
 	JTable diffExpTable = null;
 
-	JTextField topGenes;
+	JTextField maxGenes;
 	JTextField fdrCutoff;
 	JTextField log2FC;
 	JCheckBox positiveOnly;
@@ -107,8 +107,6 @@ public class DiffExpTab extends JPanel {
 	}
 
 	private void init() {
-
-		
 		JPanel buttonsPanelLeft = new JPanel();
 		buttonsPanelLeft.setLayout(new BoxLayout(buttonsPanelLeft, BoxLayout.PAGE_AXIS));
 		{
@@ -228,12 +226,27 @@ public class DiffExpTab extends JPanel {
 				log2FC.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				log2FC.setMaximumSize(new Dimension(50,35));
 				settingsPanel1.add(log2FC);
-				settingsPanel1.add(Box.createRigidArea(new Dimension(5,0)));
+				settingsPanel1.add(Box.createRigidArea(new Dimension(15,0)));
+			}
+
+			{
+				JLabel maxGenesLbl = new JLabel("Max genes:");
+				maxGenesLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+				maxGenesLbl.setMaximumSize(new Dimension(65,35));
+				settingsPanel1.add(maxGenesLbl);
+			}
+			
+			{
+				maxGenes = new JTextField(manager.getSetting(SETTING.TOP_GENES));
+				maxGenes.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				maxGenes.setMaximumSize(new Dimension(50,35));
+				settingsPanel1.add(maxGenes);
 			}
 
 			settingsPanel.add(settingsPanel1);
 			settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
 
+			/*
 			{
 				JLabel orLbl = new JLabel(" OR ");
 				orLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
@@ -248,21 +261,22 @@ public class DiffExpTab extends JPanel {
 			settingsPanel2.setBorder(BorderFactory.createEtchedBorder());
 			settingsPanel2.add(Box.createRigidArea(new Dimension(5,0)));
 			{
-				JLabel topGenesLbl = new JLabel("Top n genes");
-				topGenesLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
-				topGenesLbl.setMaximumSize(new Dimension(70,35));
-				settingsPanel2.add(topGenesLbl);
+				JLabel maxGenesLbl = new JLabel("Max genes");
+				maxGenesLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+				maxGenesLbl.setMaximumSize(new Dimension(70,35));
+				settingsPanel2.add(maxGenesLbl);
 			}
 
 			{
-				topGenes = new JTextField(manager.getSetting(SETTING.TOP_GENES));
-				topGenes.setFont(new Font("SansSerif", Font.PLAIN, 10));
-				topGenes.setMaximumSize(new Dimension(50,35));
-				settingsPanel2.add(topGenes);
+				maxGenes = new JTextField(manager.getSetting(SETTING.TOP_GENES));
+				maxGenes.setFont(new Font("SansSerif", Font.PLAIN, 10));
+				maxGenes.setMaximumSize(new Dimension(50,35));
+				settingsPanel2.add(maxGenes);
 			}
 
 			settingsPanel.add(settingsPanel2);
 			settingsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			*/
 
 			{
 				positiveOnly = new JCheckBox("Positive only", 
@@ -277,27 +291,30 @@ public class DiffExpTab extends JPanel {
 				createNetwork.setFont(new Font("SansSerif", Font.BOLD, 10));
 				createNetwork.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						int topNGenes = -1;
+						int maxNGenes = -1;
 						double log2FCCutoff = 1.0;
 						double fdr = .05;
 
-						if (topGenes.getText().length() > 0)
-							topNGenes = Integer.parseInt(topGenes.getText());
+						if (maxGenes.getText().length() > 0)
+							maxNGenes = Integer.parseInt(maxGenes.getText());
 						if (log2FC.getText().length() > 0)
 							log2FCCutoff = Double.parseDouble(log2FC.getText());
 						if (fdrCutoff.getText().length() > 0)
 							fdr = Double.parseDouble(fdrCutoff.getText());
 
-						int maxGenes = Integer.parseInt(manager.getSetting(SETTING.MAX_GENES));
+						int defaultMaxGenes = Integer.parseInt(manager.getSetting(SETTING.MAX_GENES));
 						boolean posOnly = Boolean.parseBoolean(manager.getSetting(SETTING.POSITIVE_ONLY));
+
+						if (maxNGenes <= 0)
+							maxNGenes = defaultMaxGenes;
 
 						createNetwork.setEnabled(false);
 
 						// TODO: Add max genes somewhere
 						// TODO: Get the result of the network creation to support selection
 						posOnly = positiveOnly.isSelected();
-						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, fdr, log2FCCutoff, topNGenes,
-						                                               posOnly, maxGenes);
+						CreateNetworkTask task = new CreateNetworkTask(manager, diffExp, fdr, log2FCCutoff, 0,
+						                                               posOnly, maxNGenes);
 						manager.executeTasks(new TaskIterator(task));
 						createNetwork.setEnabled(true);
 					}
@@ -384,7 +401,13 @@ public class DiffExpTab extends JPanel {
 	class HeatMapTaskWrapper extends AbstractTask {
 		public void run(TaskMonitor monitor) {
 			boolean posOnly = positiveOnly.isSelected();
-			Task heatTask = new HeatMapTask(manager, currentCategory, diffExp, posOnly, -1, null);
+			double fdr = 1.00;
+			double log2FCCutoff = 1.00;
+			if (fdrCutoff.getText().length() > 0)
+				fdr = Double.parseDouble(fdrCutoff.getText());
+			if (log2FC.getText().length() > 0)
+				log2FCCutoff = Double.parseDouble(log2FC.getText());
+			Task heatTask = new HeatMapTask(manager, currentCategory, diffExp, fdr, log2FCCutoff, posOnly, -1, null);
 			insertTasksAfterCurrentTask(heatTask);
 		}
 	}

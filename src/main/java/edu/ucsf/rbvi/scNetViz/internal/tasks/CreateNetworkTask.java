@@ -84,11 +84,13 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		// Iterate over each category value
 		for (Object cat: categoryValues) {
 			// Get the genes that match our criteria
-			List<String> geneList = diffExp.getGeneList(cat, fdrCutoff, log2FCCutoff, 
-			                                            topGenes, positiveOnly, maxGenes);
+			List<String> geneList = new ArrayList<>();
+			diffExp.getGeneList(cat, fdrCutoff, log2FCCutoff, 
+			                    topGenes, positiveOnly, maxGenes, geneList);
 			if (geneList != null && geneList.size() > 0) {
 				allGenes.addAll(geneList);
 				geneMap.put(cat, geneList);
+				System.out.println("Ordered gene list for "+cat+" "+geneList);
 			} else {
 				monitor.showMessage(TaskMonitor.Level.WARN, "No genes passed the cutoff for "+category.mkLabel(cat));
 			}
@@ -101,7 +103,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 
 		// Create the union network
 		// Create the network
-		createStringNetwork(null, categoryRow, new ArrayList(allGenes), monitor);
+		createStringNetwork(null, categoryRow, new ArrayList<String>(allGenes), geneMap, monitor);
 
 		for (Object cat: categoryValues) {
 			List<String> geneList = geneMap.get(cat);
@@ -116,7 +118,8 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		return null;
 	}
 
-	private void createStringNetwork(Object cat, String name, List<String> geneList, TaskMonitor monitor) {
+	private void createStringNetwork(Object cat, String name, List<String> geneList, 
+	                                 Map<Object, List<String>> geneMap, TaskMonitor monitor) {
 		monitor.setTitle("Retrieving STRING network for: "+name);
 		monitor.showMessage(TaskMonitor.Level.INFO, "Retrieving STRING network for: "+name);
 		Map<String, Object> args = new HashMap<>();
@@ -125,7 +128,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("limit", "0");
 		args.put("includesViruses", "false");
 		manager.executeCommand("string", "protein query", args, 
-		                       new RenameNetwork(diffExp, cat, name, geneList, false, monitor), true);
+		                       new RenameNetwork(diffExp, cat, name, geneList, geneMap, false, monitor), true);
 		cyEventHelper.flushPayloadEvents();
 	}
 
@@ -137,7 +140,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("networkName", name);
 		args.put("source", "SUID:"+unionNetwork.getSUID());
 		manager.executeCommand("network", "create", args,
-		                       new RenameNetwork(diffExp, cat, name, geneList, false, monitor), true);
+		                       new RenameNetwork(diffExp, cat, name, geneList, null, false, monitor), true);
 	}
 
 	private String listToString(List<String> list, String prefix) {
@@ -156,15 +159,18 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		boolean getEnrichment = false;
 		Object cat = null;
 		final TaskMonitor monitor;
+		final Map<Object, List<String>> geneMap;
 
 		public RenameNetwork(final DifferentialExpression diffExp, Object cat, String newName, 
-		                     List<String> geneList, boolean getEnrichment, final TaskMonitor monitor) {
+		                     final List<String> geneList, final Map<Object, List<String>> geneMap,
+		                     boolean getEnrichment, final TaskMonitor monitor) {
 			this.name = newName;
 			this.cat = cat;
 			this.geneList = geneList;
 			this.diffExp = diffExp;
 			this.monitor = monitor;
 			this.getEnrichment = getEnrichment;
+			this.geneMap = geneMap;
 		}
 
 		public void allFinished(FinishStatus status) {}
@@ -248,9 +254,12 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 				ModelUtils.addNetworkColumns(manager, network);
 				ModelUtils.updateNetworkData(manager, network, experiment, category, null);
 				for (Object cat1: categoryValues) {
+					List<String> sortedList = geneMap.get(cat1);
+
 					ModelUtils.createDEColumns(manager, network, diffExp, category.mkLabel(cat1));
 					// Add the data
-					ModelUtils.updateDEData(manager, network, geneList, diffExp, category.mkLabel(cat1));
+					ModelUtils.updateDEData(manager, network, geneList, diffExp, category.mkLabel(cat1), sortedList);
+
 				}
 				// Task resultsPanelTask = new ShowResultsPanelTask(manager, experiment);
 				// manager.executeTasks(new TaskIterator(resultsPanelTask));
