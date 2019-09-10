@@ -237,7 +237,7 @@ public class DiffExpTab extends JPanel {
 			}
 			
 			{
-				maxGenes = new JTextField(manager.getSetting(SETTING.TOP_GENES));
+				maxGenes = new JTextField(manager.getSetting(SETTING.MAX_GENES));
 				maxGenes.setFont(new Font("SansSerif", Font.PLAIN, 10));
 				maxGenes.setMaximumSize(new Dimension(50,35));
 				settingsPanel1.add(maxGenes);

@@ -39,16 +39,21 @@ public class ProcessAllTask extends AbstractTask implements TaskObserver {
 			return;
 		}
 
-		int defaultRow = defaultCategory.getDefaultRow();
-		if (defaultRow == -1) {
-			monitor.showMessage(TaskMonitor.Level.ERROR, "No default row for this category");
-			return;
-		}
+		double logFC = 0.5;
+		if (haveSetting(SETTING.DE_FC_CUTOFF))
+			logFC =	Double.parseDouble(manager.getSetting(SETTING.DE_FC_CUTOFF));
+		double dDRThreshold = 0.1;
+		if (haveSetting(SETTING.DE_MIN_PCT_CUTOFF))
+			dDRThreshold = Double.parseDouble(manager.getSetting(SETTING.DE_MIN_PCT_CUTOFF))/100.0;
 
-		defaultCategory.setSelectedRow(defaultRow);
-
-		TaskIterator ti = new TaskIterator(new CalculateDETask(manager, defaultCategory, 0.1, 0.5));
+		TaskIterator ti = new TaskIterator(new CalculateDETask(manager, defaultCategory, dDRThreshold, logFC));
 		manager.executeTasks(ti, this);
+	}
+
+	private boolean haveSetting(SETTING setting) {
+		if (manager.getSetting(setting) != null && manager.getSetting(setting).length() > 0)
+			return true;
+		return false;
 	}
 
 	@Override
@@ -61,13 +66,10 @@ public class ProcessAllTask extends AbstractTask implements TaskObserver {
 			DifferentialExpression diffExp = obsTask.getResults(DifferentialExpression.class);
 			double pValue = Double.parseDouble(manager.getSetting(SETTING.NET_PV_CUTOFF));
 			double log2FCCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_FC_CUTOFF));
-			int topGenes = -1;
-			if (manager.getSetting(SETTING.TOP_GENES) != "")
-				topGenes = Integer.parseInt(manager.getSetting(SETTING.TOP_GENES));
 			int maxGenes = Integer.parseInt(manager.getSetting(SETTING.MAX_GENES));
 			boolean positiveOnly = Boolean.parseBoolean(manager.getSetting(SETTING.POSITIVE_ONLY));
 			// TODO: use a reasonable default for maxGenes: 500?
-			TaskIterator ti = new TaskIterator(new CreateNetworkTask(manager, diffExp, pValue, log2FCCutoff, topGenes, positiveOnly, maxGenes));
+			TaskIterator ti = new TaskIterator(new CreateNetworkTask(manager, diffExp, pValue, log2FCCutoff, maxGenes, positiveOnly, maxGenes));
 			manager.executeTasks(ti);
 		}
 	}

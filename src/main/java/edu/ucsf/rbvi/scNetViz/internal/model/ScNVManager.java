@@ -14,6 +14,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -60,6 +63,7 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 	final CyServiceRegistrar registrar; 
 	final ScNVSettings settings;
 	private ScNVCytoPanel cytoPanel;
+	private Icon scNetVizIcon;
 
 	public final static String APP_NAME = "edu.ucsf.rbvi.scNetViz";
 	public final static String CATEGORIES = "categories";
@@ -78,6 +82,7 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 		this.taskManager = registrar.getService(TaskManager.class);
 		this.syncTaskManager = registrar.getService(SynchronousTaskManager.class);
 		settings = new ScNVSettings();
+		scNetVizIcon = new ImageIcon(getClass().getResource("/images/scNetViz.png"));
 
 		registrar.registerService(this, SessionAboutToBeSavedListener.class, new Properties());
 		registrar.registerService(this, SessionLoadedListener.class, new Properties());
@@ -166,6 +171,8 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 	public void setCytoPanel(ScNVCytoPanel panel) {
 		this.cytoPanel = panel;
 	}
+
+	public Icon getIcon() { return scNetVizIcon; }
 
 	public ScNVCytoPanel getCytoPanel() { return this.cytoPanel; }
 

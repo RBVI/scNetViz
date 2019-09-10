@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -129,8 +130,11 @@ public class ScNVCytoPanel extends JPanel
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 		mainPanel.add(createViewPanel());
+		mainPanel.add(Box.createVerticalGlue());
 		mainPanel.add(createComparisonPanel());
+		mainPanel.add(Box.createVerticalGlue());
 		mainPanel.add(createEnrichmentPanel());
+		mainPanel.add(Box.createVerticalGlue());
 		// TODO: add a heat map for currently selected nodes
 		// mainPanel.add(createHeatMapPanel());
 		JScrollPane scrollPane = new JScrollPane(mainPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -190,7 +194,7 @@ public class ScNVCytoPanel extends JPanel
 	@Override
 	public Icon getIcon() {
 		// TODO Auto-generated method stub
-		return null;
+		return manager.getIcon();
 	}
 
 	@Override
@@ -238,26 +242,32 @@ public class ScNVCytoPanel extends JPanel
 
 	private JPanel createViewPanel() {
 		JPanel viewPanel = new JPanel();
-		Dimension size = new Dimension(200,25);
+		Dimension size = new Dimension(150,25);
 		viewPanel.setLayout(new BoxLayout(viewPanel, BoxLayout.PAGE_AXIS));
-		viewPanel.add(Box.createHorizontalGlue());
-		Map<String, Task> menuMap = new LinkedHashMap<>();
-		menuMap.put("TPM Table", new ShowExperimentTableTask(manager, experiment, "tpmTable"));
-		menuMap.put("Category Table", new ShowExperimentTableTask(manager, experiment, "catTable"));
-		menuMap.put("DE Table", new ShowExperimentTableTask(manager, experiment, "DETable"));
-		PullDownMenu tableMenu = new PullDownMenu(manager, "Tables", menuMap, null);
-		tableMenu.setPreferredSize(size);
-		tableMenu.setMaximumSize(size);
-		tableMenu.setMinimumSize(size);
-		viewPanel.add(tableMenu);
+		viewPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+		{
+			JPanel panel = new JPanel(new GridLayout(2,1));
+			panel.setMaximumSize(new Dimension(225,60));
+			Map<String, Task> menuMap = new LinkedHashMap<>();
+			menuMap.put("TPM Table", new ShowExperimentTableTask(manager, experiment, "tpmTable"));
+			menuMap.put("Category Table", new ShowExperimentTableTask(manager, experiment, "catTable"));
+			menuMap.put("DE Table", new ShowExperimentTableTask(manager, experiment, "DETable"));
+			PullDownMenu tableMenu = new PullDownMenu(manager, "Tables", menuMap, null);
+			tableMenu.setPreferredSize(size);
+			tableMenu.setMaximumSize(size);
+			tableMenu.setMinimumSize(size);
+			panel.add(tableMenu);
 
-		plotMenu = new PullDownMenu(manager, "Plots", getPlotMap(), null);
-		plotMenu.setPreferredSize(size);
-		plotMenu.setMaximumSize(size);
-		plotMenu.setMinimumSize(size);
-		viewPanel.add(plotMenu);
-		// viewPanel.add(Box.createHorizontalGlue());
+			plotMenu = new PullDownMenu(manager, "Plots", getPlotMap(), null);
+			plotMenu.setPreferredSize(size);
+			plotMenu.setMaximumSize(size);
+			plotMenu.setMinimumSize(size);
+			panel.add(plotMenu);
+			viewPanel.add(panel);
+		}
+		viewPanel.add(Box.createHorizontalGlue());
 		viewPanel.add(Box.createVerticalGlue());
+
 		return new CollapsablePanel(iconFont, "View", viewPanel, false);
 	}
 
@@ -280,23 +290,16 @@ public class ScNVCytoPanel extends JPanel
 			{
 				JPanel panel = new JPanel();
 				panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-				// JPanel panel = new JPanel();
-				// panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-				// panel.add(Box.createRigidArea(new Dimension(5,0)));
 				panel.add(Box.createHorizontalGlue());
 
 				List<String> labels = new ArrayList<>();
 				for (List<String> lbl: categoryLabelMap.values())
 					labels.addAll(lbl);
 
-				// int selectedRow = currentCategory.getSelectedRow();
-				// String selectedLabel = categoryLabelMap.get(currentCategory).get(selectedRow);
-
 				JComboBox<String> categoryBox = 
 					new JComboBox<String>(labels.toArray(new String[1]));
 
 				String categoryRow = ModelUtils.getCategoryRowFromNetwork(manager, network);
-				System.out.println("CurrentCategoryColumn="+categoryRow);
 
 				categoryBox.setSelectedItem(categoryRow);
 
@@ -308,7 +311,6 @@ public class ScNVCytoPanel extends JPanel
 				categoryBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 				panel.add(categoryBox);
 				panel.add(Box.createHorizontalGlue());
-				// panel.add(Box.createHorizontalGlue());
 				panel.add(Box.createRigidArea(new Dimension(5,0)));
 
 				JComboBox comparison = new JComboBox(getComparisons());
@@ -323,24 +325,38 @@ public class ScNVCytoPanel extends JPanel
 				comparison.setAlignmentX(Component.LEFT_ALIGNMENT);
 				panel.add(comparison);
 				comparePanel.add(panel);
-				// panel.add(Box.createHorizontalGlue());
 			}
 
-			pValue = ViewUtils.addLabeledField(comparePanel, "pValue:", 
-			                                   manager.getSetting(SETTING.NET_PV_CUTOFF));
-			log2FC = ViewUtils.addLabeledField(comparePanel, "log2FC:", 
-			                                   manager.getSetting(SETTING.NET_FC_CUTOFF));
-			/*
-			topNGenes = ViewUtils.addLabeledField(comparePanel, "Max genes:", 
-			                                      manager.getSetting(SETTING.TOP_GENES));
-			*/
-			maxGenes = ViewUtils.addLabeledField(comparePanel, "Max genes:", 
-			                                     manager.getSetting(SETTING.MAX_GENES));
-			comparePanel.add(ViewUtils.addJCheckBox(this, "Positive only", "positiveOnlyComp", positiveOnly));
-			comparePanel.add(ViewUtils.addButton(this, "Create Networks", "createNetworks"));
-			// comparePanel.add(Box.createRigidArea(new Dimension(0, 15)));
-			// comparePanel.add(ViewUtils.addButton(this, "View Heatmap", "viewHeatmap"));
-			// comparePanel.add(ViewUtils.addButton(this, "View Violin Plot", "viewViolin"));
+			{
+				JPanel panel = new JPanel();
+				panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+				{
+					JPanel lblPanel = new JPanel(new GridLayout(1,1));
+					JLabel lbl = new JLabel("Cutoffs:");
+					lbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+					lblPanel.add(lbl);
+					lblPanel.setBorder(BorderFactory.createEmptyBorder(5,5,0,0));
+					panel.add(lblPanel);
+				}
+				{
+					JPanel innerPanel = new JPanel();
+					innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.PAGE_AXIS));
+
+					pValue = ViewUtils.addLabeledField(innerPanel, "FDR:", 
+					                                   manager.getSetting(SETTING.NET_PV_CUTOFF));
+					log2FC = ViewUtils.addLabeledField(innerPanel, "log2FC:", 
+					                                   manager.getSetting(SETTING.NET_FC_CUTOFF));
+					maxGenes = ViewUtils.addLabeledField(innerPanel, "Max genes:", 
+					                                     manager.getSetting(SETTING.MAX_GENES));
+					innerPanel.add(ViewUtils.addJCheckBox(this, "Positive only", "positiveOnlyComp", positiveOnly));
+					innerPanel.add(ViewUtils.addButton(this, "Create Networks", "createNetworks"));
+					panel.add(innerPanel);
+					panel.add(Box.createHorizontalGlue());
+					panel.add(Box.createVerticalGlue());
+				}
+
+				comparePanel.add(panel);
+			}
 		}
 
 		return new CollapsablePanel(iconFont, "Reanalyze", comparePanel, false);
@@ -350,30 +366,35 @@ public class ScNVCytoPanel extends JPanel
 		JPanel enrichmentPanel = new JPanel();
 		enrichmentPanel.setLayout(new BoxLayout(enrichmentPanel, BoxLayout.PAGE_AXIS));
 		{
+			JPanel panel = new JPanel(new GridLayout(5,1));
+
 			ButtonGroup group = new ButtonGroup();
-			enrichmentPanel.add(ViewUtils.addRadioButton(this, group,
-			                                             "Entire network", ModelUtils.ENTIRE_NETWORK, true));
-			enrichmentPanel.add(ViewUtils.addRadioButton(this, group,
-			                                             "Positive only", ModelUtils.POSITIVE_ONLY, false));
-			enrichmentPanel.add(ViewUtils.addRadioButton(this, group,
-			                                             "Negative only", ModelUtils.NEGATIVE_ONLY, false));
-			enrichmentPanel.add(ViewUtils.addRadioButton(this, group,
-			                                             "Selected only", ModelUtils.SELECTED_ONLY, false));
-			FDRCutoff = ViewUtils.addLabeledField(enrichmentPanel, "FDR cutoff:", "0.05");
+			panel.add(ViewUtils.addRadioButton(this, group,
+			                                   "Entire network", ModelUtils.ENTIRE_NETWORK, true));
+			panel.add(ViewUtils.addRadioButton(this, group,
+			                                   "Positive only", ModelUtils.POSITIVE_ONLY, false));
+			panel.add(ViewUtils.addRadioButton(this, group,
+			                                   "Negative only", ModelUtils.NEGATIVE_ONLY, false));
+			panel.add(ViewUtils.addRadioButton(this, group,
+			                                   "Selected only", ModelUtils.SELECTED_ONLY, false));
+			FDRCutoff = ViewUtils.addLabeledField(panel, "FDR cutoff:", "0.05");
 
+			panel.setBorder(BorderFactory.createEmptyBorder(0,30,5,0));
+			enrichmentPanel.add(panel);
 			enrichmentPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-			{
-				JPanel panel = new JPanel();
-				panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-				// panel.add(Box.createRigidArea(new Dimension(5,0)));
-				panel.add(Box.createHorizontalGlue());
-				panel.add(ViewUtils.addButton(this, "Retrieve Table", "getEnrichment"));
-				panel.add(Box.createHorizontalGlue());
-				enrichmentPanel.add(panel);
-			}
-			enrichmentPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-
 		}
+		{
+			JPanel panel = new JPanel();
+			panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+			panel.add(Box.createRigidArea(new Dimension(15,0)));
+			// panel.add(Box.createHorizontalGlue());
+			panel.add(ViewUtils.addButton(this, "Retrieve Table", "getEnrichment"));
+			// panel.add(Box.createHorizontalGlue());
+			panel.add(Box.createRigidArea(new Dimension(10,0)));
+			enrichmentPanel.add(panel);
+		}
+		enrichmentPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+		enrichmentPanel.add(Box.createHorizontalGlue());
 
 		return new CollapsablePanel(iconFont, "Get Enrichment", enrichmentPanel, false);
 	}

@@ -73,11 +73,12 @@ public class ViewUtils {
 	public static JTextField addLabeledField(JPanel container, String label, String defaultValue) {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-		panel.add(Box.createHorizontalGlue());
+		// panel.add(Box.createHorizontalGlue());
+		panel.add(Box.createRigidArea(new Dimension(15,0)));
 
 		JLabel jlabel = new JLabel(label);
 		jlabel.setFont(new Font("SansSerif", Font.BOLD, FONT_SIZE));
-		jlabel.setMaximumSize(new Dimension(100,35));
+		jlabel.setMaximumSize(new Dimension(80,35));
 		panel.add(jlabel);
 
 		JTextField field = new JTextField(defaultValue);
@@ -95,7 +96,8 @@ public class ViewUtils {
 	                                  String command, boolean selected) {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-		panel.add(Box.createHorizontalGlue());
+		// panel.add(Box.createHorizontalGlue());
+		panel.add(Box.createRigidArea(new Dimension(15,0)));
 
 		JCheckBox checkBox = new JCheckBox(label, selected);
 		checkBox.setHorizontalTextPosition(SwingConstants.LEFT);

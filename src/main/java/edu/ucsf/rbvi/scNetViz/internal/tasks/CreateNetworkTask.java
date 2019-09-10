@@ -90,7 +90,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			if (geneList != null && geneList.size() > 0) {
 				allGenes.addAll(geneList);
 				geneMap.put(cat, geneList);
-				System.out.println("Ordered gene list for "+cat+" "+geneList);
+				// System.out.println("Ordered gene list for "+cat+" "+geneList);
 			} else {
 				monitor.showMessage(TaskMonitor.Level.WARN, "No genes passed the cutoff for "+category.mkLabel(cat));
 			}

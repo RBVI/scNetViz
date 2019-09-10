@@ -67,11 +67,6 @@ public class SettingsTask extends AbstractTask {
 		super();
 		this.manager = manager;
 		maxGenes = Integer.parseInt(manager.getSetting(SETTING.MAX_GENES));
-		String strTopGenes = manager.getSetting(SETTING.TOP_GENES);
-		if (strTopGenes == null || strTopGenes.length() == 0)
-			topGenes = 0;
-		else
-			topGenes = Integer.parseInt(manager.getSetting(SETTING.TOP_GENES));
 		deLogFCCutoff = Double.parseDouble(manager.getSetting(SETTING.DE_FC_CUTOFF));
 		deMinPctCutoff = Double.parseDouble(manager.getSetting(SETTING.DE_MIN_PCT_CUTOFF));
 		netPvCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_PV_CUTOFF));
@@ -88,11 +83,6 @@ public class SettingsTask extends AbstractTask {
 	public void run(TaskMonitor monitor) {
 		// Update all of our values
 		manager.setSetting(SETTING.MAX_GENES, maxGenes);
-
-		if (topGenes == 0)
-			manager.setSetting(SETTING.TOP_GENES, "");
-		else
-			manager.setSetting(SETTING.TOP_GENES, topGenes);
 
 		manager.setSetting(SETTING.DE_FC_CUTOFF, deLogFCCutoff);
 		manager.setSetting(SETTING.DE_MIN_PCT_CUTOFF, deMinPctCutoff);

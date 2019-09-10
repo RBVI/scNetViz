@@ -46,9 +46,6 @@ public class CreateNetworkCommandTask extends AbstractTask {
 	@Tunable (description="Log2FC cutoff")
 	public double log2FCCutoff;
 
-	@Tunable (description="Number of top genes (alternative to pValue & Log2FC filters") 
-	public int topGenes;
-
 	@Tunable (description="The maximum number of genes")
 	public int maxGenes;
 
@@ -62,8 +59,6 @@ public class CreateNetworkCommandTask extends AbstractTask {
 		accession = new ListSingleSelection<>(manager.getExperiments());
 		fdrCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_PV_CUTOFF));
 		log2FCCutoff = Double.parseDouble(manager.getSetting(SETTING.NET_FC_CUTOFF));
-		if (manager.getSetting(SETTING.TOP_GENES) != "")
-			topGenes = Integer.parseInt(manager.getSetting(SETTING.TOP_GENES));
 		maxGenes = Integer.parseInt(manager.getSetting(SETTING.MAX_GENES));
 		positiveOnly = Boolean.parseBoolean(manager.getSetting(SETTING.POSITIVE_ONLY));
 	}
@@ -79,6 +74,6 @@ public class CreateNetworkCommandTask extends AbstractTask {
 			}
 		}
 
-		insertTasksAfterCurrentTask(new CreateNetworkTask(manager, diffExp, fdrCutoff, log2FCCutoff, topGenes, positiveOnly, maxGenes));
+		insertTasksAfterCurrentTask(new CreateNetworkTask(manager, diffExp, fdrCutoff, log2FCCutoff, maxGenes, positiveOnly, maxGenes));
 	}
 }
