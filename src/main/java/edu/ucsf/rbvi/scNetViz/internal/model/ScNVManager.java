@@ -294,11 +294,13 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 		}
 
 		CyNetwork network = getService(CyApplicationManager.class).getCurrentNetwork();
-		Experiment exp = ModelUtils.getExperimentFromNetwork(this, network);
-		if (exp != null) {
-			// Now, show the results panel
-			Task resultsPanelTask = new ShowResultsPanelTask(this, exp);
-			executeTasks(new TaskIterator(resultsPanelTask));
+		if (network != null) {
+			Experiment exp = ModelUtils.getExperimentFromNetwork(this, network);
+			if (exp != null) {
+				// Now, show the results panel
+				Task resultsPanelTask = new ShowResultsPanelTask(this, exp);
+				executeTasks(new TaskIterator(resultsPanelTask));
+			}
 		}
 	}
 

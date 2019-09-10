@@ -112,6 +112,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			int pVColumn = getColumn(cat, "pValue");
 			int fdrColumn = getColumn(cat, "FDR");
 
+			// System.out.println("gerColumn = "+gerColumn+", pVColumn = "+pVColumn+", fdrColumn = "+fdrColumn);
+
 			for (int row = 0; row < nRows; row++) {
 				// System.out.println("log2FC = "+getDoubleValue(row, gerColumn)+", pValue = "+getDoubleValue(row, pVColumn));
 				logGer[row] = getDoubleValue(row, gerColumn-1);
@@ -325,7 +327,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 
 	private int getColumn(Object cat, String lbl) {
 		String colName = category.mkLabel(cat)+" "+lbl;
-		for (int col = 1; col < nCols; col++) {
+		for (int col = 1; col <= nCols; col++) {
 			if (colName.equals(getColumnLabel(col)))
 				return col;
 		}

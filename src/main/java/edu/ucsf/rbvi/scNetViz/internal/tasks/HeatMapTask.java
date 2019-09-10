@@ -57,7 +57,7 @@ public class HeatMapTask extends AbstractTask {
 
 		this.geneNames = diffExp.getRowLabels();
 		this.dataMap = null;
-		this.columnOrder = null;
+		this.columnOrder = new ArrayList<>();
 	}
 
 	public HeatMapTask(final ScNVManager manager, final Category currentCategory, final List<String> rowLabels,
@@ -96,7 +96,8 @@ public class HeatMapTask extends AbstractTask {
 
 		// Get our column labels
 		String columnLabels = null;
-		for (String column: dataMap.keySet()) {
+		for (String column: columnOrder) {
+			System.out.println("Column: "+column);
 			if (columnLabels == null)
 				columnLabels = column;
 			else
@@ -174,6 +175,7 @@ public class HeatMapTask extends AbstractTask {
 			if (fc == null) continue;
 
 			String column = category.mkLabel(cat);
+			columnOrder.add(column);
 
 			if (selectedColumn != null && !column.equals(selectedColumn))
 				continue;
