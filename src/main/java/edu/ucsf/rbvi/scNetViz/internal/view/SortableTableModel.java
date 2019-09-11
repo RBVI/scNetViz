@@ -24,15 +24,17 @@ public abstract class SortableTableModel extends AbstractTableModel {
 	abstract public void setSelectedRow(int selectedRow);
 
 	public void sortColumns(int row) {
-		Integer tmpIndex[] = new Integer[getColumnCount()];
+		Integer tmpIndex[] = new Integer[getColumnCount()-hdrCols];
 		columnIndex = null;
-		for (int i = 0; i < getColumnCount(); i++) 
+		for (int i = 0; i < getColumnCount()-hdrCols; i++) 
 			tmpIndex[i] = i;
 		IndexSorter sorter = new IndexSorter(this, row, hdrCols);
 		Arrays.sort(tmpIndex, sorter);
 		columnIndex = tmpIndex;
-		// for (int i = 0; i < getColumnCount(); i++) {
+		// for (int i = 0; i < getColumnCount()-hdrCols; i++) {
+		// 	System.out.println("i = "+i+" columnIndex[i] = "+columnIndex[i]);
 		// 	System.out.println(getColumnName(i));
+		// 	System.out.println(getValueAt(row,i));
 		// }
 
 		fireTableChanged(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
@@ -59,10 +61,10 @@ public abstract class SortableTableModel extends AbstractTableModel {
 		}
 
 		public int compare(Integer o1, Integer o2) {
-			if (o1 < hdrCols || o2 < hdrCols) 
-				return o1.compareTo(o2);
-			Object v1 = tableModel.getValueAt(row, o1);
-			Object v2 = tableModel.getValueAt(row, o2);
+			// if (o1 < hdrCols || o2 < hdrCols) 
+			// 	return o1.compareTo(o2);
+			Object v1 = tableModel.getValueAt(row, o1+hdrCols);
+			Object v2 = tableModel.getValueAt(row, o2+hdrCols);
 			if (lastDirection < 0) {
 				Object tmp = v2;
 				v2 = v1; v1 = tmp;
