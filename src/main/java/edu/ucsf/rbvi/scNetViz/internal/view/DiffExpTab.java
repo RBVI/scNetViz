@@ -369,7 +369,7 @@ public class DiffExpTab extends JPanel {
 
 		SortableTableModel tableModel = diffExp.getTableModel();
 
-		diffExpTable = new SimpleTable(manager, tableModel);
+		diffExpTable = new SimpleTable(manager, tableModel, false, "http://www.ensembl.org/Multi/Search/Results?q=%s");
 		diffExpTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		diffExpTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent event) {

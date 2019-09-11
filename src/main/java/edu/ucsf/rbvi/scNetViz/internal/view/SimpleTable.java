@@ -19,6 +19,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
+import org.cytoscape.util.swing.OpenBrowser;
+
 import edu.ucsf.rbvi.scNetViz.internal.api.PercentDouble;
 import edu.ucsf.rbvi.scNetViz.internal.api.MyDouble;
 import edu.ucsf.rbvi.scNetViz.internal.api.PValueDouble;
@@ -28,14 +30,22 @@ public class SimpleTable extends JTable {
 	final ScNVManager manager;
 	final SortableTableModel tableModel;
 	final SimpleTable thisComponent;
+	final boolean sortable;
+	final String link;
 
 	static Color alternateColor = new Color(234,255,234);
 
 	public SimpleTable (final ScNVManager manager, final SortableTableModel tableModel) {
+		this(manager, tableModel, false, null);
+	}
+	public SimpleTable (final ScNVManager manager, final SortableTableModel tableModel, 
+	                    final boolean sortable, final String link) {
 		super(tableModel);
 		this.manager = manager;
 		this.tableModel = tableModel;
 		this.thisComponent = this;
+		this.sortable = sortable;
+		this.link = link;
 
 		this.setAutoCreateRowSorter(true);
 		this.setAutoCreateColumnsFromModel(true);
@@ -66,7 +76,14 @@ public class SimpleTable extends JTable {
 				int col = table.columnAtPoint(point);
 				if (col != 0) return;
 				if (mouseEvent.getClickCount() == 2 && table.getSelectedRow() != -1) {
-					tableModel.sortColumns(row);
+					if (sortable) {
+						tableModel.sortColumns(row);
+					} else if (link != null) {
+						int modelRow = convertRowIndexToModel(row);
+						String url = String.format(link, tableModel.getValueAt(modelRow, 0));
+						OpenBrowser openBrowser = manager.getService(OpenBrowser.class);
+						openBrowser.openURL(url);
+					}
 				}
 			}
 		});
