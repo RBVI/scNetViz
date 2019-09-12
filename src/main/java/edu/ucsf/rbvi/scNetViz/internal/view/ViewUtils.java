@@ -153,9 +153,11 @@ public class ViewUtils {
 				if (sortedKeys.contains("unused"))
 					sortedKeys.remove("unused");
 
+				/*
 				for (Object key: catMap.keySet()) {
 					System.out.println("Key "+key.toString()+" is type "+key.getClass().getName());
 				}
+				*/
 				Collections.sort(sortedKeys);
 
 				for (Object key: sortedKeys) {

@@ -97,7 +97,7 @@ public class HeatMapTask extends AbstractTask {
 		// Get our column labels
 		String columnLabels = null;
 		for (String column: columnOrder) {
-			System.out.println("Column: "+column);
+			// System.out.println("Column: "+column);
 			if (columnLabels == null)
 				columnLabels = column;
 			else

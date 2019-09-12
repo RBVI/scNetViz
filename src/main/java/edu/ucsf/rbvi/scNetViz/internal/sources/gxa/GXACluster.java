@@ -205,8 +205,8 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	}
 
 	public int getRowForK(int k) {
-		for (int row = 0; row < k; row++) {
-			if ((Integer)getValue(row, 1) == k)
+		for (int row = 0; row < nRows; row++) {
+			if ((Integer)getValue(row, 0) == k)
 				return row;
 		}
 		return -1;
@@ -220,7 +220,6 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		GXACluster cluster =  getClusterFromCSV(scManager, experiment, input, null);
 		if (jsonCategory.containsKey("suggested K")) {
 			cluster.suggestedK = ((Long)jsonCategory.get("suggested K")).intValue();
-			// Fix me
 			cluster.selectedRow = cluster.getRowForK(cluster.suggestedK);
 		}
 		return cluster;
