@@ -239,10 +239,15 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void setColumnTable(List<String[]> colTable) {
 		this.colTable = colTable;
 		if (colTable != null) {
-			if (colTable.get(0).length <= columnKey)
+			if (colTable.get(0).length <= columnKey) {
 				colLabels = getLabels(colTable, colTable.get(0).length-1);
-			else
+				colLabels.add(0, "");
+				// System.out.println("got column labels(1): "+colLabels);
+			} else {
 				colLabels = getLabels(colTable, columnKey);
+				colLabels.add(0, "");
+				// System.out.println("got column labels(2): "+colLabels);
+			}
 		}
 	}
 

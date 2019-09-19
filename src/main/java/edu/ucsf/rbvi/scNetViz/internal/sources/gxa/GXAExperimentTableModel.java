@@ -36,9 +36,9 @@ public class GXAExperimentTableModel extends SortableTableModel {
 			return matrixMarket.isTransposed() ? "Barcodes" : "Genes";
 		}
 		if (columnIndex != null) {
-			return matrixMarket.getColumnLabel(columnIndex[column-1]);
+			return matrixMarket.getColumnLabel(columnIndex[column]);
 		}
-		return matrixMarket.getColumnLabel(column-1);
+		return matrixMarket.getColumnLabel(column);
 	}
 
 	@Override
