@@ -84,7 +84,7 @@ public class tSNETask extends AbstractEmbeddingTask implements ObservableTask {
 		long start = System.currentTimeMillis();
 		
 		// TODO: Expose filter criteria
-		Xin = MatrixOps.reduceMatrix(Xin, rowLabels, colLabels, 1, 1);
+		Xin = MatrixOps.reduceMatrix(Xin, rowLabels, colLabels, 100, 1);
 
 		// System.out.println("New size = "+Xin.length+"X"+Xin[0].length);
 		// MatrixOps.debug("/tmp/reducedMatrix", MatrixOps.doubleArrayToPrintString(rowLabels, Xin, false));

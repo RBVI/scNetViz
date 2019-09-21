@@ -142,7 +142,9 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 					mtdcMap.put(key, (double[])meansMap.get(key).get("mtdc"));
 				}
 			}
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		countMap.put("Total", totalCount); // Remember the total counts for each gene
 		lastCategory = category;
@@ -158,6 +160,8 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		int[] catCount = new int[geneRows];
 		double[] catMTDC = new double[geneRows];
 
+		// System.out.println("Category: "+key+": "+arrays);
+
 		int rowNumber = 0;
 		for (int row = 0; row < rowCount; row++) {
 			if (excludeRows.get(row))
@@ -172,7 +176,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 				} else if (iMat != null) {
 					v = (double)iMat.getIntegerValue(row, col);
 				}
-				// if (row == 0) System.out.println("v["+row+"]["+(col+1)+"] = "+v);
+				// if (row == 0) System.out.println("key: "+key+" v["+row+"]["+(col)+"] = "+v);
 				if (!Double.isNaN(v)) {
 					mean += v;
 					foundCount++;
@@ -282,6 +286,8 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		if (means == null || category != lastCategory)
 			getMeans(category);
 
+		// System.out.println("means keys = "+means.keySet());
+
 		updateMatrixInfo();
 
 		double[] logFC = new double[geneRows];
@@ -339,6 +345,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 				pValue[row] = Double.NaN;
 		}
 		Map<String, double[]> returnMap = new HashMap<>();
+		// System.out.println("logFC = ("+category1+") = "+logFC);
 		returnMap.put("logFC", logFC);
 		returnMap.put("pValue", pValue);
 		return returnMap;
@@ -425,7 +432,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 				catMap.put(v, new ArrayList<>());
 				sizes.put(v, 0);
 			}
-			catMap.get(v).add(mtxCol);
+			catMap.get(v).add(mtxCol-1);
 			sizes.put(v, sizes.get(v)+1);
 		}
 
@@ -538,7 +545,6 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		}
 
 		public Map <Object, Map <String, Object>> call() {
-			// System.out.println("Starting GetLogGER for "+cat+" "+category);
 			Map<Object, Map<String, Object>> returnMap = new HashMap<>();;
 			returnMap.put(cat, calculateMeans(cat, dMat, iMat, rowCount, totalCount));
 			// System.out.println("Finished GetLogGER for "+cat+" "+category);
@@ -561,8 +567,10 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		public Map <Object, Map <String, double[]>> call() {
 			// System.out.println("Starting GetLogGER for "+cat+" "+category);
 			Map<Object, Map<String, double[]>> returnMap = new HashMap<>();;
+			try {
 			returnMap.put(cat, getLogGER(category, cat, dDRthreshold, log2FCCutoff));
 			// System.out.println("Finished GetLogGER for "+cat+" "+category);
+			} catch (Exception e) { e.printStackTrace(); }
 			return returnMap;
 		}
 	}
