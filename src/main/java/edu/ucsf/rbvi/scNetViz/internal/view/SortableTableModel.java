@@ -24,9 +24,12 @@ public abstract class SortableTableModel extends AbstractTableModel {
 	abstract public void setSelectedRow(int selectedRow);
 
 	public void sortColumns(int row) {
+		System.out.println("sorting row: "+row);
+		System.out.println("hdrCols = "+hdrCols);
+		System.out.println("getColumnCount()-hdrCols = "+(getColumnCount()-hdrCols));
 		Integer tmpIndex[] = new Integer[getColumnCount()-hdrCols];
 		columnIndex = null;
-		for (int i = 0; i < getColumnCount()-hdrCols; i++) 
+		for (int i = 0; i < (getColumnCount()-hdrCols); i++) 
 			tmpIndex[i] = i;
 		IndexSorter sorter = new IndexSorter(this, row, hdrCols);
 		Arrays.sort(tmpIndex, sorter);
@@ -63,6 +66,8 @@ public abstract class SortableTableModel extends AbstractTableModel {
 		public int compare(Integer o1, Integer o2) {
 			// if (o1 < hdrCols || o2 < hdrCols) 
 			// 	return o1.compareTo(o2);
+			// if (true) return 0;
+			// Note: these are getting the data from the JTable, *not* the Matrix
 			Object v1 = tableModel.getValueAt(row, o1+hdrCols);
 			Object v2 = tableModel.getValueAt(row, o2+hdrCols);
 			if (lastDirection < 0) {

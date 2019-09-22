@@ -78,7 +78,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 		// Get the unsorted row labels
 		List<String> rowLabels = experiment.getMatrix().getRowLabels();
 		for (String gene: geneList) {
-			// System.out.println("Selecting gene: "+gene);
+			System.out.println("Selecting gene: "+gene);
 			int index = rowLabels.indexOf(gene);
 			index = experimentTable.convertRowIndexToView(index);
 			experimentTable.getSelectionModel().addSelectionInterval(index, index);
@@ -173,6 +173,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 				for (int row: rows) {
 					geneList.add(experimentTable.getValueAt(row, 0).toString());
 				}
+				System.out.println("geneList: "+geneList);
 				ModelUtils.selectNodes(manager, accession, geneList);
 			}
 		});

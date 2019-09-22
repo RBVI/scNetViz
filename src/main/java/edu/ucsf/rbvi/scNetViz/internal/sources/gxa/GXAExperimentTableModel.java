@@ -22,7 +22,7 @@ public class GXAExperimentTableModel extends SortableTableModel {
 	}
 
 	@Override
-	public int getColumnCount() { return matrixMarket.getNCols()+1; }
+	public int getColumnCount() { return matrixMarket.getNCols()+hdrCols; }
 
 	@Override
 	public int getSelectedRow() { return 0; }
@@ -36,7 +36,7 @@ public class GXAExperimentTableModel extends SortableTableModel {
 			return matrixMarket.isTransposed() ? "Barcodes" : "Genes";
 		}
 		if (columnIndex != null) {
-			return matrixMarket.getColumnLabel(columnIndex[column]);
+			return matrixMarket.getColumnLabel(columnIndex[column-1]);
 		}
 		return matrixMarket.getColumnLabel(column);
 	}
