@@ -131,7 +131,7 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 	public String getValue(String rowLabel, String colLabel) { 
 		int row = rowLabels.indexOf(rowLabel);
 		int col = colLabels.indexOf(colLabel);
-		return categories[row][col];
+		return categories[row][col-1];
 	}
 
 	@Override
@@ -143,11 +143,12 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		return;
 	}
 
-	public static GXADesign readDesign(ScNVManager scManager, GXAExperiment experiment, File file, JSONObject jsonCategory) throws IOException {
+	public static GXADesign readDesign(ScNVManager scManager, GXAExperiment experiment, File file, 
+	                                   JSONObject jsonCategory) throws IOException {
 		List<String[]> input = CSVReader.readCSV(null, file);
 		if (input == null || input.size() < 2) return null;
 
-		return getDesignFromCSV(scManager, experiment, input, null);
+		return getDesignFromSession(scManager, experiment, input);
 	}
 
 	public static GXADesign fetchDesign(ScNVManager scManager, String accession, 
@@ -159,20 +160,56 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		return getDesignFromCSV(scManager, experiment, input, monitor);
 	}
 
+	/**
+	 * This is just like getDesignFromCSV except we don't transpose since it's already transposed in the
+	 * session file
+	 */
+	private static GXADesign getDesignFromSession(ScNVManager scManager, GXAExperiment experiment, List<String[]> input) {
+		GXADesign gxaDesign = new GXADesign(scManager, experiment);
+		gxaDesign.nRows = input.size()-1;
+		gxaDesign.nCols = input.get(0).length;
+
+		System.out.println("nCols = "+gxaDesign.nCols+", nRows = "+gxaDesign.nRows);
+
+		gxaDesign.setColLabels(stripArray(input.get(0), 0));
+    gxaDesign.categories = new String[gxaDesign.nRows][gxaDesign.nCols];
+    List<String> rowLabels = new ArrayList<String>(gxaDesign.nRows);
+
+		boolean first = true;
+		int row = 0;
+		for (String[] line: input) {
+			if (first) {
+				first = false;
+				// System.out.println("Column header line has: "+line.length+" columns");
+				// gxaCluster.headers = line;
+				continue;
+			}
+			rowLabels.add(stripQuotes(line[0]));
+			for (int col = 1; col < gxaDesign.nCols+1; col++) {
+				gxaDesign.categories[row][col-1] = stripQuotes(line[col]);
+			}
+			row++;
+		}
+		gxaDesign.setRowLabels(rowLabels);
+		return gxaDesign;
+	}
+
 	private static GXADesign getDesignFromCSV(ScNVManager scManager, GXAExperiment experiment, List<String[]> input, TaskMonitor monitor) {
 		GXADesign gxaDesign = new GXADesign(scManager, experiment);
-		gxaDesign.nCols = input.size()-1;
+		gxaDesign.nCols = input.size();
 		gxaDesign.nRows = input.get(0).length-1;
 
 		// System.out.println("nCols = "+gxaDesign.nCols+", experiment ncols = "+experiment.getMatrix().getNCols());
+		// System.out.println("nCols = "+gxaDesign.nCols+", nRows = "+gxaDesign.nRows);
 
 		gxaDesign.setRowLabels(stripArray(input.get(0), 1));
+		// System.out.println("rowLabels = "+stripArray(input.get(0), 1));
 		gxaDesign.categories = new String[gxaDesign.nRows][gxaDesign.nCols];
 		List<String> colLabels = new ArrayList<String>(gxaDesign.nCols);
 		colLabels.add("Category");
 
 		boolean first = true;
-		int col = 0;
+		int col = 1;
 		for (String[] line: input) {
 			if (first) {
 				first = false;
