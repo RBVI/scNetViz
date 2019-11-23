@@ -91,6 +91,7 @@ public class SimpleTable extends JTable {
 		this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		ListSelectionModel selectionModel = getSelectionModel();
 
+		/*
 		selectionModel.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e) {
 				int row = thisComponent.getSelectedRow();
@@ -98,6 +99,7 @@ public class SimpleTable extends JTable {
 					tableModel.setSelectedRow(thisComponent.convertRowIndexToModel(row));
 			}
 		});
+		*/
 
 		doLayout();
 	}

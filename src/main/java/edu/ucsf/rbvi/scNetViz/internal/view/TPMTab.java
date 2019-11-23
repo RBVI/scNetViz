@@ -173,7 +173,6 @@ public class TPMTab extends JPanel implements TaskObserver {
 				for (int row: rows) {
 					geneList.add(experimentTable.getValueAt(row, 0).toString());
 				}
-				System.out.println("geneList: "+geneList);
 				ModelUtils.selectNodes(manager, accession, geneList);
 			}
 		});

@@ -323,7 +323,9 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		public int getSelectedRow() { return cluster.getSelectedRow(); }
 
 		@Override
-		public void setSelectedRow(int selectedRow) { cluster.setSelectedRow(selectedRow); }
+		public void setSelectedRow(int selectedRow) { 
+			cluster.setSelectedRow(selectedRow); 
+		}
 
 		@Override
 		public String getColumnName(int column) {
