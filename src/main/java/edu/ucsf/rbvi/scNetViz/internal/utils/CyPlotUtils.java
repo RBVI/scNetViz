@@ -55,7 +55,7 @@ public class CyPlotUtils {
 		if (zValues != null) {
 			argMap.put("zValues",zValues);
 			argMap.put("colorscale","Viridis");
-			argMap.put("editor","true");
+			argMap.put("editor","false");
 		} else {
 			argMap.put("editor","false");
 		}
@@ -74,7 +74,7 @@ public class CyPlotUtils {
 		argMap.put("rowLabels", rowLabels);
 		argMap.put("columnLabels", columnLabels);
 		argMap.put("data", data);
-		argMap.put("editor", "true");
+		argMap.put("editor", "false");
 		argMap.put("xLabel",xlabel);
 		argMap.put("yLabel",ylabel);
 		argMap.put("title",title);

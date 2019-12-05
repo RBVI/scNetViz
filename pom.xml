@@ -46,9 +46,8 @@
 						<Embed-Transitive>true</Embed-Transitive>
 						<Import-Package>*;resolution:=optional</Import-Package>
 						<Cytoscape-App-Dependencies>
-							stringApp;1.5.0,cyPlot;0.6.0,enhancedGraphics;1.4.0
+							stringApp;1.5,cyPlot;0.6.0,enhancedGraphics;1.5.0
 						</Cytoscape-App-Dependencies>
-
 					</instructions>
 				</configuration>
 			</plugin>
