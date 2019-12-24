@@ -132,7 +132,7 @@ public class ViewUtils {
 			String zValues = null;
 			if (geneRow >= 0) {
 				zValues = "{\"trace\": "+
-								CyPlotUtils.valuesToJSON((DoubleMatrix)exp.getMatrix(), geneRow)+"}";
+								CyPlotUtils.valuesToJSON((DoubleMatrix)exp.getMatrix(), geneRow, true)+"}";
 
 			}
 

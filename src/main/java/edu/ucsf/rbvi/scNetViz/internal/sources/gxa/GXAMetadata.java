@@ -7,6 +7,8 @@ import java.util.HashMap;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import edu.ucsf.rbvi.scNetViz.internal.utils.JSONUtils;
+
 import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 
 public class GXAMetadata extends HashMap<String, Object> implements Metadata {
@@ -14,10 +16,13 @@ public class GXAMetadata extends HashMap<String, Object> implements Metadata {
 	public static String CONTRASTS = "contrasts";
 	public static String ASSAYS = "assays";
 	public static String FACTORS = "factors";
+	public static String TECHTYPE = "technologyType";
+	public static String PROJECTS = "projects";
 
 	public GXAMetadata(JSONObject json) {
 		super();
-		put(TYPE,(String) json.get("experimentType"));
+		System.out.println("Metadata: "+json.toString());
+		put(TYPE,(String) json.get("rawExperimentType"));
 		put(ACCESSION,(String) json.get("experimentAccession"));
 		put(DESCRIPTION, (String) json.get("experimentDescription"));
 		put(DATE, (String) json.get("lastUpdate"));
@@ -25,12 +30,10 @@ public class GXAMetadata extends HashMap<String, Object> implements Metadata {
 		put(CONTRASTS, (Long) json.get("numberOfContrasts"));
 		put(SPECIES, (String) json.get("species"));
 		put(KINGDOM, (String) json.get("kingdom"));
+		put(TECHTYPE, JSONUtils.jsonArrayToList((JSONArray) json.get(TECHTYPE), String.class));
+		put(PROJECTS, JSONUtils.jsonArrayToList((JSONArray) json.get("experimentProjects"), String.class));
 		JSONArray factors = (JSONArray) json.get("experimentalFactors");
-		List<String> expFactors = new ArrayList<String>();
-		for (Object obj: factors) {
-			expFactors.add((String)obj);
-		}
-		put(FACTORS, expFactors);
+		put(FACTORS, JSONUtils.jsonArrayToList(factors, String.class));
 	}
 
 	public GXAMetadata() {

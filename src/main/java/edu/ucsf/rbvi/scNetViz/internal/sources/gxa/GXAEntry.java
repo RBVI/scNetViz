@@ -6,8 +6,11 @@ import java.util.List;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import edu.ucsf.rbvi.scNetViz.internal.utils.JSONUtils;
+
 public class GXAEntry {
 	String expType;
+	String expTypeRaw;
 	String expAccession;
 	String expDescription;
 	String expDate;
@@ -18,6 +21,8 @@ public class GXAEntry {
 	List<String> expFactors;
 
 	public GXAEntry(JSONObject json) {
+		System.out.println("Entry: "+json.toString());
+		expTypeRaw = (String) json.get("rawExperimentType");
 		expType = (String) json.get("experimentType");
 		expAccession = (String) json.get("experimentAccession");
 		expDescription = (String) json.get("experimentDescription");
@@ -27,13 +32,10 @@ public class GXAEntry {
 		expSpecies = (String) json.get("species");
 		expKingdom = (String) json.get("kingdom");
 		JSONArray factors = (JSONArray) json.get("experimentalFactors");
-		expFactors = new ArrayList<String>();
-		for (Object obj: factors) {
-			expFactors.add((String)obj);
-		}
+		expFactors = JSONUtils.jsonArrayToList(factors, String.class);
 	}
 
-	public String getType() { return expType; }
+	public String getType() { return expTypeRaw; }
 	public String getAccession() { return expAccession; }
 	public String getDescription() { return expDescription; }
 	public String getDate() { return expDate; }

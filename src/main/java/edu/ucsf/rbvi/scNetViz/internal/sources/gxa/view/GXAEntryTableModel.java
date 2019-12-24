@@ -13,7 +13,8 @@ import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
 public class GXAEntryTableModel extends AbstractTableModel {
 	List<Metadata> entries = null;
 
-	static String[] columnNames = {"Accession", "Loaded", "Experiment", "Cells", "Comparisons", "Organisms", "Experimental Variables"};
+	// static String[] columnNames = {"Accession", "Loaded", "Experiment", "Cells", "Comparisons", "Organisms", "Experimental Variables"};
+	static String[] columnNames = {"Accession", "Loaded", "Experiment", "Cells", "Organisms", "Experimental Variables"};
 
 	public GXAEntryTableModel (List<Metadata> entries) {
 		super();
@@ -44,11 +45,11 @@ public class GXAEntryTableModel extends AbstractTableModel {
 				return String.class;
 			case 3:
 				return Integer.class;
+			// case 4:
+			// 	return Integer.class;
 			case 4:
-				return Integer.class;
-			case 5:
 				return String.class;
-			case 6:
+			case 5:
 				return String.class;
 		}
 		return String.class;
@@ -66,11 +67,11 @@ public class GXAEntryTableModel extends AbstractTableModel {
 				return entry.get(GXAMetadata.DESCRIPTION);
 			case 3:
 				return new Integer(((Long)entry.get(GXAMetadata.ASSAYS)).intValue());
+			// case 4:
+			// 	return new Integer(((Long)entry.get(GXAMetadata.CONTRASTS)).intValue());
 			case 4:
-				return new Integer(((Long)entry.get(GXAMetadata.CONTRASTS)).intValue());
-			case 5:
 				return entry.get(GXAMetadata.SPECIES);
-			case 6:
+			case 5:
 				return nlList(entry.get(GXAMetadata.FACTORS));
 		}
 		return null;

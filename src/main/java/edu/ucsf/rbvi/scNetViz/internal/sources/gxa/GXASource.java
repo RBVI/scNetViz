@@ -119,7 +119,7 @@ public class GXASource implements Source {
 			return;
 		}
 		if (json == null) return;
-		JSONArray experiments = (JSONArray) json.get("aaData");
+		JSONArray experiments = (JSONArray) json.get("experiments");
 		for (Object exp: experiments) {
 			GXAMetadata entry = new GXAMetadata((JSONObject)exp);
 			metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);

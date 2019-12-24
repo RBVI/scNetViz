@@ -56,13 +56,14 @@ public class CyPlotUtils {
 			argMap.put("zValues",zValues);
 			argMap.put("colorscale","Viridis");
 			argMap.put("editor","false");
+			argMap.put("scaleLabel", "log(TPM)");
 		} else {
 			argMap.put("editor","false");
+			argMap.put("scaleLabel", "TPM");
 		}
 		argMap.put("title",title);
 		argMap.put("names",names);
 		argMap.put("id",accession);
-		argMap.put("scaleLabel", "TPM");
 		argMap.put("selectionString","scnetviz select accession=\""+accession+"\" cells=%s");
 		manager.executeCommand("cyplot", "scatter", argMap);
 	}
@@ -167,13 +168,13 @@ public class CyPlotUtils {
 		return builder.toString();
 	}
 
-	public static String valuesToJSON(DoubleMatrix matrix, int row) {
+	public static String valuesToJSON(DoubleMatrix matrix, int row, boolean log) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("[");
 		for (int column = 0; column < matrix.getNCols()-1; column++) {
-			builder.append(getNonNaNValue(matrix.getDoubleValue(row, column),0.0)+",");
+			builder.append(getNonNaNValue(matrix.getDoubleValue(row, column),0.0, log)+",");
 		}
-		builder.append(getNonNaNValue(matrix.getDoubleValue(row, matrix.getNCols()-1),0.0)+"]");
+		builder.append(getNonNaNValue(matrix.getDoubleValue(row, matrix.getNCols()-1),0.0, log)+"]");
 		return builder.toString();
 	}
 
@@ -207,9 +208,12 @@ public class CyPlotUtils {
 		return builder.toString();
 	}
 
-	public static double getNonNaNValue(double v, double missing) {
+	public static double getNonNaNValue(double v, double missing, boolean log) {
 		if (!Double.isNaN(v))
-			return v;
+			if (log)
+				return Math.log(v);
+			else
+				return v;
 		return missing;
 	}
 }
