@@ -183,6 +183,10 @@ public class HeatMapTask extends AbstractTask {
 			List<String> filteredGenes = new ArrayList<>();
 			double[] filteredFC = diffExp.getGeneList(cat, fdrCutoff, fcCutoff, 0, posOnly, fc.length, filteredGenes);
 
+			// System.out.println("Category = "+cat.toString());
+			// for (int i = 0; i < filteredGenes.size(); i++)
+			// 	System.out.println(filteredGenes.get(i)+"="+filteredFC[i]);
+
 			Integer[] sort = MatrixUtils.indexSort(filteredFC, filteredFC.length);
 
 			/*
@@ -225,6 +229,7 @@ public class HeatMapTask extends AbstractTask {
 
 		// Reverse the geneList
 		Collections.reverse(geneList);
+		// for (String gene: geneList) System.out.println("Gene: "+gene);
 
 		// Now we have the list of genes that we want to use 
 		Map<String, double[]> sortedData = new HashMap<>();

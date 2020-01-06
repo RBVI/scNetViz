@@ -180,7 +180,7 @@ public class HCAExperiment implements Experiment {
 					colTable.remove(0);
 
 					if (mtx != null) 
-						mtx.setColumnTable(colTable, 1);
+						mtx.setColumnTable(colTable, 0);
 				} else if (name.endsWith("genes.tsv.gz")) {
 					rowTable = CSVReader.readCSV(monitor, zipStream, name, 1);
 					if (mtx != null) 
@@ -191,7 +191,7 @@ public class HCAExperiment implements Experiment {
 						mtx.setRowTable(rowTable, 0);
 
 					if (colTable != null)
-						mtx.setColumnTable(colTable, 1);
+						mtx.setColumnTable(colTable, 0);
 
 					mtx.readMTX(monitor, zipStream, name);
 				}
