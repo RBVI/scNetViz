@@ -21,7 +21,7 @@ public class GXAEntry {
 	List<String> expFactors;
 
 	public GXAEntry(JSONObject json) {
-		System.out.println("Entry: "+json.toString());
+		// System.out.println("Entry: "+json.toString());
 		expTypeRaw = (String) json.get("rawExperimentType");
 		expType = (String) json.get("experimentType");
 		expAccession = (String) json.get("experimentAccession");

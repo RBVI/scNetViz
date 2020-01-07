@@ -158,7 +158,7 @@ public class GXAExperiment implements Experiment {
 	}
 
 	private void fetchAccession(TaskMonitor monitor, String fetchString, boolean peak) {
-		System.out.println("fetchAccession");
+		// System.out.println("fetchAccession");
 		try {
 			CloseableHttpClient httpclient = HttpClients.createDefault();
 			RequestConfig config = RequestConfig.custom()

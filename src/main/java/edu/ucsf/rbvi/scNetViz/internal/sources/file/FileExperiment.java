@@ -151,12 +151,12 @@ public class FileExperiment implements Experiment {
 
 		try {
 			if (mtxFile.isDirectory()) {
-				System.out.println("Directory");
+				// System.out.println("Directory");
 				for (File f: mtxFile.listFiles()) {
 					readFile(monitor, f, skipFirst);
 				}
 			} else if (FileUtils.isZip(mtxFile.getName())) {
-				System.out.println("Zip file");
+				// System.out.println("Zip file");
 				ZipInputStream zipStream = FileUtils.getZipInputStream(mtxFile);
 				ZipEntry entry;
 				while ((entry = zipStream.getNextEntry()) != null) {
@@ -165,11 +165,11 @@ public class FileExperiment implements Experiment {
 				}
 				zipStream.close();
 			} else if (FileUtils.isTar(mtxFile.getName())) {
-				System.out.println("Tar file");
+				// System.out.println("Tar file");
 				TarArchiveInputStream tarStream = FileUtils.getTarInputStream(mtxFile);
 				TarArchiveEntry entry;
 				while ((entry = tarStream.getNextTarEntry()) != null) {
-					System.out.println("Tar entry: "+entry.getName());
+					// System.out.println("Tar entry: "+entry.getName());
 					if (FileUtils.isGzip(entry.getName())) {
 						InputStream stream = FileUtils.getGzipStream(tarStream);
 						readFile(monitor, entry.getName(), stream, skipFirst);
@@ -333,16 +333,16 @@ public class FileExperiment implements Experiment {
 	}
 
 	private int getColumnIndex(List<String[]> table, String name) {
-		System.out.println("getColumnIndex of "+name);
-		System.out.println("getColumnIndex table size = "+table.size());
-		System.out.println("getColumnIndex table length = "+table.get(0).length);
+		// System.out.println("getColumnIndex of "+name);
+		// System.out.println("getColumnIndex table size = "+table.size());
+		// System.out.println("getColumnIndex table length = "+table.get(0).length);
 		if (table.size() > 0 && table.get(0).length == 1 && name.contains("barcodes"))
 			return 0;
 		return 1;
 	}
 
 	private int getRowIndex(List<String[]> table, String name) {
-		System.out.println("Row Table size = "+table.size());
+		// System.out.println("Row Table size = "+table.size());
 		if (table.size() > 0 && name.contains("features"))
 			return 0;
 		return 1;

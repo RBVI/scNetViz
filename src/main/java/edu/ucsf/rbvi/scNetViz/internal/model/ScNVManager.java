@@ -258,7 +258,7 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 		List<File> scNvFiles = appFiles.get(APP_NAME);
 		Map<String, File> fileMap = new HashMap<>();
 		for (File f: scNvFiles) {
-			System.out.println("File map has file: "+f.getName());
+			// System.out.println("File map has file: "+f.getName());
 			fileMap.put(f.getName(),f);
 		}
 

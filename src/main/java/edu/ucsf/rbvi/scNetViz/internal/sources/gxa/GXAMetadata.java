@@ -21,7 +21,7 @@ public class GXAMetadata extends HashMap<String, Object> implements Metadata {
 
 	public GXAMetadata(JSONObject json) {
 		super();
-		System.out.println("Metadata: "+json.toString());
+		// System.out.println("Metadata: "+json.toString());
 		put(TYPE,(String) json.get("rawExperimentType"));
 		put(ACCESSION,(String) json.get("experimentAccession"));
 		put(DESCRIPTION, (String) json.get("experimentDescription"));
