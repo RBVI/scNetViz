@@ -245,6 +245,8 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 
 	// See if we have data in the session, and load it if we do
 	public void handleEvent(SessionLoadedEvent e) {
+		System.out.println("SessionLoaded");
+
 		// First, if we have a results panel, unregister it
 		if (cytoPanel != null) {
 			unregisterService(cytoPanel, CytoPanelComponent.class);
@@ -252,36 +254,43 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 			cytoPanel = null;
 		}
 		Map<String,List<File>> appFiles = e.getLoadedSession().getAppFileListMap();
-		if (!appFiles.containsKey(APP_NAME))
+		if (!appFiles.containsKey(APP_NAME)) {
+			System.out.println("Don't see "+APP_NAME+"!");
 			return;
+		}
 
 		List<File> scNvFiles = appFiles.get(APP_NAME);
 		Map<String, File> fileMap = new HashMap<>();
 		for (File f: scNvFiles) {
-			// System.out.println("File map has file: "+f.getName());
+			System.out.println("File map has file: "+f.getName());
 			fileMap.put(f.getName(),f);
 		}
 
-		if (!fileMap.containsKey(EXPERIMENTS_FILE))
+		if (!fileMap.containsKey(EXPERIMENTS_FILE)) {
+			System.out.println("Don't see "+EXPERIMENTS_FILE+"!");
 			return;
+		}
 
 		JSONParser parser = new JSONParser();
 		JSONObject jsonExperiment;
 		try {
 			jsonExperiment = (JSONObject) parser.parse(new FileReader(fileMap.get(EXPERIMENTS_FILE)));
 		} catch(Exception ioe) {
+			System.out.println("Error reading "+EXPERIMENTS_FILE+": "+ioe.getMessage());
+			ioe.printStackTrace();
 			return;
 		}
 
 		JSONArray experiments = (JSONArray) jsonExperiment.get(EXPERIMENTS);
 		for (Object exp: experiments) {
 			JSONObject jsonExp = (JSONObject) exp;
+			System.out.println("Getting experiment: "+jsonExp.toString());
 			Experiment experiment = getExperimentFromSession(jsonExp, fileMap);
-			// System.out.println("Loaded expermient: "+experiment);
+			System.out.println("Loaded expermient: "+experiment);
 			if (experiment == null) continue;
 
 			if (jsonExp.containsKey(CATEGORIES)) {
-				// System.out.println("Getting categories");
+				System.out.println("Getting categories");
 				JSONArray categories = (JSONArray) jsonExp.get(CATEGORIES);
 				for (Object cat: categories) {
 					Category category = getCategoryFromSession((JSONObject)cat, experiment, fileMap);
@@ -336,8 +345,10 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 			try {
 				e.addAppFiles(APP_NAME, files);
 			} catch (Exception add) {
+				add.printStackTrace();
 			}
 		} catch (Exception jsonException) {
+			jsonException.printStackTrace();
 		}
 	}
 

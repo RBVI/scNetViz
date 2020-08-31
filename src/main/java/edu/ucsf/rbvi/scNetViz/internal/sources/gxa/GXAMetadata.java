@@ -22,18 +22,18 @@ public class GXAMetadata extends HashMap<String, Object> implements Metadata {
 	public GXAMetadata(JSONObject json) {
 		super();
 		// System.out.println("Metadata: "+json.toString());
-		put(TYPE,(String) json.get("rawExperimentType"));
-		put(ACCESSION,(String) json.get("experimentAccession"));
-		put(DESCRIPTION, (String) json.get("experimentDescription"));
-		put(DATE, (String) json.get("lastUpdate"));
-		put(ASSAYS, (Long) json.get("numberOfAssays"));
-		put(CONTRASTS, (Long) json.get("numberOfContrasts"));
-		put(SPECIES, (String) json.get("species"));
-		put(KINGDOM, (String) json.get("kingdom"));
-		put(TECHTYPE, JSONUtils.jsonArrayToList((JSONArray) json.get(TECHTYPE), String.class));
-		put(PROJECTS, JSONUtils.jsonArrayToList((JSONArray) json.get("experimentProjects"), String.class));
+		safePut(TYPE,(String) json.get("rawExperimentType"));
+		safePut(ACCESSION,(String) json.get("experimentAccession"));
+		safePut(DESCRIPTION, (String) json.get("experimentDescription"));
+		safePut(DATE, (String) json.get("lastUpdate"));
+		safePut(ASSAYS, (Long) json.get("numberOfAssays"));
+		safePut(CONTRASTS, (Long) json.get("numberOfContrasts"));
+		safePut(SPECIES, (String) json.get("species"));
+		safePut(KINGDOM, (String) json.get("kingdom"));
+		safePut(TECHTYPE, JSONUtils.jsonArrayToList((JSONArray) json.get(TECHTYPE), String.class));
+		safePut(PROJECTS, JSONUtils.jsonArrayToList((JSONArray) json.get("experimentProjects"), String.class));
 		JSONArray factors = (JSONArray) json.get("experimentalFactors");
-		put(FACTORS, JSONUtils.jsonArrayToList(factors, String.class));
+		safePut(FACTORS, JSONUtils.jsonArrayToList(factors, String.class));
 	}
 
 	public GXAMetadata() {
@@ -52,13 +52,23 @@ public class GXAMetadata extends HashMap<String, Object> implements Metadata {
 		String json = "{";
 		for (String key: keySet()) {
 			Object v = get(key);
+			if (v == null) {
+				System.out.println("No entry for "+key);
+				continue;
+			}
 			json += "\""+key+"\":";
 			if (v instanceof List) {
-				json += "[";
-				for (Object lv: (List)v) {
-					json += "\""+lv.toString()+"\""+",";
+				List vL = (List)v;
+				// Check for empty list
+				if (vL.isEmpty()) {
+					json += "[],";
+				} else {
+					json += "[";
+					for (Object le: vL) {
+						json += "\""+le.toString()+"\""+",";
+					}
+					json = json.substring(0, json.length()-1)+"],";
 				}
-				json = json.substring(0, json.length()-1)+"],";
 			} else {
 				json+="\""+v.toString()+"\",";
 			}
@@ -79,5 +89,10 @@ public class GXAMetadata extends HashMap<String, Object> implements Metadata {
 				put((String)key, value);
 			}
 		}
+	}
+
+	private void safePut(String key, Object value) {
+		if (value != null)
+			put(key, value);
 	}
 }

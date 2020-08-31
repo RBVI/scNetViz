@@ -36,6 +36,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class HTTPUtils {
 	public static final String WS_URL = "http://webservices.rbvi.ucsf.edu/scnetviz/api/v1/";
+	// public static final String WS_URL = "http://localhost:8000/scnetviz/api/v1/";
 
 	public static JSONObject postJSON(String uri, CloseableHttpClient httpclient, 
 	                                  String jsonQuery, TaskMonitor monitor) throws Exception {

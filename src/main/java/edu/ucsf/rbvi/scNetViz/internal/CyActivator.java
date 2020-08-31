@@ -51,6 +51,7 @@ import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportDiffExpTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportExperimentTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.GetExperimentTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ListExperimentsTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ProcessAllTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteLeidenTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteLouvainTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteUMAPTaskFactory;
@@ -269,6 +270,18 @@ public class CyActivator extends AbstractCyActivator {
 		}
 
 		// Commands
+		{
+			ProcessAllTaskFactory processAll = new ProcessAllTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "create networks");
+			props.setProperty(COMMAND_DESCRIPTION, "Create networks");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "Use default cluster to calculate differential expression and create networks.");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
+			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(processAll, TaskFactory.class, props);
+		}
+
 		{
 			CalculateDECommandTaskFactory calcDE = new CalculateDECommandTaskFactory(scNVManager);
 			Properties props = new Properties();
