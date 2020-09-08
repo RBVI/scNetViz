@@ -274,7 +274,7 @@ public class CyActivator extends AbstractCyActivator {
 			ProcessAllTaskFactory processAll = new ProcessAllTaskFactory(scNVManager);
 			Properties props = new Properties();
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
-			props.setProperty(COMMAND, "create networks");
+			props.setProperty(COMMAND, "create all");
 			props.setProperty(COMMAND_DESCRIPTION, "Create networks");
 			props.setProperty(COMMAND_LONG_DESCRIPTION, "Use default cluster to calculate differential expression and create networks.");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");

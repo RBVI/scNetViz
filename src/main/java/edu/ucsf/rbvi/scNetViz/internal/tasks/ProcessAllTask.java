@@ -43,13 +43,6 @@ public class ProcessAllTask extends AbstractTask implements TaskObserver {
 	public ProcessAllTask(final ScNVManager manager) {
 		super();
 		this.manager = manager;
-		for (Experiment e: manager.getExperiments()) {
-			if (e.toString().equals(experiment.getSelectedValue())) {
-				exp = e;
-				break;
-			}
-		}
-		if (exp == null) return;
 	}
 
 	public ProcessAllTask(final ScNVManager manager, Experiment experiment) {
@@ -59,6 +52,14 @@ public class ProcessAllTask extends AbstractTask implements TaskObserver {
 	}
 
 	public void run(TaskMonitor monitor) {
+		if (exp == null) {
+			for (Experiment e: manager.getExperiments()) {
+				if (e.toString().equals(experiment.getSelectedValue())) {
+					exp = e;
+					break;
+				}
+			}
+		}
 		Category defaultCategory = exp.getDefaultCategory();
 		if (defaultCategory == null) {
 			monitor.showMessage(TaskMonitor.Level.ERROR, "No default category for this experiment");
