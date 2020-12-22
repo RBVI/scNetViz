@@ -99,7 +99,7 @@ public class GXAEntryFrame extends JFrame {
 							gxaEntryTable.clearSelection();
 							List<Integer> matches = model.search(searchText);
 							for (Integer row: matches) {
-								int modelRow = gxaEntryTable.getRowSorter().convertRowIndexToModel(row);
+								int modelRow = gxaEntryTable.getRowSorter().convertRowIndexToView(row);
 								gxaEntryTable.getSelectionModel().addSelectionInterval(modelRow, modelRow);
 							}
 							search.setText("");

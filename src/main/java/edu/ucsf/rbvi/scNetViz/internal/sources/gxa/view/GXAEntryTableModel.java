@@ -82,10 +82,11 @@ public class GXAEntryTableModel extends AbstractTableModel {
 		List<Integer> results = new ArrayList<>();
 		for (int i = 0; i < entries.size(); i++) {
 			Metadata entry = entries.get(i);
-			if (contains(entry, GXAMetadata.ACCESSION, searchText) ||
+			if (equals(entry, GXAMetadata.ACCESSION, searchText) ||
 			    contains(entry, GXAMetadata.DESCRIPTION, searchText) ||
-					contains(entry, GXAMetadata.SPECIES, searchText))
+					contains(entry, GXAMetadata.SPECIES, searchText)) {
 				results.add(i);
+      }
 		}
 		return results;
 	}
@@ -109,7 +110,12 @@ public class GXAEntryTableModel extends AbstractTableModel {
 
 	private boolean contains(Metadata entry, String key, String text) {
 		String str = ((String)entry.get(key)).toLowerCase();
-		return str.contains(text);
+		return str.contains(text.toLowerCase());
+	}
+
+	private boolean equals(Metadata entry, String key, String text) {
+		String str = ((String)entry.get(key)).toLowerCase();
+		return str.equals(text.toLowerCase());
 	}
 
 	private String nlList(Object list) {

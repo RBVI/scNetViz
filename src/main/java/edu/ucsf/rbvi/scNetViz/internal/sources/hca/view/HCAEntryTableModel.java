@@ -77,7 +77,7 @@ public class HCAEntryTableModel extends AbstractTableModel {
 		List<Integer> results = new ArrayList<>();
 		for (int i = 0; i < entries.size(); i++) {
 			Metadata entry = entries.get(i);
-			if (contains(entry, HCAMetadata.ACCESSION, searchText) ||
+			if (equals(entry, HCAMetadata.ACCESSION, searchText) ||
 			    contains(entry, HCAMetadata.DESCRIPTION, searchText) ||
 					contains(entry, HCAMetadata.SPECIES, searchText))
 				results.add(i);
@@ -104,7 +104,12 @@ public class HCAEntryTableModel extends AbstractTableModel {
 
 	private boolean contains(Metadata entry, String key, String text) {
 		String str = ((String)entry.get(key)).toLowerCase();
-		return str.contains(text);
+		return str.contains(text.toLowerCase());
+	}
+
+	private boolean equals(Metadata entry, String key, String text) {
+		String str = ((String)entry.get(key)).toLowerCase();
+		return str.equals(text.toLowerCase());
 	}
 
 	private String nlList(Object list) {
