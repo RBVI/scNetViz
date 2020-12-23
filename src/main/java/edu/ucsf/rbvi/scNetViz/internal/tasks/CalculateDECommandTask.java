@@ -104,6 +104,12 @@ public class CalculateDECommandTask extends AbstractTask implements ObservableTa
 				categoryRow = cat.getDefaultRow();
 		}
 
+    if (categoryRow == -1) {
+		  monitor.showMessage(TaskMonitor.Level.ERROR, 
+		                      "Unable to complete differential expression calculation: no default row available.");
+      return;
+    }
+
 		try {
 			/*
 			System.out.println("experiment = "+accession.getSelectedValue());
@@ -124,7 +130,7 @@ public class CalculateDECommandTask extends AbstractTask implements ObservableTa
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			monitor.showMessage(TaskMonitor.Level.ERROR, 
-			                    "Unable complete differential expression calculation: "+ex.getMessage());
+			                    "Unable to complete differential expression calculation: "+ex.getMessage());
 		}
 	}
 

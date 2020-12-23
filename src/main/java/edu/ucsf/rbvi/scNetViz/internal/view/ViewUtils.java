@@ -25,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.table.TableModel;
 
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
@@ -108,6 +109,25 @@ public class ViewUtils {
 		panel.add(Box.createRigidArea(new Dimension(15,0)));
 		return panel;
 	}
+
+	public static void showPlot(final ScNVManager manager,
+                              final Experiment experiment, 
+                              final Category category,
+                              final int catRow,
+                              final int geneRow) {
+    String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
+    String title = experiment.getPlotType()+" Plot of "+accession;
+		if (geneRow >= 0) {
+		  TableModel tableModel = experiment.getTableModel();
+			title = accession+" Expression for "+tableModel.getValueAt(geneRow, 0);
+		} else if (category != null && catRow >= 0) {
+			title = experiment.getPlotType()+" Plot for "+accession+" Category "+category.toString();
+			List<String> rowLabels = category.getMatrix().getRowLabels();
+			title += " ("+rowLabels.get(catRow)+")";
+    }
+		ViewUtils.showtSNE(manager, experiment, category, catRow, geneRow, title);
+	}
+
 
 	public static void showtSNE(final ScNVManager manager, final Experiment exp, 
 	                            final Category category, final int catRow, 

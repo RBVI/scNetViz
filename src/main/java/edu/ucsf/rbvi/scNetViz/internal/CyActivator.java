@@ -59,6 +59,7 @@ import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteTSNETaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteGraphTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SelectTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowCellPlotTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowResultsPanelTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETaskFactory;
@@ -203,7 +204,7 @@ public class CyActivator extends AbstractCyActivator {
 			props.setProperty(MENU_GRAVITY, "230.0");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "calculate tsne");
-			props.setProperty(COMMAND_DESCRIPTION, "Calculate the t-SNE embedding");
+			props.setProperty(COMMAND_DESCRIPTION, "Calculate the t-SNE embedding (remote)");
 			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
@@ -225,6 +226,17 @@ public class CyActivator extends AbstractCyActivator {
 			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
+			scNVManager.registerService(show, TaskFactory.class, props);
+		}
+
+    {
+			ShowCellPlotTaskFactory show = new ShowCellPlotTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "show cell plot");
+			props.setProperty(COMMAND_DESCRIPTION, "Display the cell plot for a single experiment");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "false");
 			scNVManager.registerService(show, TaskFactory.class, props);
 		}
 

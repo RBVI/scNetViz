@@ -53,7 +53,7 @@ public class CalculateDETask extends AbstractTask implements ObservableTask {
 		} catch (Exception exp) {
 			exp.printStackTrace();
 			monitor.showMessage(TaskMonitor.Level.ERROR, 
-			                    "Unable complete differential expression calculation: "+exp.getMessage());
+			                    "Unable to complete differential expression calculation: "+exp.getMessage());
 		}
 	}
 
