@@ -218,6 +218,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	public Experiment getExperiment() { return experiment; }
 
 	public int getCategoryRow() { return categoryRow; }
+	public Category getCategory() { return category; }
 
 	public SortableTableModel getTableModel() {
 		if (tableModel == null) {
@@ -235,6 +236,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		builder.append("\"log2FCCutoff\": "+log2FCCutoff+"}");
 		return builder.toString();
 	}
+
+  public double getLog2FCCutoff() { return log2FCCutoff; }
 
 	public String toString() {
 		return "Differential expression for category "+category+" row "+categoryRow;

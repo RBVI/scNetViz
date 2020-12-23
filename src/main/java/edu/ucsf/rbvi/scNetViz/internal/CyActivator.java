@@ -60,6 +60,7 @@ import edu.ucsf.rbvi.scNetViz.internal.tasks.RemoteGraphTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SelectTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.SettingsTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowCellPlotTaskFactory;
+import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowDiffPlotTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowExperimentTableTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowResultsPanelTaskFactory;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.tSNETaskFactory;
@@ -235,6 +236,17 @@ public class CyActivator extends AbstractCyActivator {
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "show cell plot");
 			props.setProperty(COMMAND_DESCRIPTION, "Display the cell plot for a single experiment");
+			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
+			props.setProperty(COMMAND_SUPPORTS_JSON, "false");
+			scNVManager.registerService(show, TaskFactory.class, props);
+		}
+
+    {
+			ShowDiffPlotTaskFactory show = new ShowDiffPlotTaskFactory(scNVManager);
+			Properties props = new Properties();
+			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
+			props.setProperty(COMMAND, "show diff plot");
+			props.setProperty(COMMAND_DESCRIPTION, "Display the differential expression plot for a single experiment");
 			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "false");
 			scNVManager.registerService(show, TaskFactory.class, props);
