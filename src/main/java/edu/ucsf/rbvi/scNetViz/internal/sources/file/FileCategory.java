@@ -1,6 +1,7 @@
 package edu.ucsf.rbvi.scNetViz.internal.sources.file;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ public class FileCategory extends AbstractCategory implements Category {
 		super(scManager, experiment, name, nRows, nCols);
 		logger = Logger.getLogger(CyUserLog.NAME);
 		this.dataType = type;
-		if (dataType.equals("text"))
+		if (dataType.equals("text") || dataType.equals("string"))
 			stringCategories = new String[nCols][nRows];
 		else if (dataType.equals("integer"))
 			intCategories = new int[nCols][nRows];
@@ -119,18 +120,23 @@ public class FileCategory extends AbstractCategory implements Category {
 	public int getHeaderCols() { return 1; }
 
 	public void setValue(int row, int col, String value) {
-		if (dataType.equals("text"))
-			stringCategories[col][row] = value;
-		else if (dataType.equals("integer")) {
-			intCategories[col][row] = Integer.parseInt(value);
-			if (zeroRelative)
-				intCategories[col][row]++;
-		} else if (dataType.equals("float"))
-			doubleCategories[col][row] = Double.parseDouble(value);
+    try {
+  		if (dataType.equals("text") || dataType.equals("string"))
+  			stringCategories[col][row] = value;
+  		else if (dataType.equals("integer")) {
+  			intCategories[col][row] = Integer.parseInt(value);
+  			if (zeroRelative)
+  				intCategories[col][row]++;
+  		} else if (dataType.equals("float"))
+  			doubleCategories[col][row] = Double.parseDouble(value);
+    } catch (Exception e) {
+		  LogUtils.error("Unable to read value '"+value+"' as type "+dataType);
+      return;
+    }
 	}
 
 	public Object getValue(int row, int col) {
-		if (dataType.equals("text"))
+		if (dataType.equals("text") || dataType.equals("string"))
 			return stringCategories[col][row];
 		else if (dataType.equals("integer"))
 			return new Integer(intCategories[col][row]);
@@ -150,13 +156,21 @@ public class FileCategory extends AbstractCategory implements Category {
 	                                         boolean zeroRelative,
 	                                         TaskMonitor monitor) throws Exception {
 
-		List<String[]> input = CSVReader.readCSV(monitor, file);
-		if (input == null || input.size() < 2) {
-			// System.out.println("No input!");
-			return null;
-		}
-		return createCategory(scManager, experiment, file.getName(), dataCategory, input,
-		                      transpose, hdrCols, zeroRelative, monitor);
+    try {
+		  List<String[]> input = CSVReader.readCSV(monitor, file);
+  		if (input == null || input.size() < 2) {
+  			// System.out.println("No input!");
+  			return null;
+  		}
+  		return createCategory(scManager, experiment, file.getName(), dataCategory, input,
+  		                      transpose, hdrCols, zeroRelative, monitor);
+    } catch (FileNotFoundException e) {
+		  LogUtils.log(monitor, TaskMonitor.Level.ERROR, "File not found: "+file.getName());
+    } catch (IOException e) {
+		  LogUtils.log(monitor, TaskMonitor.Level.ERROR, "Unable to read file: "+
+                   file.getName()+" ["+e.getMessage()+"]");
+    }
+    return null;
 	}
 
 	public static FileCategory createCategory(ScNVManager scManager, Experiment experiment,
@@ -202,11 +216,25 @@ public class FileCategory extends AbstractCategory implements Category {
 				// System.out.println("Label["+(lineNumber-1)+"]: "+line[0]);
 				if (!transpose) {
 					for (int col = 0; col < fileCategory.nCols; col++) {
-						fileCategory.setValue(lineNumber-1, col, line[col+1]);
+            try {
+              fileCategory.setValue(lineNumber-1, col, line[col+hdrCols]);
+            } catch (Exception e) {
+		          LogUtils.log(monitor, TaskMonitor.Level.ERROR, 
+                           "Unable to read value '"+line[col+hdrCols]+"' "+
+                           "at "+lineNumber+","+col+" as type "+dataCategory);
+              return null;
+            }
 					}
 				} else {
 					for (int row = 0; row < fileCategory.nRows; row++) {
-						fileCategory.setValue(row, lineNumber-1, line[row+1]);
+            try {
+						  fileCategory.setValue(row, lineNumber-1, line[row+hdrCols]);
+            } catch (Exception e) {
+		          LogUtils.log(monitor, TaskMonitor.Level.ERROR, 
+                           "Unable to read value '"+line[row+hdrCols]+"' "+
+                           "at "+lineNumber+","+row+" as type "+dataCategory);
+              return null;
+            }
 					}
 				}
 			}
@@ -244,7 +272,7 @@ public class FileCategory extends AbstractCategory implements Category {
 			super(category.getHeaderCols());
 			this.category = category;
 			this.experiment = category.experiment;
-			hdrCols = 1;
+			// hdrCols = 1;
 		}
 
 		@Override
@@ -267,7 +295,7 @@ public class FileCategory extends AbstractCategory implements Category {
 		public Class<?> getColumnClass(int column) {
 			if (column < hdrCols)
 				return String.class;
-			if (category.dataType.equals("text"))
+			if (category.dataType.equals("text") || dataType.equals("string"))
 				return String.class;
 			else if (category.dataType.equals("integer"))
 				return Integer.class;
@@ -278,20 +306,20 @@ public class FileCategory extends AbstractCategory implements Category {
 
 		@Override
 		public Object getValueAt(int row, int column) {
-			if (column == 0) {
+			if (column < hdrCols) {
 				return strip(category.getRowLabel(row));
 			}
 
 			if (columnIndex != null)
 				column = columnIndex[column];
 
-			if (category.getValue(row, column) == null)
+			if (category.getValue(row, column-hdrCols) == null)
 				return "";
 
-			if (category.dataType.equals("text"))
-				return strip(category.getValue(row, column).toString());
+			if (category.dataType.equals("text") || dataType.equals("string"))
+				return strip(category.getValue(row, column-hdrCols).toString());
 			else 
-				return category.getValue(row, column);
+				return category.getValue(row, column-hdrCols);
 		}
 
 		@Override

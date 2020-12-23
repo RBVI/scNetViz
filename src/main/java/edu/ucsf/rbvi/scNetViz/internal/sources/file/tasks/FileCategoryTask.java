@@ -72,6 +72,10 @@ public class FileCategoryTask extends AbstractTask implements ObservableTask {
 			cat = FileCategory.fetchCategory(scManager, exp, file,
 			                                 dataType.getSelectedValue(), 
 			                                 pivot, hdrCols, false, taskMonitor);
+      if (cat == null) {
+		    taskMonitor.setStatusMessage("Failed to read category file: "+file);
+        return;
+      }
 			exp.addCategory(cat);
 			ExperimentFrame expFrame = scManager.getExperimentFrame(exp);
 			if (expFrame != null) {
