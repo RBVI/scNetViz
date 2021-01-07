@@ -181,7 +181,14 @@ public class FileExperiment implements Experiment {
 			} else {
 				readFile(monitor, mtxFile, skipFirst);
 			}
-		} catch(IOException e) {}
+    } catch (FileNotFoundException e) {
+      monitor.showMessage(TaskMonitor.Level.ERROR, "No such file: '"+mtxFile.getName()+"'");
+      return;
+		} catch(IOException e) {
+      monitor.showMessage(TaskMonitor.Level.ERROR, "Error reading file: '"+mtxFile.getName()+"': "+e.getMessage());
+      e.printStackTrace();
+      return;
+    }
 
 		scNVManager.addExperiment(accession, this);
 		System.out.println("mtx has "+mtx.getNRows()+" rows and "+mtx.getNCols()+" columns");

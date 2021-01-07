@@ -55,7 +55,7 @@ public class FileExperimentTask extends AbstractTask {
 		taskMonitor.setTitle(getTitle());
 		taskMonitor.setStatusMessage("Reading mtx file");
 		FileMetadata metadata = new FileMetadata(file);
-		metadata.put(Metadata.SPECIES, species);
+		metadata.put(Metadata.SPECIES, species.getSelectedValue().getName());
 		Experiment experiment = fileSource.getExperiment(metadata, taskMonitor, skipFirst);
 
 		if (showTable) {

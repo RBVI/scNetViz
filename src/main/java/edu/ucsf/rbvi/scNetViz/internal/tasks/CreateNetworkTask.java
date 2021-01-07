@@ -68,13 +68,14 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 	}
 
 	public void run(TaskMonitor monitor) {
+    try {
 		monitor.setTitle("Creating Networks");
 
 		Category category = diffExp.getCurrentCategory();
 		experiment = category.getExperiment();
 		Set<Object> categoryValues = diffExp.getCategoryValues();
 		List<String> rowLabels = category.getMatrix().getRowLabels();
-		String categoryRow = category.toString()+" ("+rowLabels.get(category.getSelectedRow())+")";
+		String categoryRow = category.toString()+" ("+rowLabels.get(diffExp.getCategoryRow())+")";
 
 		Map<Object, List<String>> geneMap = new HashMap<>();
 
@@ -109,6 +110,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			List<String> geneList = geneMap.get(cat);
 			createSubNetwork(cat, category.mkLabel(cat), geneList, monitor);
 		}
+    } catch (Exception e) {e.printStackTrace();}
 	}
 
 	// TODO: return the networks?
@@ -185,7 +187,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			Category category = diffExp.getCurrentCategory();
 			Experiment experiment = category.getExperiment();
 			List<String> rowLabels = category.getMatrix().getRowLabels();
-			String categoryRow = rowLabels.get(category.getSelectedRow());
+			String categoryRow = rowLabels.get(diffExp.getCategoryRow());
 
 			CyNetwork network = null;
 			CyNetworkView networkView = null;
