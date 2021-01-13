@@ -128,6 +128,18 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
     return;
   }
 
+  public static boolean hasMatrix(JSONObject json) {
+    if (json.containsKey("fileTypeSummaries")) {
+      JSONArray fileTypes = (JSONArray)json.get("fileTypeSummaries");
+      for (Object obj: fileTypes) {
+         JSONObject fileType = (JSONObject)obj;
+          if (fileType.containsKey("fileType") && fileType.get("fileType").equals("matrix"))
+            return true;
+      }
+    }
+    return false;
+  }
+
   public static List<String> getOrgans(JSONObject hit) {
 		JSONArray suspensions = (JSONArray)hit.get("cellSuspensions");
     List<String> organList = new ArrayList<>();
