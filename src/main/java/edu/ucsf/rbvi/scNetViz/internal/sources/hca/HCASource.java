@@ -49,7 +49,7 @@ import static org.cytoscape.work.ServiceProperties.TOOL_BAR_GRAVITY;
 import static org.cytoscape.work.ServiceProperties.TOOLTIP;
 
 public class HCASource implements Source {
-	public static String HCA_PROJECT_URL = "https://service.explore.data.humancellatlas.org/repository/projects?";
+	public static String HCA_PROJECT_URL = "https://service.azul.data.humancellatlas.org/index/projects?catalog=dcp1&";
 
 	final Logger logger;
 	final ScNVManager scNVManager;
@@ -119,8 +119,12 @@ public class HCASource implements Source {
 			for (Object hit: hits) {
 				// For some reason, even though we only ask for projects with matrix files, we get others also
 				if (HCAMetadata.hasMatrix((JSONObject)hit)) {
-					HCAMetadata entry = new HCAMetadata((JSONObject)hit);
-					metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);
+          List<String> organs = HCAMetadata.getOrgans((JSONObject)hit);
+          for (String organ: organs) {
+					  HCAMetadata entry = new HCAMetadata(organ, (JSONObject)hit);
+            if (entry.get(HCAMetadata.MATRIX) != null)
+					    metadataMap.put((String)entry.get(Metadata.ACCESSION), entry);
+          }
 				}
 			}
 		} catch (Exception e) {

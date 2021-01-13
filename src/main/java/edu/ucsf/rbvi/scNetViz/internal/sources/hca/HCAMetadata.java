@@ -1,8 +1,10 @@
 package edu.ucsf.rbvi.scNetViz.internal.sources.hca;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -31,47 +33,46 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
 	public static String INSDC = "inscd";
 	public static String LABORATORY = "laboratory";
 	public static String SHORT_NAME = "name";
+	public static String FULL_DESCRIPTION = "name";
+	public static String MATRIX = "matrix";
+	public static String SELECTED_CELL_TYPES = "cellTypes";
 
-	public HCAMetadata(JSONObject json) {
+	public HCAMetadata(String organ, JSONObject json) {
 		super();
+		put(Metadata.ACCESSION, (String)json.get("entryId")+"-"+organ);
+		getProjects((JSONArray)json.get("projects"), organ);
+		getSuspensions((JSONArray)json.get("cellSuspensions"), organ);
+  }
 
-		try {
-		put(Metadata.ACCESSION, (String)json.get("entryId"));
-		getProtocols((JSONArray)json.get("protocols"));
-		getProjects((JSONArray)json.get("projects"));
-		getDonors((JSONArray)json.get("donorOrganisms"));
-		getSuspensions((JSONArray)json.get("cellSuspensions"));
-		} catch (Exception e) { e.printStackTrace(); }
-	}
-
-	private void getProtocols(JSONArray protocols) {
-		// {'protocols': [{'libraryConstructionApproach': ['Smart-seq2'], 'instrumentManufacturerModel': ['Illumina NextSeq 500'], 'pairedEnd': [True], 'workflow': ['smartseq2_v2.3.0', 'smartseq2_v2.4.0'], 'assayType': []}], 
-		JSONObject protocol = (JSONObject)protocols.get(0);
-	}
-
-	private void getProjects(JSONArray projects) {
-		//  'projects': [{'projectTitle': 'Single cell transcriptome analysis of human pancreas reveals transcriptional signatures of aging and somatic mutation patterns.', 'projectShortname': 'Single cell transcriptome analysis of human pancreas', 'laboratory': ['Human Cell Atlas Data Coordination Platform', 'Molecular Atlas'], 'arrayExpressAccessions': [], 'geoSeriesAccessions': ['GSE81547'], 'insdcProjectAccessions': ['SRP075496'], 'insdcStudyAccessions': []}], 
-		JSONObject project = (JSONObject)projects.get(0);
+	private void getProjects(JSONArray projects, String organ) {
+		JSONObject project = (JSONObject)projects.get(0); // Only dealing with one project at a time, here
 		put(DESCRIPTION, (String)project.get("projectTitle"));
 		put(SHORT_NAME, (String)project.get("projectShortname"));
+		put(FULL_DESCRIPTION, (String)project.get("projectDescription"));
 		put(GEO, getArray((JSONArray)project.get("geoSeriesAccessions")));
 		put(ARRAY_EXPRESS, getArray((JSONArray)project.get("arrayExpressAccessions")));
 		put(INSDC, getArray((JSONArray)project.get("insdcProjectAccessions")));
 		put(LABORATORY, getArray((JSONArray)project.get("laboratory")));
-	}
+    getMatrix((JSONObject)project.get("matrices"), organ);
+  }
 
-	private void getDonors(JSONArray donors) {
-		JSONObject donor = (JSONObject) donors.get(0);
-		put(Metadata.SPECIES, (String)((JSONArray)donor.get("genusSpecies")).get(0));
-	}
+	private void getSuspensions(JSONArray suspensions, String organ) {
+    for (Object susp: suspensions) {
+      JSONObject suspension = (JSONObject) susp;
+      JSONArray organs = (JSONArray)suspension.get("organ");
+      for (Object org: organs) {
+        if (organ.equals((String)org)) {
+		      put(ASSAYS, ((Long)suspension.get("totalCells")).longValue());
+          put(SELECTED_CELL_TYPES, getArray((JSONArray)suspension.get("selectedCellType")));
+          put(ORGANS, Collections.singletonList(organ));
+        }
+      }
+    }
+    return;
+  }
 
-	private void getSuspensions(JSONArray suspensions) {
-		JSONObject suspension = (JSONObject)suspensions.get(0); // TODO: what do we do if there is more than one suspension?
-		put(ASSAYS, ((Long)suspension.get("totalCells")).longValue());
-		put(ORGANS, getArray((JSONArray)suspension.get("organ")));
-	}
 
-	private List<String> getArray(JSONArray jsonArray) {
+	private static List<String> getArray(JSONArray jsonArray) {
 		List<String> array = new ArrayList<String>();
 		for (Object obj: jsonArray) {
 			array.add((String)obj);
@@ -79,17 +80,63 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
 		return array;
 	}
 
-	public static boolean hasMatrix(JSONObject json) {
-		if (json.containsKey("fileTypeSummaries")) {
-			JSONArray fileTypes = (JSONArray)json.get("fileTypeSummaries");
-			for (Object obj: fileTypes) {
-				JSONObject fileType = (JSONObject)obj;
-				if (fileType.containsKey("fileType") && fileType.get("fileType").equals("matrix"))
-					return true;
-			}
-		}
-		return false;
-	}
+  private void getMatrix(JSONObject jsonMatrices, String organ) {
+    JSONObject obj = (JSONObject) jsonMatrices.get("genusSpecies");
+    for (Object spObj: obj.keySet()) {
+      String species = (String)spObj;
+      JSONObject xobj = (JSONObject)obj.get(spObj);
+      if (xobj.containsKey("organ")) {
+        JSONObject organs = (JSONObject)xobj.get("organ");
+        if (organs.containsKey(organ)) {
+          JSONObject orgObj = (JSONObject)organs.get(organ);
+          JSONObject lcaObj = (JSONObject)orgObj.get("libraryConstructionApproach");
+          for (Object lcaType: lcaObj.keySet()) {
+            JSONArray matrices = (JSONArray)lcaObj.get(lcaType);
+            for (Object matObj: matrices) {
+              String name = (String)((JSONObject)matObj).get("name");
+              if (name.contains("mtx.zip")) {
+                put(Metadata.TYPE, (String)lcaType);
+                put(MATRIX, (String)((JSONObject)matObj).get("url"));
+                put(Metadata.SPECIES, species);
+                return;
+              }
+            }
+          }
+        }
+      } else if (xobj.containsKey("libraryConstructionApproach")) {
+        JSONObject lcas = (JSONObject)xobj.get("libraryConstructionApproach");
+        for (Object lca: lcas.keySet()) {
+          JSONObject lcaObj = (JSONObject)lcas.get(lca);
+          if (!lcaObj.containsKey("organ"))
+            continue;
+          JSONObject organs = (JSONObject) lcaObj.get("organ");
+          if (!organs.containsKey(organ))
+            continue;
+          JSONArray matrices = (JSONArray)organs.get(organ);
+          for (Object matObj: matrices) {
+            String name = (String)((JSONObject)matObj).get("name");
+            if (name.contains("mtx.zip")) {
+              put(Metadata.TYPE, (String)lca);
+              put(Metadata.SPECIES, species);
+              put(MATRIX, (String)((JSONObject)matObj).get("url"));
+              return;
+            }
+          }
+        }
+      }
+    }
+    return;
+  }
+
+  public static List<String> getOrgans(JSONObject hit) {
+		JSONArray suspensions = (JSONArray)hit.get("cellSuspensions");
+    List<String> organList = new ArrayList<>();
+    for (Object suspension: suspensions) {
+      JSONObject susp = (JSONObject) suspension;
+		  organList.addAll(getArray((JSONArray)susp.get("organ")));
+    }
+    return organList;
+  }
 
 	public String toHTML() {
 		return "<html><p style='width: 500px'><b>"+get(ACCESSION)+"</b>: "+get(DESCRIPTION)+"</p></html>";

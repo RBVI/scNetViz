@@ -128,44 +128,22 @@ public class HCAExperiment implements Experiment {
 	}
 
 	public void fetchMTX (final TaskMonitor monitor) {
-		// Create the JSON argument
-		String query = "{\"filter\": {\"op\":\"=\",\"value\":\""+
-		                 accession+"\",\"field\":\"project.provenance.document_id\"},\"format\":\"mtx\"}";
 		// Get the URI
 		try {
+			String matrixURL = (String)hcaMetadata.get(HCAMetadata.MATRIX);
 			CloseableHttpClient httpclient = HttpClients.createDefault();
-			JSONObject jsonResponse = HTTPUtils.postJSON(HCA_MATRIX_URL, httpclient, query, monitor);
-
-			String requestId = (String)jsonResponse.get("request_id");
-
-			// Now that we have a request ID, interate through until the matrix server is ready
-			int retries = 120;
-			JSONObject status = null;
-			while (retries > 0) {
-				status = HTTPUtils.fetchJSON(HCA_MATRIX_URL+requestId, httpclient, monitor);
-				if (status != null && status.containsKey("status") && 
-				    !((String)status.get("status")).equals("In Progress")) {
-					break;
-				}
-				Thread.sleep(5000); // 5 seconds
-				retries--;
-			}
-			if (retries == 0 || status == null) {
-				monitor.showMessage(TaskMonitor.Level.ERROR, "Timeout waiting for matrix service");
+      JSONObject jsonResponse = HTTPUtils.getJSON((String)hcaMetadata.get(HCAMetadata.MATRIX), httpclient, monitor);
+      if (jsonResponse.containsKey("Location")) {
+        matrixURL = (String)jsonResponse.get("Location");
+      } else {
 				httpclient.close();
-				return;
-			}
-
-			String statusValue = (String)status.get("status");
-			if (!statusValue.equals("Complete")) {
-				monitor.showMessage(TaskMonitor.Level.ERROR, "Error getting matrix: "+statusValue);
-				httpclient.close();
-				return;
-			}
+				monitor.showMessage(TaskMonitor.Level.ERROR, "Error getting matrix: no redirect");
+        return;
+      }
 			httpclient.close();
 
 			CloseableHttpClient httpZipClient = HttpClients.createDefault();
-			String matrixURL = (String)status.get("matrix_url");
+			// String matrixURL = (String)status.get("matrix_url");
 			ZipInputStream zipStream = HTTPUtils.getZipStream(matrixURL, httpZipClient, monitor);
 			ZipEntry entry;
 			while ((entry = zipStream.getNextEntry()) != null) {

@@ -38,6 +38,24 @@ public class HTTPUtils {
 	public static final String WS_URL = "http://webservices.rbvi.ucsf.edu/scnetviz/api/v1/";
 	// public static final String WS_URL = "http://localhost:8000/scnetviz/api/v1/";
 
+	public static JSONObject getJSON(String uri, CloseableHttpClient httpclient, 
+	                                 TaskMonitor monitor) throws Exception {
+		HttpGet httpGet = new HttpGet(uri);
+		httpGet.setHeader("Accept", "application/json");
+		CloseableHttpResponse response = httpclient.execute(httpGet);
+		int statusCode = response.getStatusLine().getStatusCode();
+		if (statusCode != 200 && statusCode != 202) {
+			monitor.showMessage(TaskMonitor.Level.ERROR, "Got "+
+			                    response.getStatusLine().getStatusCode()+" code from server");
+			return null;
+		}
+
+		HttpEntity entity1 = response.getEntity();
+
+		JSONObject jsonResponse = (JSONObject) new JSONParser().parse(new InputStreamReader(entity1.getContent()));
+		return jsonResponse;
+  }
+
 	public static JSONObject postJSON(String uri, CloseableHttpClient httpclient, 
 	                                  String jsonQuery, TaskMonitor monitor) throws Exception {
 		HttpPost httpPost = new HttpPost(uri);
