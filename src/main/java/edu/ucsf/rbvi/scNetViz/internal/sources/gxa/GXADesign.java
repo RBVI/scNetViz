@@ -173,7 +173,7 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 
 		gxaDesign.setColLabels(stripArray(input.get(0), 0));
     gxaDesign.categories = new String[gxaDesign.nRows][gxaDesign.nCols];
-    List<String> rowLabels = new ArrayList<String>(gxaDesign.nRows);
+    // List<String> rowLabels = new ArrayList<String>(gxaDesign.nRows);
 
 		boolean first = true;
 		int row = 0;
@@ -184,13 +184,14 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 				// gxaCluster.headers = line;
 				continue;
 			}
-			rowLabels.add(stripQuotes(line[0]));
+			// rowLabels.add(stripQuotes(line[0]));
+      gxaDesign.setRowLabel(stripQuotes(line[0]), row, 0);
 			for (int col = 1; col < gxaDesign.nCols+1; col++) {
 				gxaDesign.categories[row][col-1] = stripQuotes(line[col]);
 			}
 			row++;
 		}
-		gxaDesign.setRowLabels(rowLabels);
+		// gxaDesign.setRowLabels(rowLabels);
 		return gxaDesign;
 	}
 
@@ -203,10 +204,8 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		// System.out.println("nCols = "+gxaDesign.nCols+", nRows = "+gxaDesign.nRows);
 
 		gxaDesign.setRowLabels(stripArray(input.get(0), 1));
-		// System.out.println("rowLabels = "+stripArray(input.get(0), 1));
 		gxaDesign.categories = new String[gxaDesign.nRows][gxaDesign.nCols];
-		List<String> colLabels = new ArrayList<String>(gxaDesign.nCols);
-		colLabels.add("Category");
+		gxaDesign.setColLabel("Category", 0, 0);
 
 		boolean first = true;
 		int col = 1;
@@ -214,15 +213,13 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 			if (first) {
 				first = false;
 			} else {
-				colLabels.add(stripQuotes(line[0]));
+				gxaDesign.setColLabel(stripQuotes(line[0]), 0, col);
 				for (int row = 1; row < gxaDesign.nRows; row++) {
 					gxaDesign.categories[row-1][col] = stripQuotes(line[row]);
 				}
 				col++;
 			}
 		}
-		gxaDesign.setColLabels(colLabels);
-
 		gxaDesign.source = experiment.getSource();
 
 		LogUtils.log(monitor, TaskMonitor.Level.INFO, "Read "+gxaDesign.nRows+
@@ -230,11 +227,12 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		return gxaDesign;
 	}
 
-	static private List<String> stripArray(String[] array, int offset) {
-		List<String> result = new ArrayList<>();
+	static private List<String[]> stripArray(String[] array, int offset) {
+		List<String[]> result = new ArrayList<>();
 		for (int i = offset; i < array.length; i++) {
-			String str = array[i];
-			result.add(str.replaceAll("^\"|\"$", ""));
+			String[] str = new String[1];
+      str[0] = array[i].replaceAll("^\"|\"$", "");
+			result.add(str);
 		}
 		return result;
 	}
@@ -249,11 +247,11 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 		int factorColumn = colLabels.indexOf(factor);
 
 		for (int row = 0; row < nRows; row++) {
-			String id = rowLabels.get(row);
+			String[] id = rowLabels.get(row);
 			String rowFactor = categories[row][factorColumn];
 			if (!clusterMap.containsKey(rowFactor))
 				clusterMap.put(rowFactor, new ArrayList<>());
-			clusterMap.get(rowFactor).add(id);
+			clusterMap.get(rowFactor).add(id[0]);
 		}
 		return clusterMap;
 	}
@@ -278,6 +276,7 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 			// ncols = design.rows.size();
 			// nrows = design.columns.length-1;
 			hdrCols = 1;
+      hdrRows = 1;
 		}
 
 		@Override

@@ -74,7 +74,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		Category category = diffExp.getCurrentCategory();
 		experiment = category.getExperiment();
 		Set<Object> categoryValues = diffExp.getCategoryValues();
-		List<String> rowLabels = category.getMatrix().getRowLabels();
+		List<String> rowLabels = category.getMatrix().getRowLabels(0);
 		String categoryRow = category.toString()+" ("+rowLabels.get(diffExp.getCategoryRow())+")";
 
 		Map<Object, List<String>> geneMap = new HashMap<>();
@@ -129,6 +129,8 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 		args.put("species", diffExp.getCurrentCategory().getExperiment().getSpecies());
 		args.put("limit", "0");
 		args.put("includesViruses", "false");
+    System.out.println("species = "+args.get("species"));
+    System.out.println("query = "+args.get("query"));
 		manager.executeCommand("string", "protein query", args, 
 		                       new RenameNetwork(diffExp, cat, name, geneList, geneMap, false, monitor), true);
 		cyEventHelper.flushPayloadEvents();
@@ -186,7 +188,7 @@ public class CreateNetworkTask extends AbstractTask implements ObservableTask {
 			// Get some information we're going to need later
 			Category category = diffExp.getCurrentCategory();
 			Experiment experiment = category.getExperiment();
-			List<String> rowLabels = category.getMatrix().getRowLabels();
+			List<String> rowLabels = category.getMatrix().getRowLabels(0);
 			String categoryRow = rowLabels.get(diffExp.getCategoryRow());
 
 			CyNetwork network = null;

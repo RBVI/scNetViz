@@ -119,7 +119,7 @@ public class ScNVCytoPanel extends JPanel
 
 		categoryLabelMap = new HashMap<>();
 		for (Category cat: categories) {
-			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
+			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels(0));
 		}
 		currentCategoryColumn = ModelUtils.getName(network, network);
 
@@ -173,7 +173,7 @@ public class ScNVCytoPanel extends JPanel
 
 		categoryLabelMap = new HashMap<>();
 		for (Category cat: categories) {
-			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
+			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels(0));
 		}
 		experimentLabel.updateText(experiment);
 		currentCategoryColumn = ModelUtils.getName(network, network);

@@ -57,7 +57,6 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 	protected int selectedRow = -1;
 	protected int lastCategory = -1;
-	protected int hdrCols = 1;
 	protected BitSet excludeRows = null;
 	protected int geneRows = 0;
 
@@ -406,11 +405,11 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		// We'll use the column names to map to the experiment matrix
 		Matrix mtx = experiment.getMatrix();
 		HashMap<String, Integer> colLabelMap = new HashMap<>();
-		List<String> colLabels = mtx.getColLabels();
+		List<String[]> colLabels = mtx.getColLabels();
 		// System.out.println("nCols = "+nCols+", colLabels.size() = "+colLabels.size());
 		int colIndex = 0;
-		for (String str: colLabels) {
-			colLabelMap.put(str, colIndex);
+		for (String[] str: colLabels) {
+			colLabelMap.put(str[0], colIndex);  // Note that we're basing the uniqueness off of the first value
 			colIndex++;
 		}
 

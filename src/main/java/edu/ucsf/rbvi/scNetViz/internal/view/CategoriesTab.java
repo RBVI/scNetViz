@@ -104,7 +104,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 		catTable.setRowSelectionAllowed(false);
 
 		// Get the unsorted row labels
-		List<String> colLabels = currentCategory.getMatrix().getColLabels();
+		List<String> colLabels = currentCategory.getMatrix().getColLabels(0);
 
 		/*
 		System.out.println("ColLabels = ");
@@ -368,7 +368,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			if (catRow < 0)
 				catRow = cat.getDefaultRow();
 			if (catRow >= 0) {
-				List<String> rowLabels = cat.getMatrix().getRowLabels();
+				List<String> rowLabels = cat.getMatrix().getRowLabels(0);
 				title += " ("+rowLabels.get(catRow)+")";
 			}
 		}

@@ -179,30 +179,31 @@ public class FileCategory extends AbstractCategory implements Category {
 	                                          boolean zeroRelative, TaskMonitor monitor) {
 
 		int nRows = lines.size()-1; // Rows don't include the header
-		int nCols = lines.get(0).length-hdrCols;
+		int nCols = lines.get(0).length;
 		if (transpose) {
 			int x = nCols;
 			nCols = nRows;
 			nRows = x;
 		}
 
-		// System.out.println("nCols = "+nCols+", nRows = "+nRows);
+		System.out.println("nCols = "+nCols+", nRows = "+nRows);
 
 		FileCategory fileCategory = new FileCategory(scManager, experiment, name, dataCategory, nRows, nCols);
-		fileCategory.hdrCols = hdrCols;
+		fileCategory.setHdrCols(hdrCols);
+		fileCategory.setHdrRows(1);  // XXX: Do we need multiple row headers?
 		fileCategory.zeroRelative = zeroRelative;
 
-		List<String> labels;
-
 		if (!transpose) {
-			fileCategory.setColLabels(Arrays.asList(lines.get(0)));
-			labels = new ArrayList<String>(fileCategory.nRows);
+      for (int row = 0; row < fileCategory.getHdrRows(); row++) {
+			  fileCategory.setColLabels(lines.get(row), row);
+      }
 		} else {
-			String[] colLabels = lines.get(0);
-			String[] newLabels = Arrays.copyOfRange(colLabels, 1, colLabels.length);
-			fileCategory.setRowLabels(Arrays.asList(newLabels));
-			labels = new ArrayList<String>(fileCategory.nCols);
-			labels.add("Category");
+      for (int col = 0; col < fileCategory.getHdrCols(); col++) {
+			  String[] colLabels = lines.get(col);
+			  String[] newLabels = Arrays.copyOfRange(colLabels, fileCategory.getHdrRows(), colLabels.length);
+			  fileCategory.setRowLabels(newLabels, col);
+      }
+      fileCategory.setRowLabel("Category", 0, 0);
 		}
 
 
@@ -212,11 +213,11 @@ public class FileCategory extends AbstractCategory implements Category {
 			if (first) {
 				first = false;
 			} else {
-				labels.add(line[0]);
-				// System.out.println("Label["+(lineNumber-1)+"]: "+line[0]);
 				if (!transpose) {
-					for (int col = 0; col < fileCategory.nCols; col++) {
+          fileCategory.setRowLabel(line, lineNumber);
+					for (int col = 0; col < fileCategory.nCols-hdrCols; col++) {
             try {
+              System.out.println("Setting value for "+line[0]+","+fileCategory.getColumnLabel(col+hdrCols)+" to "+line[col+hdrCols]);
               fileCategory.setValue(lineNumber-1, col, line[col+hdrCols]);
             } catch (Exception e) {
 		          LogUtils.log(monitor, TaskMonitor.Level.ERROR, 
@@ -226,6 +227,7 @@ public class FileCategory extends AbstractCategory implements Category {
             }
 					}
 				} else {
+          fileCategory.setColLabel(line, lineNumber);
 					for (int row = 0; row < fileCategory.nRows; row++) {
             try {
 						  fileCategory.setValue(row, lineNumber-1, line[row+hdrCols]);
@@ -239,14 +241,6 @@ public class FileCategory extends AbstractCategory implements Category {
 				}
 			}
 			lineNumber++;
-		}
-
-		if (!transpose) {
-			// System.out.println("Found "+labels.size()+" row labels");
-			fileCategory.setRowLabels(labels);
-		} else {
-			// System.out.println("Found "+labels.size()+" column labels");
-			fileCategory.setColLabels(labels);
 		}
 
 		LogUtils.log(monitor, TaskMonitor.Level.INFO, "Read "+fileCategory.nRows+

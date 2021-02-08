@@ -24,9 +24,9 @@ public abstract class SortableTableModel extends AbstractTableModel {
 	abstract public void setSelectedRow(int selectedRow);
 
 	public void sortColumns(int row) {
-		System.out.println("sorting row: "+row);
-		System.out.println("hdrCols = "+hdrCols);
-		System.out.println("getColumnCount()-hdrCols = "+(getColumnCount()-hdrCols));
+		//System.out.println("sorting row: "+row);
+		//System.out.println("hdrCols = "+hdrCols);
+		//System.out.println("getColumnCount()-hdrCols = "+(getColumnCount()-hdrCols));
 		Integer tmpIndex[] = new Integer[getColumnCount()-hdrCols];
 		columnIndex = null;
 		for (int i = 0; i < (getColumnCount()-hdrCols); i++) 

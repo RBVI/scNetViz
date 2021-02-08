@@ -53,7 +53,7 @@ public class ViolinDiffExpTask extends AbstractTask {
 				columnOrder.add(currentCategory.mkLabel(cat));
 			}
 		}
-		geneNames = diffExp.getRowLabels();
+		geneNames = diffExp.getRowLabels(0);
 
 		accession = diffExp.getExperiment().getMetadata().get(Metadata.ACCESSION).toString();
 		String source = diffExp.getExperiment().getSource().toString();

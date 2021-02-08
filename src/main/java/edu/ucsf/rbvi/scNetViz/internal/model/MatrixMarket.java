@@ -159,8 +159,10 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	}
 
 	public MatrixMarket(final ScNVManager manager, 
-	                    List<String> rowLabels, List<String> colLabels) {
+	                    List<String[]> rowLabels, List<String[]> colLabels) {
 		super(manager, rowLabels, colLabels);
+    hdrCols = 1;
+    hdrRows = 1;
 		rowMap = new HashMap<>();
 		colMap = new HashMap<>();
 		intMatrix = null;
@@ -186,13 +188,13 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 	public BitSet findControls() {
 		if (controls == null)
-			controls = MatrixUtils.findControls(rowLabels, MatrixUtils.CONTROL_PREFIX);
+			controls = MatrixUtils.findControls(rowLabels, MatrixUtils.CONTROL_PREFIX, 0);
 		return controls;
 	}
 
 	public boolean isControl(int row) {
 		if (controls == null)
-			controls = MatrixUtils.findControls(rowLabels, MatrixUtils.CONTROL_PREFIX);
+			controls = MatrixUtils.findControls(rowLabels, MatrixUtils.CONTROL_PREFIX, 0);
 
 		return controls.get(row);
 	}
@@ -218,11 +220,13 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 	public void setRowTable(List<String[]> rowTable) {
 		this.rowTable = rowTable;
-		if (rowTable != null)
+		if (rowTable != null) {
+      System.out.println("rowKey = "+rowKey);
 			if (rowTable.get(0).length <= rowKey)
-				rowLabels = getLabels(rowTable, rowTable.get(0).length-1);
+				rowLabels = getLabels(rowTable, rowTable.get(0).length-1, hdrCols, hdrRows-1, 0);
 			else
-				rowLabels = getLabels(rowTable, rowKey);
+				rowLabels = getLabels(rowTable, rowKey, hdrCols, hdrRows-1, 0);
+    }
 	}
 
 	public void setRowTable(List<String[]> rowTable, int index) {
@@ -239,13 +243,12 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void setColumnTable(List<String[]> colTable) {
 		this.colTable = colTable;
 		if (colTable != null) {
+      System.out.println("colKey = "+columnKey);
 			if (colTable.get(0).length <= columnKey) {
-				colLabels = getLabels(colTable, colTable.get(0).length-1);
-				colLabels.add(0, "");
+				colLabels = getLabels(colTable, colTable.get(0).length-1, hdrRows, hdrCols, 0);
 				// System.out.println("got column labels(1): "+colLabels);
 			} else {
-				colLabels = getLabels(colTable, columnKey);
-				colLabels.add(0, "");
+				colLabels = getLabels(colTable, columnKey, hdrRows, hdrRows, 0);
 				// System.out.println("got column labels(2): "+colLabels);
 			}
 		}
@@ -754,22 +757,22 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		}
 	}
 
-	private void createColumns(CyTable table, List<String> labels) {
-		for (String lbl: labels) {
-			String columnLabel = "MTX::"+lbl;
+	private void createColumns(CyTable table, List<String[]> labels) {
+		for (String[] lbl: labels) {
+			String columnLabel = "MTX::"+lbl[0];
 			table.createColumn(columnLabel, Double.class, true);
 		}
 	}
 
-	private void createRows(CyTable table, List<String> rowLabels, List<String> colLabels) {
+	private void createRows(CyTable table, List<String[]> rowLabels, List<String[]> colLabels) {
 		if (format == MTXFORMAT.COORDINATE) {
 			for (int index = 0; index < nonZeros; index++) {
 				int row = intMatrix[index][0];
 				int col = intMatrix[index][1];
 				if (transposed) { int rtmp = row; row = col; col = rtmp; }
-				String rowLabel = rowLabels.get(row);
+				String rowLabel = rowLabels.get(row)[0];
 				CyRow cyRow = table.getRow(rowLabel);
-				String colLabel = "MTX::"+colLabels.get(col);
+				String colLabel = "MTX::"+colLabels.get(col)[0];
 				if (type == MTXTYPE.REAL) {
 					double v = doubleArray[index];
 					cyRow.set(colLabel, Double.valueOf(v));
@@ -780,10 +783,10 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 			}
 		} else if (format == MTXFORMAT.ARRAY) {
 			for (int row = 0; row < rowLabels.size(); row++) {
-				String rowLabel = rowLabels.get(row);
+				String rowLabel = rowLabels.get(row)[0];
 				CyRow cyRow = table.getRow(rowLabel);
 				for (int col = 0; col < colLabels.size(); col++) {
-					String colLabel = "MTX::"+colLabels.get(col);
+					String colLabel = "MTX::"+colLabels.get(col)[0];
 					int r = row;
 					int c = col;
 					if (transposed) { int rtmp = r; r = c; c = rtmp; }

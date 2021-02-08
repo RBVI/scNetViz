@@ -75,8 +75,8 @@ public class tSNETask extends AbstractEmbeddingTask implements ObservableTask {
 
 
 		// System.out.println("Getting matrix");
-		List<String> rowLabels = new ArrayList<String>(matrix.getRowLabels());
-		List<String> colLabels = new ArrayList<String>(matrix.getColLabels());
+		List<String> rowLabels = new ArrayList<String>(matrix.getRowLabels(0));
+		List<String> colLabels = new ArrayList<String>(matrix.getColLabels(0));
 		// get sparse primitive matrix instead?
 		double[][] Xin = matrix.getDoubleMatrix(0.0, false, true);
 		// MatrixOps.debug("/tmp/originalMatrix", MatrixOps.doubleArrayToPrintString(matrix.getRowLabels(), Xin, false));

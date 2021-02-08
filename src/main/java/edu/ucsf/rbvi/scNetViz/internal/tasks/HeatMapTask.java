@@ -55,7 +55,7 @@ public class HeatMapTask extends AbstractTask {
 		this.fdrCutoff = fdrCutoff;
 		this.fcCutoff = fcCutoff;
 
-		this.geneNames = diffExp.getRowLabels();
+		this.geneNames = diffExp.getRowLabels(0);
 		this.dataMap = null;
 		this.columnOrder = new ArrayList<>();
 	}

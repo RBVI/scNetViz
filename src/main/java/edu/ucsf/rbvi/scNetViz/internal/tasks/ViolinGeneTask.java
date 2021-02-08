@@ -52,7 +52,7 @@ public class ViolinGeneTask extends AbstractTask {
 
 		dataMap = new HashMap<>();
 		columnOrder = new ArrayList<>();
-		cellNames = experiment.getMatrix().getColLabels();
+		cellNames = experiment.getMatrix().getColLabels(0);
 		for (Object cat: catMap.keySet()) {
 			// System.out.println("Cat: "+cat.toString());
 			double[] tpm = new double[cellNames.size()];

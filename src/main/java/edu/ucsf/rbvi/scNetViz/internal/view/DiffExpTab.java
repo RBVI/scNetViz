@@ -85,7 +85,7 @@ public class DiffExpTab extends JPanel {
 		this.diffExp = diffExp;
 		categoryLabelMap = new HashMap<>();
 		for (Category cat: categories) {
-			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels());
+			categoryLabelMap.put(cat, cat.getMatrix().getRowLabels(0));
 		}
 		init();
 	}
@@ -95,7 +95,7 @@ public class DiffExpTab extends JPanel {
 		diffExpTable.clearSelection();
 		diffExpTable.setRowSelectionAllowed(true);
 		// Get the unsorted row labels
-		List<String> rowLabels = experiment.getMatrix().getRowLabels();
+		List<String> rowLabels = experiment.getMatrix().getRowLabels(0);
 		for (String gene: geneList) {
 			int index = rowLabels.indexOf(gene);
 			index = diffExpTable.convertRowIndexToView(index);

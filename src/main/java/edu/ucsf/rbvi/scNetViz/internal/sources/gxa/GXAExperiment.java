@@ -205,7 +205,7 @@ public class GXAExperiment implements Experiment {
 					} else if (name.endsWith(".mtx_rows")) {
 						rowTable = CSVReader.readCSV(monitor, zipStream, name);
 						if (mtx != null) 
-							mtx.setRowTable(rowTable);
+							mtx.setRowTable(rowTable, 0);
 					} else if (name.endsWith(".mtx")) {
 						if (mtx == null)
 							mtx = new MatrixMarket(scNVManager, null, null);

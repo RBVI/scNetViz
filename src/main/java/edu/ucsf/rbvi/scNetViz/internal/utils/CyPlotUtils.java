@@ -149,11 +149,11 @@ public class CyPlotUtils {
 		return builder.substring(0, builder.length()-1);
 	}
 
-	public static String listToJSON(List<String> names) {
+	public static String listToJSON(List<String[]> names, int hdr) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("[");
-		for (String s: names) {
-			builder.append("\""+s+"\",");
+		for (String[] s: names) {
+			builder.append("\""+s[hdr]+"\",");
 		}
 		return builder.substring(0, builder.length()-1)+"]";
 	}
@@ -178,13 +178,13 @@ public class CyPlotUtils {
 		return builder.toString();
 	}
 
-	public static String listToMap(Map<Object, List<Integer>> map, List<String> list) {
+	public static String listToMap(Map<Object, List<Integer>> map, List<String[]> list, int hdr) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
 		for (Object trace: map.keySet()) {
 			builder.append("\""+trace.toString()+"\":[");
 			for (Integer index: map.get(trace)) {
-				builder.append("\""+list.get(index)+"\",");
+				builder.append("\""+list.get(index)[hdr]+"\",");
 			}
 			builder.setCharAt(builder.length()-1, ']');
 			builder.append(",");

@@ -50,6 +50,9 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 	// Map<Object, double[]> fdrMap = null;
 	final double[][] matrix;
 
+  List<String> colLabelCache = null;
+  List<String> rowLabelCache = null;
+
 	SortableTableModel tableModel = null;
 
 	int nGenes;
@@ -81,7 +84,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		}
 
 		super.nCols = matrixLines.get(0).length-1;
-		super.setColLabels(Arrays.asList(matrixLines.get(0)));
+		super.setColLabels(Arrays.asList(matrixLines.get(0)),0);
 		super.nRows = matrixLines.size()-1;
 		matrix = new double[nRows][nCols];
 		List<String> rowLabels = new ArrayList<>();
@@ -99,7 +102,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 				}
 			}
 		}
-		super.setRowLabels(rowLabels);
+		super.setRowLabels(rowLabels, 0);
 
 		// Now, built our logGERMap
 		logGERMap = new HashMap<>();
@@ -167,9 +170,9 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		for (int row = 0; row < mtx.getNRows(); row++) {
 			if (mtx instanceof MatrixMarket && ((MatrixMarket)mtx).isControl(row))
 				continue;
-			labels.add(mtx.getRowLabels().get(row));
+			labels.add(mtx.getRowLabels().get(row)[0]);
 		}
-		setRowLabels(labels);
+		setRowLabels(labels, 0);
 
 		// Get the column headers
 		List<String> colHeaders = new ArrayList<>();
@@ -184,7 +187,7 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			colHeaders.add(category.mkLabel(cat)+" pValue");
 			colHeaders.add(category.mkLabel(cat)+" FDR");
 		}
-		setColLabels(colHeaders);
+		setColLabels(colHeaders, 0);
 
 		// Initialize the matrix
 		matrix = new double[nRows][nCols];
@@ -236,6 +239,10 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		builder.append("\"log2FCCutoff\": "+log2FCCutoff+"}");
 		return builder.toString();
 	}
+
+  public List<String> getRowLabels(int lbl) {
+    return super.getRowLabels(lbl);
+  }
 
   public double getLog2FCCutoff() { return log2FCCutoff; }
 
@@ -424,8 +431,14 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 
 	@Override
 	public double getDoubleValue(String row, String column) {
-		int col = colLabels.indexOf(column);
-		int intRow = rowLabels.indexOf(row);
+    if (colLabelCache == null) {
+      colLabelCache = getColLabels(columnKey);
+    }
+		int col = colLabelCache.indexOf(column);
+    if (rowLabelCache == null) {
+      rowLabelCache = getRowLabels(rowKey);
+    }
+		int intRow = rowLabelCache.indexOf(row);
 		if (col < 0 || intRow < 0) {
 			System.out.println("Got negative index for "+row+","+column);
 		}

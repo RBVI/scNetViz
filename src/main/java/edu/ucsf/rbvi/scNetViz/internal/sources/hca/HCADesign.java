@@ -153,8 +153,7 @@ public class HCADesign extends AbstractCategory implements StringMatrix {
 
 		setRowLabels(stripArray(input.get(0), 1));
 		categories = new String[nRows][nCols];
-		List<String> colLabels = new ArrayList<String>(nCols);
-		colLabels.add("Category");
+		setColLabel("Category", 0, 0);
 
 		boolean first = true;
 		int col = hdrCols;
@@ -163,8 +162,7 @@ public class HCADesign extends AbstractCategory implements StringMatrix {
 				if (first) {
 					first = false;
 				} else {
-					String label = stripQuotes(new String(line[0]));
-					colLabels.add(label);
+				  setColLabel(stripQuotes(line[0]), col, 0);
 				}
 				for (int row = 1; row < nRows; row++) {
 					categories[row-1][col-hdrCols] = stripQuotes(new String(line[row]));
@@ -174,18 +172,18 @@ public class HCADesign extends AbstractCategory implements StringMatrix {
 
 		}
 		// System.out.println("colLabels.size() = "+colLabels.size());
-		setColLabels(colLabels);
 
 		LogUtils.log(monitor, TaskMonitor.Level.INFO, "Read "+nRows+
 			                    " rows with "+nCols+" columns");
 		return;
 	}
 
-	static private List<String> stripArray(String[] array, int offset) {
-		List<String> result = new ArrayList<>();
+	static private List<String[]> stripArray(String[] array, int offset) {
+		List<String[]> result = new ArrayList<>();
 		for (int i = offset; i < array.length; i++) {
-			String str = new String(array[i]);
-			result.add(str.replaceAll("^\"|\"$", ""));
+			String[] str = new String[1];
+      str[0] = array[i].replaceAll("^\"|\"$", "");
+			result.add(str);
 		}
 		return result;
 	}
@@ -200,11 +198,11 @@ public class HCADesign extends AbstractCategory implements StringMatrix {
 		int factorColumn = colLabels.indexOf(factor);
 
 		for (int row = 0; row < nRows; row++) {
-			String id = rowLabels.get(row);
+			String[] id = rowLabels.get(row);
 			String rowFactor = categories[row][factorColumn];
 			if (!clusterMap.containsKey(rowFactor))
 				clusterMap.put(rowFactor, new ArrayList<>());
-			clusterMap.get(rowFactor).add(id);
+			clusterMap.get(rowFactor).add(id[0]);
 		}
 		return clusterMap;
 	}

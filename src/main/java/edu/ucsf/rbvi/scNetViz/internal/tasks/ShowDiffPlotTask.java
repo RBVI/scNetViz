@@ -86,7 +86,7 @@ public class ShowDiffPlotTask extends AbstractTask {
     } else {
       int row = 0;
       int rowNumber = -1;
-      for (String rowName: exp.getMatrix().getRowLabels()) {
+      for (String rowName: exp.getMatrix().getRowLabels(0)) {
         if (rowName.equalsIgnoreCase(gene)) {
           rowNumber = row;
           break;
@@ -116,7 +116,7 @@ public class ShowDiffPlotTask extends AbstractTask {
     int rowNumber = -1;
     if (gene != null) {
       int row = 0;
-      for (String rowName: exp.getMatrix().getRowLabels()) {
+      for (String rowName: exp.getMatrix().getRowLabels(0)) {
         if (rowName.equalsIgnoreCase(gene)) {
           rowNumber = row;
           break;

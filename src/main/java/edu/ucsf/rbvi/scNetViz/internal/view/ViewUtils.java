@@ -122,8 +122,8 @@ public class ViewUtils {
 			title = accession+" Expression for "+tableModel.getValueAt(geneRow, 0);
 		} else if (category != null && catRow >= 0) {
 			title = experiment.getPlotType()+" Plot for "+accession+" Category "+category.toString();
-			List<String> rowLabels = category.getMatrix().getRowLabels();
-			title += " ("+rowLabels.get(catRow)+")";
+			List<String[]> rowLabels = category.getMatrix().getRowLabels();
+			title += " ("+rowLabels.get(catRow)[0]+")";
     }
 		ViewUtils.showtSNE(manager, experiment, category, catRow, geneRow, title);
 	}
@@ -146,7 +146,7 @@ public class ViewUtils {
 
 		if (category == null) {
 			// See if a gene is selected and provide a color trace if it is
-			String names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels())+"}";
+			String names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels(), 0)+"}";
 			String xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
 			String yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
 			String zValues = null;
@@ -194,11 +194,11 @@ public class ViewUtils {
 				// for (Object key: sortedKeys) {
 				// 	sortedLabels.add(category.mkLabel(key));
 				// }
-				names = CyPlotUtils.listToMap(newMap, exp.getMatrix().getColLabels());
+				names = CyPlotUtils.listToMap(newMap, exp.getMatrix().getColLabels(), 0);
 				xValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 0);
 				yValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 1);
 			} else {
-				names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels())+"}";
+				names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels(), 0)+"}";
 				xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
 				yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
 			}

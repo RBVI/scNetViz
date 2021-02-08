@@ -66,14 +66,17 @@ public class CSVWriter {
 		BufferedWriter output = null;
 		try {
 			output = new BufferedWriter(new FileWriter(file));
-			List<String> rowLabels = matrix.getRowLabels();
+			List<String[]> rowLabels = matrix.getRowLabels();
 			// Get the column labels
-			List<String> colLabels = matrix.getColLabels();
+			List<String[]> colLabels = matrix.getColLabels();
+      int hdrRows = matrix.getHdrRows();
 
-			for (int i = 0; i < colLabels.size()-1; i++) {
-				output.write(quote(colLabels.get(i), delimiter)+delimiter);
+      for (int hdrRow = 0; hdrRow < hdrRows; hdrRow++) {
+			  for (int i = 0; i < colLabels.size()-1; i++) {
+				  output.write(quote(colLabels.get(i)[hdrRow], delimiter)+delimiter);
+        }
+			  output.write(quote(colLabels.get(colLabels.size()-1)[hdrRow], delimiter)+"\n");
 			}
-			output.write(quote(colLabels.get(colLabels.size()-1), delimiter)+"\n");
 
 			// Get the matrix
 			if (matrix instanceof DoubleMatrix) {
@@ -102,20 +105,24 @@ public class CSVWriter {
 		return "\""+str+"\"";
 	}
 
-	private static void writeStringRow(BufferedWriter output, String rowLabel, 
+	private static void writeStringRow(BufferedWriter output, String[] rowLabel, 
 	                                   StringMatrix mat, int row, String delimiter) throws IOException {
 		int nCols = mat.getNCols();
-		output.write(quote(rowLabel, delimiter)+delimiter);
+		for (int hdr=0; hdr < rowLabel.length; hdr++) {
+		  output.write(quote(rowLabel[hdr], delimiter)+delimiter);
+    }
 		for (int col = 0; col < nCols-1; col++) {
 			output.write(quote(mat.getValue(row, col), delimiter)+delimiter);
 		}
 		output.write(quote(mat.getValue(row,nCols-1), delimiter)+"\n");
 	}
 
-	private static void writeIntegerRow(BufferedWriter output, String rowLabel, 
+	private static void writeIntegerRow(BufferedWriter output, String[] rowLabel, 
 	                                    IntegerMatrix mat, int row, String delimiter) throws IOException {
 		int nCols = mat.getNCols();
-		output.write(quote(rowLabel, delimiter)+delimiter);
+		for (int hdr=0; hdr < rowLabel.length; hdr++) {
+		  output.write(quote(rowLabel[hdr], delimiter)+delimiter);
+    }
 		for (int col = 0; col < nCols-1; col++) {
 			int value = mat.getIntegerValue(row, col);
 			if (value == Integer.MIN_VALUE)
@@ -130,10 +137,12 @@ public class CSVWriter {
 			output.write(value+"\n");
 	}
 
-	private static void writeDoubleRow(BufferedWriter output, String rowLabel, 
+	private static void writeDoubleRow(BufferedWriter output, String[] rowLabel, 
 	                                   DoubleMatrix mat, int row, String delimiter) throws IOException {
 		int nCols = mat.getNCols();
-		output.write(quote(rowLabel, delimiter)+delimiter);
+		for (int hdr=0; hdr < rowLabel.length; hdr++) {
+		  output.write(quote(rowLabel[hdr], delimiter)+delimiter);
+    }
 		for (int col = 0; col < nCols-1; col++) {
 			double value = mat.getDoubleValue(row, col);
 			if (Double.isNaN(value))

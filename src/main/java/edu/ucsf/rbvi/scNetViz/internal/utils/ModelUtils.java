@@ -202,9 +202,9 @@ public class ModelUtils {
 		if (nodes == null || nodes.size() == 0 || network == null) return -1;
 
 		// We want to use the diff exp because it's already removed the spike-ins
-		List<String> rowLabels = exp.getDiffExp().getRowLabels();
+		List<String> rowLabels = exp.getDiffExp().getRowLabels(0);
 		String name = getGeneNameFromNode(network, nodes.get(0));
-		return rowLabels.indexOf(name);
+    return rowLabels.indexOf(name);
 	}
 
 	public static List<CyNode> selectNodes(ScNVManager manager, CyNetwork network, String enrichmentType) {

@@ -72,6 +72,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 	public GXACluster(final ScNVManager scManager, final GXAExperiment experiment) {
 		super(scManager, experiment, "Cluster", 0, 0);
 		super.hdrCols = 2;
+    super.hdrRows = 0;
 
 		logger = Logger.getLogger(CyUserLog.NAME);
 		source = scManager.getSource("GXA");
@@ -193,7 +194,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 			if (!clusterMap.containsKey(cluster)) {
 				clusterMap.put(cluster, new ArrayList<>());
 			}
-			clusterMap.get(cluster).add(colLabels.get(i+2));
+			clusterMap.get(cluster).add("k = "+getColumnLabel(i+2, 0));
 		}
 		return clusterMap;
 	}
@@ -241,17 +242,21 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 
 		GXACluster gxaCluster = new GXACluster(scManager, experiment);
 
+		gxaCluster.nCols = ncolumns;
+		gxaCluster.nRows = nclusters;
+
 		// System.out.println("ncolumns = "+ncolumns+", ncluster = "+nclusters);
 		gxaCluster.clusters = new int[ncolumns][nclusters];
 		boolean first = true;
-		List<String> lbl = new ArrayList<>();
 
 		int clustering = 0;
+    gxaCluster.setColKey(0);
+    gxaCluster.setRowKey(0);
 		for (String[] line: input) {
 			if (first) {
 				first = false;
 				// System.out.println("Column header line has: "+line.length+" columns");
-				gxaCluster.setColLabels(Arrays.asList(line));
+				gxaCluster.setColLabels(line, 0);
 				// gxaCluster.headers = line;
 				continue;
 			}
@@ -259,11 +264,15 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 			// for (String l: line) { System.out.print(l+","); }
 			// System.out.println();
 			int thisK = Integer.parseInt(line[1]);
-			lbl.add("k = "+thisK);
+
+      gxaCluster.setRowLabel(line[1], clustering, 0);
 			if (line[0].equalsIgnoreCase("TRUE")) {
 				gxaCluster.suggestedK = thisK;
 				gxaCluster.selectedRow = clustering;
-			}
+        gxaCluster.setRowLabel("True", clustering, 1);
+			} else {
+        gxaCluster.setRowLabel("False", clustering, 1);
+      }
 
 			// System.out.println("line.length = "+line.length);
 			// System.out.println("thisK = "+thisK);
@@ -273,19 +282,13 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 				gxaCluster.clusters[i-1][clustering] = Integer.parseInt(line[i]);
 			}
 			clustering++;
-
 		}
-
-		gxaCluster.setRowLabels(lbl);
 
 		if (monitor != null) {
 			monitor.showMessage(TaskMonitor.Level.INFO, "Read "+(nclusters-1)+" clusters.  Suggested K = "+gxaCluster.suggestedK);
 		} else {
 			gxaCluster.logger.info("Read "+(nclusters-1)+" clusters.  Suggested K = "+gxaCluster.suggestedK);
 		}
-
-		gxaCluster.nCols = ncolumns;
-		gxaCluster.nRows = nclusters;
 
 		gxaCluster.source = experiment.getSource();
 		
@@ -329,10 +332,17 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 
 		@Override
 		public String getColumnName(int column) {
-			if (columnIndex != null)
-				return cluster.getColumnLabel(columnIndex[column]);
-			else
-				return cluster.getColumnLabel(column);
+      switch (column) {
+        case 0:
+          return cluster.getColumnLabel(1);
+        case 1:
+          return cluster.getColumnLabel(0);
+        default:
+			    if (columnIndex != null)
+				    return cluster.getColumnLabel(columnIndex[column]);
+			    else
+				    return cluster.getColumnLabel(column);
+      }
 		}
 
 		@Override
@@ -344,6 +354,8 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 		public Class getColumnClass(int column) {
 			switch(column) {
 				case 0:
+					return Integer.class;
+				case 1:
 					return String.class;
 				default:
 					return Integer.class;
@@ -361,8 +373,11 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 			// System.out.println("getValueAt: "+row+","+column);
 			switch (column) {
 				case 0:
-					int thisK = (Integer) getValueAt(row, 1);
-					return (thisK) == suggestedK ? "True" : "False";
+          return cluster.getRowLabel(row, 0);
+				case 1:
+          return cluster.getRowLabel(row, 1);
+					// int thisK = (Integer) getValueAt(row, 0);
+					// return (thisK) == suggestedK ? "True" : "False";
 				default:
 					int value;
 					if (columnIndex != null)

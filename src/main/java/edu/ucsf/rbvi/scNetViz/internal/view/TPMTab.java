@@ -76,7 +76,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 		// Clear the selection list
 		experimentTable.getSelectionModel().clearSelection();
 		// Get the unsorted row labels
-		List<String> rowLabels = experiment.getMatrix().getRowLabels();
+		List<String> rowLabels = experiment.getMatrix().getRowLabels(0);
 		for (String gene: geneList) {
 			int index = rowLabels.indexOf(gene);
 			index = experimentTable.convertRowIndexToView(index);
