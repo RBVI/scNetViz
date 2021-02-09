@@ -149,10 +149,15 @@ public class HCAExperiment implements Experiment {
 			while ((entry = zipStream.getNextEntry()) != null) {
 				String name = entry.getName();
 				if (name.endsWith("cells.tsv.gz")) {
+
+          // System.out.println("Reading cells.tsv.gz");
 					colTable = CSVReader.readCSV(monitor, zipStream, name, 0);
+          // System.out.println(colTable.get(0)[0]);
 
 					// First, create our design category
+          // System.out.println("Creating the design category");
 					((HCADesign)categories.get(0)).fetchDesign(this, colTable, monitor);
+          // System.out.println("done");
 
 					// Now, we need to skip over the header
 					colTable.remove(0);
@@ -177,7 +182,9 @@ public class HCAExperiment implements Experiment {
 			zipStream.close();
 			httpZipClient.close();
 
-		} catch (Exception e) {}
+		} catch (Exception e) {
+      e.printStackTrace();
+    }
 		scNVManager.addExperiment(accession, this);
 	}
 

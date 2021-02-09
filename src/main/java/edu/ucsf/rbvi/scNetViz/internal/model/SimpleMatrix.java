@@ -212,11 +212,13 @@ public abstract class SimpleMatrix implements Matrix {
 
 	@Override
 	public String getColumnLabel(int col) {
-    return getColumnLabel(col, 0);
+    return getColumnLabel(0, col);
   }
 
   @Override
-  public String getColumnLabel(int col, int row) {
+  public String getColumnLabel(int row, int col) {
+    // System.out.println("Getting column label: "+col+","+row+": transposed = "+transposed);
+    // System.out.println("colLabels.size() = "+colLabels.size());
 		String label = transposed ? rowLabels.get(col)[row]: colLabels.get(col)[row];
 		return label;
 	}

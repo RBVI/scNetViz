@@ -34,14 +34,14 @@ public interface Matrix {
 	public void setColLabels(List<String[]> cLabels);
 	public void setColLabels(String[] cLabels, int lbl);
 	public void setColLabels(List<String> cLabels, int lbl);
-	public void setColLabel(String cLabel, int col, int row);
+	public void setColLabel(String cLabel, int row, int col);
 	public void setColLabel(String[] cLabel, int col);
 
 	public String getRowLabel(int row);
 	public String getRowLabel(int row, int col);
 
 	public String getColumnLabel(int col);
-	public String getColumnLabel(int col, int row);
+	public String getColumnLabel(int row, int col);
 }
 
 

@@ -53,6 +53,8 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
 		put(ARRAY_EXPRESS, getArray((JSONArray)project.get("arrayExpressAccessions")));
 		put(INSDC, getArray((JSONArray)project.get("insdcProjectAccessions")));
 		put(LABORATORY, getArray((JSONArray)project.get("laboratory")));
+    // System.out.println("Project: "+project.toString());
+    // System.out.println("Matrices: "+project.get("matrices").toString());
     getMatrix((JSONObject)project.get("matrices"), organ);
   }
 
@@ -62,7 +64,10 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
       JSONArray organs = (JSONArray)suspension.get("organ");
       for (Object org: organs) {
         if (organ.equals((String)org)) {
-		      put(ASSAYS, ((Long)suspension.get("totalCells")).longValue());
+          if (suspension.containsKey("totalCells") && suspension.get("totalCells") != null) {
+		        put(ASSAYS, ((Long)suspension.get("totalCells")).longValue());
+          } else
+            put(ASSAYS, new Long(0L));
           put(SELECTED_CELL_TYPES, getArray((JSONArray)suspension.get("selectedCellType")));
           put(ORGANS, Collections.singletonList(organ));
         }
@@ -80,28 +85,38 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
 		return array;
 	}
 
+  // Wow!  They've made this incredably hard.  The first element of the matrix object can
+  // be either an organ *or* a genusSpecies
   private void getMatrix(JSONObject jsonMatrices, String organ) {
     JSONObject obj = (JSONObject) jsonMatrices.get("genusSpecies");
+    if (jsonMatrices.containsKey("genusSpecies")) {
+      getOrganOrLCA(obj, organ);
+    } else if (jsonMatrices.containsKey("organ")) {
+      JSONObject organs = (JSONObject)jsonMatrices.get("organ");
+      if (organs.containsKey(organ)) {
+        JSONObject orgObj = (JSONObject)organs.get(organ);
+        if (orgObj.containsKey("genusSpecies")) {
+          JSONObject jsObj = (JSONObject) orgObj.get("genusSpecies");
+          for (Object spObj: jsObj.keySet()) {
+            String species = (String)spObj;
+            JSONObject lca = (JSONObject)jsObj.get(spObj); // this better be LCA
+          }
+        }
+      }
+    }
+  }
+
+  private void getOrganOrLCA(JSONObject obj, String organ) {
     for (Object spObj: obj.keySet()) {
       String species = (String)spObj;
+      System.out.println("species = "+species);
       JSONObject xobj = (JSONObject)obj.get(spObj);
       if (xobj.containsKey("organ")) {
         JSONObject organs = (JSONObject)xobj.get("organ");
         if (organs.containsKey(organ)) {
           JSONObject orgObj = (JSONObject)organs.get(organ);
-          JSONObject lcaObj = (JSONObject)orgObj.get("libraryConstructionApproach");
-          for (Object lcaType: lcaObj.keySet()) {
-            JSONArray matrices = (JSONArray)lcaObj.get(lcaType);
-            for (Object matObj: matrices) {
-              String name = (String)((JSONObject)matObj).get("name");
-              if (name.contains("mtx.zip")) {
-                put(Metadata.TYPE, (String)lcaType);
-                put(MATRIX, (String)((JSONObject)matObj).get("url"));
-                put(Metadata.SPECIES, species);
-                return;
-              }
-            }
-          }
+          getLCA((JSONObject)orgObj.get("libraryConstructionApproach"), species, organ);
+          return;
         }
       } else if (xobj.containsKey("libraryConstructionApproach")) {
         JSONObject lcas = (JSONObject)xobj.get("libraryConstructionApproach");
@@ -117,6 +132,7 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
             String name = (String)((JSONObject)matObj).get("name");
             if (name.contains("mtx.zip")) {
               put(Metadata.TYPE, (String)lca);
+              System.out.println("species = "+species);
               put(Metadata.SPECIES, species);
               put(MATRIX, (String)((JSONObject)matObj).get("url"));
               return;
@@ -126,6 +142,22 @@ public class HCAMetadata extends HashMap<String, Object> implements Metadata {
       }
     }
     return;
+  }
+
+  private void getLCA(JSONObject lcaObj, String species, String organ) {
+    for (Object lcaType: lcaObj.keySet()) {
+      JSONArray matrices = (JSONArray)lcaObj.get(lcaType);
+      for (Object matObj: matrices) {
+        String name = (String)((JSONObject)matObj).get("name");
+        if (name.contains("mtx.zip")) {
+          put(Metadata.TYPE, (String)lcaType);
+          put(MATRIX, (String)((JSONObject)matObj).get("url"));
+          put(Metadata.SPECIES, species);
+          System.out.println("species = "+species);
+          return;
+        }
+      }
+    }
   }
 
   public static boolean hasMatrix(JSONObject json) {

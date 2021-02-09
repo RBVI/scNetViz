@@ -194,7 +194,7 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 			if (!clusterMap.containsKey(cluster)) {
 				clusterMap.put(cluster, new ArrayList<>());
 			}
-			clusterMap.get(cluster).add("k = "+getColumnLabel(i+2, 0));
+			clusterMap.get(cluster).add("k = "+getColumnLabel(0, i+2));
 		}
 		return clusterMap;
 	}

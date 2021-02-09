@@ -116,6 +116,12 @@ public class HCASource implements Source {
 		try {
 			JSONObject json = HTTPUtils.fetchJSON(HCA_PROJECT_URL+query, taskMonitor);
 			JSONArray hits = (JSONArray) json.get("hits");
+      while (json.containsKey("pagination") && 
+             ((JSONObject)json.get("pagination")).containsKey("next") && 
+             ((JSONObject)json.get("pagination")).get("next") != null) {
+			  json = HTTPUtils.fetchJSON(((JSONObject)json.get("pagination")).get("next").toString(), taskMonitor);
+        hits.addAll((JSONArray)json.get("hits"));
+      }
 			for (Object hit: hits) {
 				// For some reason, even though we only ask for projects with matrix files, we get others also
 				if (HCAMetadata.hasMatrix((JSONObject)hit)) {
@@ -128,6 +134,7 @@ public class HCASource implements Source {
 				}
 			}
 		} catch (Exception e) {
+      e.printStackTrace();
 			taskMonitor.showMessage(TaskMonitor.Level.ERROR, "Exception reading HCA experiment list: "+e.getMessage());
 		}
   }

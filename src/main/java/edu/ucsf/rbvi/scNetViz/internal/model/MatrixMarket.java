@@ -236,6 +236,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	}
 
 	public void setColumnTable(List<String[]> colTable, int index) {
+    System.out.println("mtx: setColumnTable, index = "+index+", colTable has "+colTable.size()+" entries");
 		columnKey = index;
 		setColumnTable(colTable);
 	}

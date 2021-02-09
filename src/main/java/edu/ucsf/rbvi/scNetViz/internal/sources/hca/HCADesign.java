@@ -53,7 +53,7 @@ public class HCADesign extends AbstractCategory implements StringMatrix {
 		super(scManager, experiment, "Design/Factors", 0, 0);
 		logger = Logger.getLogger(CyUserLog.NAME);
 		source = scManager.getSource("HCA");
-		hdrCols = 1;
+		super.hdrCols = 1;
 	}
 
 	@Override
@@ -152,24 +152,21 @@ public class HCADesign extends AbstractCategory implements StringMatrix {
 		// System.out.println("HCA fetchDesign: nCols = "+nCols+", nRows = "+nRows);
 
 		setRowLabels(stripArray(input.get(0), 1));
+    // System.out.println("First row label = "+getRowLabel(0));
 		categories = new String[nRows][nCols];
 		setColLabel("Category", 0, 0);
 
 		boolean first = true;
-		int col = hdrCols;
+		int col = 0;
 		for (String[] line: input) {
-			if (col >= hdrCols) {
-				if (first) {
-					first = false;
-				} else {
-				  setColLabel(stripQuotes(line[0]), col, 0);
-				}
-				for (int row = 1; row < nRows; row++) {
-					categories[row-1][col-hdrCols] = stripQuotes(new String(line[row]));
-				}
-			}
+      if (col >= hdrCols) {
+        // System.out.println("column["+col+"] = "+line[0]);
+        setColLabel(stripQuotes(line[0]), 0, col);
+        for (int row = 1; row < nRows; row++) {
+          categories[row-1][col] = stripQuotes(new String(line[row]));
+        }
+      }
 			col++;
-
 		}
 		// System.out.println("colLabels.size() = "+colLabels.size());
 
@@ -240,6 +237,7 @@ public class HCADesign extends AbstractCategory implements StringMatrix {
 
 		@Override
 		public String getColumnName(int column) {
+      // System.out.println("Getting column "+column+" name");
 			if (columnIndex == null) 
 				return strip(design.getColumnLabel(column));
 			else

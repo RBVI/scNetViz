@@ -55,7 +55,8 @@ public class ExperimentFrame extends JFrame {
 
 	public void addTPMContent(String title, JPanel content) {
 		titles[0] = title;
-		jFrame.setTitle(title);
+    // System.out.println("titles[0] = "+titles[0]);
+		jFrame.setTitle(titles[0]);
 		JPanel panel = (JPanel)tabbedPane.getComponentAt(0);
 		panel.removeAll();
 		panel.add(content, BorderLayout.CENTER);

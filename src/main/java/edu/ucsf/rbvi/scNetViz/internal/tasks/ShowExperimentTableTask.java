@@ -60,6 +60,7 @@ public class ShowExperimentTableTask extends AbstractTask {
 					frame = new ExperimentFrame(manager, experiment);
 					// Add our TPM tab
 					String accession = experiment.getMetadata().get(Metadata.ACCESSION).toString();
+          System.out.println("accession = "+accession);
 					frame.addTPMContent(accession+": TPM Tab", new TPMTab(manager, experiment, frame));
 					// Add our Categories tab if we have any categories
 					List<Category> categories = experiment.getCategories();
