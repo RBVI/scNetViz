@@ -124,7 +124,7 @@ public class GXADesign extends AbstractCategory implements StringMatrix {
 	@Override
 	public String getValue(int row, int col) { 
 		// System.out.println("categories["+row+"]["+col+"] = "+categories[row][col]);
-		return categories[row][col];
+		return categories[row][col+1];
 	}
 
 	@Override

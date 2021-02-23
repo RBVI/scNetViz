@@ -46,6 +46,9 @@ public class FileCategoryTask extends AbstractTask implements ObservableTask {
 	@Tunable (description="File needs to be pivoted (columns are categories)")
 	public boolean pivot=false;
 
+	@Tunable (description="Key column (or row, if pivoted)", format="#")
+	public int keyColumn=0;
+
 	public FileCategoryTask(final ScNVManager scManager, final FileSource fileSource, final Experiment exp) {
 		super();
 		this.scManager = scManager;
@@ -71,7 +74,7 @@ public class FileCategoryTask extends AbstractTask implements ObservableTask {
 		try {
 			cat = FileCategory.fetchCategory(scManager, exp, file,
 			                                 dataType.getSelectedValue(), 
-			                                 pivot, hdrCols, false, taskMonitor);
+			                                 pivot, hdrCols, keyColumn, false, taskMonitor);
       if (cat == null) {
 		    taskMonitor.setStatusMessage("Failed to read category file: "+file);
         return;

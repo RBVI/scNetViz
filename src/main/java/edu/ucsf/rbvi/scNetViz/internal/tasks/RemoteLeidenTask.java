@@ -30,6 +30,7 @@ public class RemoteLeidenTask extends AbstractEmbeddingTask implements Observabl
 	public static String SHORTNAME = "louvain";
 	public static String NAME = "Leiden clustering";
 	public final static String GROUP_ATTRIBUTE = "__Leiden.SUID";
+  String[] labels = {"Clusters"};
 
 	@Tunable (description="Experiment to use")
 	public ListSingleSelection<String> accession = null;
@@ -121,7 +122,8 @@ public class RemoteLeidenTask extends AbstractEmbeddingTask implements Observabl
 			}
 			FileCategory louvainCategory = FileCategory.createCategory(manager, exp,
 	                                                               categoryName, "integer", input,
-	                                                               true, 1, true, monitor);
+	                                                               true, 0, 0, true, labels, monitor);
+      try {
 			exp.addCategory(louvainCategory);
 			ExperimentFrame expFrame = manager.getExperimentFrame(exp);
 			if (expFrame != null) {
@@ -131,6 +133,10 @@ public class RemoteLeidenTask extends AbstractEmbeddingTask implements Observabl
       	expFrame.addCategoriesContent(accession+": Categories Tab", catTab);
 				catTab.changeCategory(louvainCategory, -1);
 			}
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw e;
+      }
 		} catch (Exception e) {
 			monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: Calculation failed"+e.toString());
 			return;

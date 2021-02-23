@@ -127,7 +127,7 @@ public class CyActivator extends AbstractCyActivator {
 		}
 		
 		{
-			TaskFactory leidenTF = new RemoteLouvainTaskFactory(scNVManager);
+			TaskFactory leidenTF = new RemoteLeidenTaskFactory(scNVManager);
 			Properties props = new Properties();
 			props.setProperty(TITLE, "Leiden clustering");
 			props.setProperty(PREFERRED_MENU, "Apps.scNetViz.Add Category[100.1]");

@@ -409,6 +409,7 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		// System.out.println("nCols = "+nCols+", colLabels.size() = "+colLabels.size());
 		int colIndex = 0;
 		for (String[] str: colLabels) {
+      // System.out.println("Column["+colIndex+"] = "+str[0]);
 			colLabelMap.put(str[0], colIndex);  // Note that we're basing the uniqueness off of the first value
 			colIndex++;
 		}
@@ -422,11 +423,12 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			// Get the corresponding mtx column first
 			int mtxCol = mapColumn(col, tpmHeaderCols, colLabelMap);
 			if (mtxCol < 0) continue;
-			Object v = getValue(row, col-hdrCols+1);
+			Object v = getValue(row, col-hdrCols);
 			// System.out.println("v for "+getColumnLabel(col)+"("+mtxCol+":"+col+") = "+v);
 			if (v != null && v.toString().length() == 0) {
 				v = "Unspecified";
 			}
+      // System.out.println("v["+row+"]["+(col-hdrCols)+"] = "+v.toString());
 			if (!catMap.containsKey(v)) {
 				catMap.put(v, new ArrayList<>());
 				sizes.put(v, 0);

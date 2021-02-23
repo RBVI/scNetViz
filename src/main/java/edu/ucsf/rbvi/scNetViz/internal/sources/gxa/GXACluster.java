@@ -303,7 +303,8 @@ public class GXACluster extends AbstractCategory implements IntegerMatrix {
 
 	@Override
 	public Object getValue(int row, int col) {
-		return clusters[col][row];
+    // Note that we skip over the K value
+		return clusters[col+1][row];
 	}
 
 	public class GXAClusterTableModel extends SortableTableModel {

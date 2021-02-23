@@ -137,8 +137,9 @@ public abstract class SimpleMatrix implements Matrix {
 
 	@Override
 	public void setRowLabel(String[] rLabels, int row) { 
-    for (int col = 0; col < hdrCols; col++)
+    for (int col = 0; col < hdrCols; col++) {
       setRowLabel(rLabels[col], row, col);
+    }
   }
 
 	@Override

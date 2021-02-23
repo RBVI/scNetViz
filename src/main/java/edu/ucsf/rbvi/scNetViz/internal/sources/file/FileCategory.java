@@ -117,9 +117,10 @@ public class FileCategory extends AbstractCategory implements Category {
 	public Source getSource() { return source;}
 
 	@Override
-	public int getHeaderCols() { return 1; }
+	public int getHeaderCols() { return hdrCols; }
 
 	public void setValue(int row, int col, String value) {
+    // System.out.println("Setting value["+row+"]["+col+"] to "+value);
     try {
   		if (dataType.equals("text") || dataType.equals("string"))
   			stringCategories[col][row] = value;
@@ -153,7 +154,7 @@ public class FileCategory extends AbstractCategory implements Category {
 
 	public static FileCategory fetchCategory(ScNVManager scManager, Experiment experiment,
 	                                         File file, String dataCategory, boolean transpose, int hdrCols,
-	                                         boolean zeroRelative,
+	                                         int keyCol, boolean zeroRelative,
 	                                         TaskMonitor monitor) throws Exception {
 
     try {
@@ -163,7 +164,7 @@ public class FileCategory extends AbstractCategory implements Category {
   			return null;
   		}
   		return createCategory(scManager, experiment, file.getName(), dataCategory, input,
-  		                      transpose, hdrCols, zeroRelative, monitor);
+  		                      transpose, hdrCols, keyCol, zeroRelative, null, monitor);
     } catch (FileNotFoundException e) {
 		  LogUtils.log(monitor, TaskMonitor.Level.ERROR, "File not found: "+file.getName());
     } catch (IOException e) {
@@ -173,39 +174,64 @@ public class FileCategory extends AbstractCategory implements Category {
     return null;
 	}
 
+  // External interface to create a category from a file.  Note that there is a bit of trickery here.  For
+  // some uses (e.g. our remote cluster routines) we provide a simple list of label,values.  This makes
+  // managing the tables and labels a bit tough.  What we do is pass a static label (rowLabels) that provides
+  // the row labels (there is only one of them) and set hdrCols to 0.  The tricky part is that *if* we have
+  // a hdrCol of 0 and we have row labels, then by definition we actually have at least 1 header column.  But,
+  // the data isn't structured that we, so we tell the matrix that there is a header column, but we process
+  // the data as if there isn't.
 	public static FileCategory createCategory(ScNVManager scManager, Experiment experiment,
 	                                          String name, String dataCategory, List<String[]> lines,
-	                                          boolean transpose, int hdrCols,
-	                                          boolean zeroRelative, TaskMonitor monitor) {
+	                                          boolean transpose, int hdrCols, int keyCol,
+	                                          boolean zeroRelative, String[] rowLabels, TaskMonitor monitor) {
 
 		int nRows = lines.size()-1; // Rows don't include the header
 		int nCols = lines.get(0).length;
 		if (transpose) {
 			int x = nCols;
-			nCols = nRows;
-			nRows = x;
+			nCols = nRows+hdrCols;
+      if (hdrCols == 0 && rowLabels != null)
+        nCols++;
+			nRows = x-1;
 		}
 
 		System.out.println("nCols = "+nCols+", nRows = "+nRows);
 
 		FileCategory fileCategory = new FileCategory(scManager, experiment, name, dataCategory, nRows, nCols);
-		fileCategory.setHdrCols(hdrCols);
+    if (hdrCols == 0 && rowLabels != null)
+		  fileCategory.setHdrCols(1);
+    else
+		  fileCategory.setHdrCols(hdrCols);
 		fileCategory.setHdrRows(1);  // XXX: Do we need multiple row headers?
+    fileCategory.setColKey(keyCol);
 		fileCategory.zeroRelative = zeroRelative;
 
 		if (!transpose) {
       for (int row = 0; row < fileCategory.getHdrRows(); row++) {
-			  fileCategory.setColLabels(lines.get(row), row);
+        if (keyCol == 0) {
+			    fileCategory.setColLabels(lines.get(row), row);
+        } else {
+          // Set the key column as the first column
+          String[] lbls = lines.get(row);
+          setColLabels(fileCategory, lbls, keyCol, row);
+        }
       }
 		} else {
+      // Note that we're using the matrix view of hdrCols
       for (int col = 0; col < fileCategory.getHdrCols(); col++) {
-			  String[] colLabels = lines.get(col);
-			  String[] newLabels = Arrays.copyOfRange(colLabels, fileCategory.getHdrRows(), colLabels.length);
-			  fileCategory.setRowLabels(newLabels, col);
+        if (rowLabels != null) {
+			    fileCategory.setRowLabels(rowLabels, col);
+        } else {
+          String[] colLabels = lines.get(col);
+          String[] newLabels = Arrays.copyOfRange(colLabels, fileCategory.getHdrRows(), colLabels.length);
+          for (int lbl = 0; lbl < newLabels.length; lbl++)
+            newLabels[lbl] = strip(newLabels[lbl]);
+          fileCategory.setRowLabels(newLabels, col);
+        }
       }
-      fileCategory.setRowLabel("Category", 0, 0);
+      fileCategory.setColLabel("Category", 0, 0);
 		}
-
 
 		boolean first = true;
 		int lineNumber = 0;
@@ -214,26 +240,33 @@ public class FileCategory extends AbstractCategory implements Category {
 				first = false;
 			} else {
 				if (!transpose) {
-          fileCategory.setRowLabel(line, lineNumber);
+          setRowLabels(fileCategory, line, keyCol, lineNumber);
 					for (int col = 0; col < fileCategory.nCols-hdrCols; col++) {
             try {
-              System.out.println("Setting value for "+line[0]+","+fileCategory.getColumnLabel(col+hdrCols)+" to "+line[col+hdrCols]);
               fileCategory.setValue(lineNumber-1, col, line[col+hdrCols]);
             } catch (Exception e) {
 		          LogUtils.log(monitor, TaskMonitor.Level.ERROR, 
                            "Unable to read value '"+line[col+hdrCols]+"' "+
-                           "at "+lineNumber+","+col+" as type "+dataCategory);
+                           "at "+(lineNumber-1)+","+col+" as type "+dataCategory);
+              e.printStackTrace();
               return null;
             }
 					}
 				} else {
-          fileCategory.setColLabel(line, lineNumber);
-					for (int row = 0; row < fileCategory.nRows; row++) {
+          if (keyCol == 0) {
             try {
-						  fileCategory.setValue(row, lineNumber-1, line[row+hdrCols]);
+            // System.out.println("Column["+lineNumber+"]="+strip(line[0]));
+            fileCategory.setColLabel(strip(line), lineNumber);
+            } catch (Exception e) { e.printStackTrace(); }
+          } else {
+            setColLabels(fileCategory, line, keyCol, lineNumber);
+          }
+					for (int row = 0; row < fileCategory.nRows-hdrCols; row++) {
+            try {
+              fileCategory.setValue(row, lineNumber-1, line[row+fileCategory.getHdrRows()]);
             } catch (Exception e) {
 		          LogUtils.log(monitor, TaskMonitor.Level.ERROR, 
-                           "Unable to read value '"+line[row+hdrCols]+"' "+
+                           "Unable to read value '"+line[row+fileCategory.getHdrRows()]+"' "+
                            "at "+lineNumber+","+row+" as type "+dataCategory);
               return null;
             }
@@ -250,6 +283,40 @@ public class FileCategory extends AbstractCategory implements Category {
 		return fileCategory;
 	}
 
+  private static void setColLabels(FileCategory fileCategory, String[] labels, int keyCol, int row) {
+    // Set the key column as the first column
+    int column = 1;
+    fileCategory.setColLabel(strip(labels[keyCol]), row, 0);
+    for (int col = 0; col < labels.length; col++) {
+      if (col == keyCol) continue;
+      fileCategory.setColLabel(strip(labels[col]), row, column);
+      column++;
+    }
+  }
+
+  private static void setRowLabels(FileCategory fileCategory, String[] labels, int keyCol, int row) {
+    // Set the key column as the first column
+    int column = 1;
+    row = row-fileCategory.getHdrRows();
+    fileCategory.setRowLabel(strip(labels[keyCol]), row, 0);
+    for (int col = 0; col < fileCategory.getHdrCols(); col++) {
+      if (col == keyCol) continue;
+      fileCategory.setRowLabel(strip(labels[col]), row, column);
+      column++;
+    }
+  }
+
+  public static String strip(String str) {
+    return str.replaceAll("^\"|\"$", "");
+  }
+
+  public static String[] strip(String[] str) {
+    for (int i = 0; i < str.length; i++) {
+      str[i] =  str[i].replaceAll("^\"|\"$", "");
+    }
+    return str;
+  }
+
 	public String getSortedRow() { return sortedRow; }
 
 	public SortableTableModel getTableModel() {
@@ -263,10 +330,9 @@ public class FileCategory extends AbstractCategory implements Category {
 		final Experiment experiment;
 
 		FileCategoryTableModel(final FileCategory category) {
-			super(category.getHeaderCols());
+			super(category.getHdrCols());
 			this.category = category;
 			this.experiment = category.experiment;
-			// hdrCols = 1;
 		}
 
 		@Override
@@ -275,9 +341,9 @@ public class FileCategory extends AbstractCategory implements Category {
 		@Override
 		public String getColumnName(int column) {
 			if (columnIndex == null) 
-				return strip(category.getColumnLabel(column));
+				return FileCategory.strip(category.getColumnLabel(column));
 			else
-				return strip(category.getColumnLabel(columnIndex[column]));
+				return FileCategory.strip(category.getColumnLabel(columnIndex[column]));
 		}
 
 		@Override
@@ -301,24 +367,26 @@ public class FileCategory extends AbstractCategory implements Category {
 		@Override
 		public Object getValueAt(int row, int column) {
 			if (column < hdrCols) {
-				return strip(category.getRowLabel(row));
+				return FileCategory.strip(category.getRowLabel(row, column));
 			}
 
 			if (columnIndex != null)
 				column = columnIndex[column];
 
-			if (category.getValue(row, column-hdrCols) == null)
+			if (category.getValue(row, column-hdrCols) == null) {
 				return "";
+      }
 
-			if (category.dataType.equals("text") || dataType.equals("string"))
-				return strip(category.getValue(row, column-hdrCols).toString());
-			else 
+			if (category.dataType.equals("text") || dataType.equals("string")) {
+				return FileCategory.strip(category.getValue(row, column-hdrCols).toString());
+      } else  {
 				return category.getValue(row, column-hdrCols);
+      }
 		}
 
 		@Override
 		public void sortColumns(int row) {
-			sortedRow = strip(category.getRowLabel(row));
+			sortedRow = FileCategory.strip(category.getRowLabel(row));
 			super.sortColumns(row);
 		}
 
@@ -327,9 +395,5 @@ public class FileCategory extends AbstractCategory implements Category {
 
 		@Override
 		public void setSelectedRow(int selectedRow) { category.setSelectedRow(selectedRow); }
-
-		public String strip(String str) {
-			return str.replaceAll("^\"|\"$", "");
-		}
 	}
 }

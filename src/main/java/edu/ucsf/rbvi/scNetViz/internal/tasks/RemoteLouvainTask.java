@@ -30,6 +30,7 @@ public class RemoteLouvainTask extends AbstractEmbeddingTask implements Observab
 	public static String SHORTNAME = "louvain";
 	public static String NAME = "Louvain clustering";
 	public final static String GROUP_ATTRIBUTE = "__Louvain.SUID";
+  String[] labels = {"Clusters"};
 
 	@Tunable (description="Experiment to use")
 	public ListSingleSelection<String> accession = null;
@@ -119,7 +120,7 @@ public class RemoteLouvainTask extends AbstractEmbeddingTask implements Observab
 			}
 			FileCategory louvainCategory = FileCategory.createCategory(manager, exp,
 	                                                               categoryName, "integer", input,
-	                                                               true, 1, true, monitor);
+	                                                               true, 0, 0, true, labels, monitor);
 			exp.addCategory(louvainCategory);
 			ExperimentFrame expFrame = manager.getExperimentFrame(exp);
 			if (expFrame != null) {
