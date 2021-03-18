@@ -154,7 +154,7 @@ public class CyActivator extends AbstractCyActivator {
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "calculate tSNE");
-			props.setProperty(COMMAND_DESCRIPTION, "Calculate the tSNE embedding");
+			props.setProperty(COMMAND_DESCRIPTION, "Calculate the tSNE embedding (local)");
 			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
@@ -171,7 +171,7 @@ public class CyActivator extends AbstractCyActivator {
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "calculate UMAP");
-			props.setProperty(COMMAND_DESCRIPTION, "Calculate the UMAP embedding");
+			props.setProperty(COMMAND_DESCRIPTION, "Calculate the UMAP embedding (remote)");
 			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
@@ -235,7 +235,7 @@ public class CyActivator extends AbstractCyActivator {
 			Properties props = new Properties();
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "show cell plot");
-			props.setProperty(COMMAND_DESCRIPTION, "Display the cell plot for a single experiment");
+			props.setProperty(COMMAND_DESCRIPTION, "Display the current cell plot (UMAP, t-SNE) for a single experiment");
 			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "false");
 			scNVManager.registerService(show, TaskFactory.class, props);
@@ -299,7 +299,7 @@ public class CyActivator extends AbstractCyActivator {
 			Properties props = new Properties();
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "create all");
-			props.setProperty(COMMAND_DESCRIPTION, "Create networks");
+			props.setProperty(COMMAND_DESCRIPTION, "Calculate differential expression and create networks");
 			props.setProperty(COMMAND_LONG_DESCRIPTION, "Use default cluster to calculate differential expression and create networks.");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");
@@ -311,7 +311,7 @@ public class CyActivator extends AbstractCyActivator {
 			Properties props = new Properties();
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "calculate diffexp");
-			props.setProperty(COMMAND_DESCRIPTION, "Calculate the table of differential expressions");
+			props.setProperty(COMMAND_DESCRIPTION, "Calculate the table of differential gene expression");
 			props.setProperty(COMMAND_LONG_DESCRIPTION, "");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");
 			props.setProperty(COMMAND_EXAMPLE_JSON, "{}");

@@ -86,7 +86,7 @@ public class HCASource implements Source {
 		// Register our commands
 		{
 			Properties props = new Properties();
-			props.setProperty(COMMAND_DESCRIPTION, "List all Gene Expression Atlas (HCA) entries available");
+			props.setProperty(COMMAND_DESCRIPTION, "List all Human Cell Atlas (HCA) entries available");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
 			props.setProperty(COMMAND, "list hca entries");
 			props.setProperty(COMMAND_SUPPORTS_JSON, "true");

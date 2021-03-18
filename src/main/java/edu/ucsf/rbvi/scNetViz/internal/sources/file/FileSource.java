@@ -71,7 +71,7 @@ public class FileSource implements Source {
 			props.setProperty(IN_MENU_BAR, "TRUE");
 			props.setProperty(MENU_GRAVITY, "30.0");
 			props.setProperty(COMMAND_NAMESPACE, "scnetviz");
-			props.setProperty(COMMAND_DESCRIPTION, "Load an experiment from a file");
+			props.setProperty(COMMAND_DESCRIPTION, "Load an experiment from a MatrixMarket file");
 			props.setProperty(COMMAND, "load experiment file");
 			scNVManager.registerService(new FileExperimentTaskFactory(manager, this), TaskFactory.class, props);
 		}
