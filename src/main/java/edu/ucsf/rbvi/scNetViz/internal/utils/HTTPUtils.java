@@ -36,6 +36,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 
 public class HTTPUtils {
 	public static final String WS_URL = "http://webservices.rbvi.ucsf.edu/scnetviz/api/v1/";
+	public static final String WS_URL_V2 = "http://webservices.rbvi.ucsf.edu/scnetviz/api/v2/";
 	// public static final String WS_URL = "http://localhost:8000/scnetviz/api/v1/";
 
 	public static JSONObject getJSON(String uri, CloseableHttpClient httpclient, 
@@ -102,6 +103,25 @@ public class HTTPUtils {
 		return strings;
 	}
 
+	public static List<String> fetchResult(String uri, TaskMonitor monitor) throws Exception {
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		HttpGet httpGet = new HttpGet(uri);
+		CloseableHttpResponse response1 = httpclient.execute(httpGet);
+		int statusCode = response1.getStatusLine().getStatusCode();
+		if (statusCode != 200 && statusCode != 202) {
+			monitor.showMessage(TaskMonitor.Level.ERROR, "Got "+
+			                    response1.getStatusLine().getStatusCode()+" code from server");
+			return null;
+		}
+		BufferedReader reader = new BufferedReader(new InputStreamReader(response1.getEntity().getContent()));
+		List<String> strings = new ArrayList<>();
+		String line;
+		while((line = reader.readLine()) != null) {
+			strings.add(line);
+		}
+		return strings;
+  }
+
 	public static JSONObject fetchJSON(String uri, TaskMonitor monitor) throws Exception {
 		CloseableHttpClient httpclient = HttpClients.createDefault();
 		JSONObject obj = fetchJSON(uri, httpclient, monitor);
@@ -154,10 +174,14 @@ public class HTTPUtils {
 	}
 
 	public static String getWebServicesURL(String command, Experiment exp, String args) {
+    /*
 		String url = WS_URL+command+"?source="+exp.getSource().getName()+"&accession="+
 		             exp.getMetadata().get(Metadata.ACCESSION).toString();
+    */
+		String url = WS_URL_V2+command+"/"+exp.getSource().getName()+"/"+
+		             exp.getMetadata().get(Metadata.ACCESSION).toString();
 		if (args != null) {
-			url += "&"+args;
+			url += "?"+args;
 		}
 		return url;
 	}

@@ -78,6 +78,8 @@ public class RemoteLouvainTask extends AbstractEmbeddingTask implements Observab
 
 		// Get the experiment
 		Experiment exp = manager.getExperiment(accession.getSelectedValue());
+
+    /*
 		// Get the MatrixMarket matrix
 		Matrix mtx = exp.getMatrix();
 		if (!(mtx instanceof MatrixMarket)) {
@@ -90,6 +92,7 @@ public class RemoteLouvainTask extends AbstractEmbeddingTask implements Observab
 			createCache(mmtx, exp);
 		}
 		File expFile = mmtx.getMatrixCache();
+    */
 
 		String url = HTTPUtils.getWebServicesURL("louvain", exp, 
 		                                         "n_neighbors="+n_neighbors+
@@ -97,7 +100,8 @@ public class RemoteLouvainTask extends AbstractEmbeddingTask implements Observab
 
 		// Do the query
 		try {
-			List<String> lines = HTTPUtils.postFile(url, expFile, monitor);
+			List<String> lines = HTTPUtils.fetchResult(url, monitor);
+			// List<String> lines = HTTPUtils.postFile(url, expFile, monitor);
 			if (lines == null) {
 				monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: Graph failed: unable to read return");
 				return;

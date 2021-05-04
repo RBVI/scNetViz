@@ -97,6 +97,8 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 
 		// Get the experiment
 		Experiment exp = manager.getExperiment(accession.getSelectedValue());
+
+    /*
 		// Get the MatrixMarket matrix
 		Matrix mtx = exp.getMatrix();
 		if (!(mtx instanceof MatrixMarket)) {
@@ -109,6 +111,8 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 			createCache(mmtx, exp);
 		}
 		File expFile = mmtx.getMatrixCache();
+    */
+
 		String query = "perplexity="+perplexity+"&early_exaggeration="+early_exaggeration;
 		if (n_pcs >= 0) query += "&n_pcs="+n_pcs;
 		query += "&"+advancedParameters.getArgs();
@@ -116,7 +120,8 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 
 		// Do the query
 		try {
-			List<String> lines = HTTPUtils.postFile(url, expFile, monitor);
+			// List<String> lines = HTTPUtils.postFile(url, expFile, monitor);
+			List<String> lines = HTTPUtils.fetchResult(url, monitor);
 			if (lines == null) {
 				monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: TSNE failed: unable to read return");
 				return;

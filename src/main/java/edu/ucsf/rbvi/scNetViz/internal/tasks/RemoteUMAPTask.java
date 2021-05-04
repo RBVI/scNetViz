@@ -81,6 +81,8 @@ public class RemoteUMAPTask extends AbstractEmbeddingTask implements ObservableT
 
 		// Get the experiment
 		Experiment exp = manager.getExperiment(accession.getSelectedValue());
+
+    /*
 		// Get the MatrixMarket matrix
 		Matrix mtx = exp.getMatrix();
 		if (!(mtx instanceof MatrixMarket)) {
@@ -93,13 +95,14 @@ public class RemoteUMAPTask extends AbstractEmbeddingTask implements ObservableT
 			createCache(mmtx, exp);
 		}
 		File expFile = mmtx.getMatrixCache();
+    */
 		String url = HTTPUtils.getWebServicesURL("umap", exp, 
 		                                         "n_neighbors="+n_neighbors+"&min_dist="+min_dist+
 		                                         "&"+advancedParameters.getArgs());
 
 		// Do the query
 		try {
-			List<String> lines = HTTPUtils.postFile(url, expFile, monitor);
+			List<String> lines = HTTPUtils.fetchResult(url, monitor);
 			if (lines == null) {
 				monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: UMAP failed: unable to read return");
 				return;

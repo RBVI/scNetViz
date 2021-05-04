@@ -51,6 +51,7 @@ import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 public class GXAExperiment implements Experiment {
 	public static String RESULTS_URL = "https://www.ebi.ac.uk/gxa/sc/experiments/%s/Results";
 	public static String GXA_MTX_URI = "https://www.ebi.ac.uk/gxa/sc/experiment/%s/download/zip?fileType=normalised";
+	public static String SERVICES_URI = "http://webservices.rbvi.ucsf.edu/scnetviz/api/v2/fetch/GXA/%s";
 	final Logger logger;
 
 	String accession = null;
@@ -141,6 +142,9 @@ public class GXAExperiment implements Experiment {
 		// IMPORTANT!  We need to do a gc here to avoid any pauses later
 		Runtime.getRuntime().gc();
 
+    // Spawn off a thread to cache this accession on the server
+    cacheAccession();
+
 		// See how many cells we have.  For really large matrices, we want to "peak" first and
 		// preallocate our arrays.
 		int assays = ((Long)gxaMetadata.get(GXAMetadata.ASSAYS)).intValue();
@@ -151,10 +155,11 @@ public class GXAExperiment implements Experiment {
 
 		fetchAccession(monitor, fetchString, false);
 
-		if (mtx != null)
-			mtx.createCache(source.getName(), accession);
+		// if (mtx != null)
+		// 	mtx.createCache(source.getName(), accession);
 
 		scNVManager.addExperiment(accession, this);
+
 	}
 
 	private void fetchAccession(TaskMonitor monitor, String fetchString, boolean peak) {
@@ -235,11 +240,16 @@ public class GXAExperiment implements Experiment {
 		} catch (Exception e) {}
 	}
 
+
 	public void fetchClusters (final TaskMonitor monitor) {
 		categories.set(0,GXACluster.fetchCluster(scNVManager, accession, this, monitor));
 
 		// Sanity check
 	}
+
+  private void cacheAccession() {
+		new Thread(new CacheExperimentThread()).start();
+  }
 
 	public void fetchClusters () {
 		new Thread(new FetchClusterThread()).start();
@@ -442,6 +452,28 @@ public class GXAExperiment implements Experiment {
 		@Override
 		public void run() {
 			categories.set(1, GXADesign.fetchDesign(scNVManager, accession, gxaExperiment, null));
+		}
+	}
+
+  // Force the server to cache the experiment for us
+	class CacheExperimentThread implements Runnable {
+		@Override
+		public void run() {
+      String fetchString = String.format(SERVICES_URI, accession);
+      try {
+        CloseableHttpClient httpclient = HttpClients.createDefault();
+        RequestConfig config = RequestConfig.custom()
+                .setSocketTimeout(60*1000)
+                .build();
+        HttpGet httpGet = new HttpGet(fetchString);
+        httpGet.setConfig(config);
+        CloseableHttpResponse response1 = httpclient.execute(httpGet);
+        if (response1.getStatusLine().getStatusCode() == 200) {
+          return;
+        }
+			} catch (Exception e) {
+				e.printStackTrace();
+      }
 		}
 	}
 }
