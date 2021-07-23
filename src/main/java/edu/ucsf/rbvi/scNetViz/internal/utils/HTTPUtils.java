@@ -24,10 +24,13 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+import org.apache.log4j.Logger;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import org.cytoscape.application.CyUserLog;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
@@ -38,6 +41,7 @@ public class HTTPUtils {
 	public static final String WS_URL = "http://webservices.rbvi.ucsf.edu/scnetviz/api/v1/";
 	public static final String WS_URL_V2 = "http://webservices.rbvi.ucsf.edu/scnetviz/api/v2/";
 	// public static final String WS_URL = "http://localhost:8000/scnetviz/api/v1/";
+
 
 	public static JSONObject getJSON(String uri, CloseableHttpClient httpclient, 
 	                                 TaskMonitor monitor) throws Exception {
@@ -90,8 +94,13 @@ public class HTTPUtils {
 		CloseableHttpResponse response = httpclient.execute(httpPost);
 		int statusCode = response.getStatusLine().getStatusCode();
 		if (statusCode != 200 && statusCode != 202) {
-			monitor.showMessage(TaskMonitor.Level.ERROR, "Got "+
-			                    response.getStatusLine().getStatusCode()+" code from server");
+      if (monitor != null) {
+        monitor.showMessage(TaskMonitor.Level.ERROR, "Got "+
+                            response.getStatusLine().getStatusCode()+" code from server");
+      } else {
+        Logger logger = Logger.getLogger(CyUserLog.NAME);
+        logger.error("Unable to post file to "+uri+": code "+response.getStatusLine().getStatusCode());
+      }
 			return null;
 		}
 		BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));

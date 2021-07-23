@@ -105,7 +105,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		// Register our sources
 		scNVManager.addSource(new GXASource(scNVManager));
-		scNVManager.addSource(new HCASource(scNVManager));
+		// scNVManager.addSource(new HCASource(scNVManager));
 		scNVManager.addSource(new FileSource(scNVManager));
 
 		// Register our menu items

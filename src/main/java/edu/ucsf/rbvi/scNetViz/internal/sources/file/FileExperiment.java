@@ -41,6 +41,7 @@ import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVReader;
 import edu.ucsf.rbvi.scNetViz.internal.utils.CSVWriter;
 import edu.ucsf.rbvi.scNetViz.internal.utils.FileUtils;
+import edu.ucsf.rbvi.scNetViz.internal.utils.HTTPUtils;
 import edu.ucsf.rbvi.scNetViz.internal.utils.ModelUtils;
 
 public class FileExperiment implements Experiment {
@@ -66,6 +67,8 @@ public class FileExperiment implements Experiment {
 
 	int rowIndexKey = 1;
 	int columnIndexKey = 1;
+
+	public static String SERVICES_URI = "http://webservices.rbvi.ucsf.edu/scnetviz/api/v2/save/File/%s";
 
 	public FileExperiment (ScNVManager manager, FileSource source, FileMetadata metadata) {
 		this.scNVManager = manager;
@@ -191,6 +194,10 @@ public class FileExperiment implements Experiment {
     }
 
 		scNVManager.addExperiment(accession, this);
+
+    // Cache the file on the server
+		new Thread(new CacheExperimentThread(accession)).start();
+
 		System.out.println("mtx has "+mtx.getNRows()+" rows and "+mtx.getNCols()+" columns");
 	}
 
@@ -354,5 +361,32 @@ public class FileExperiment implements Experiment {
 			return 0;
 		return 1;
 	}
+
+	class CacheExperimentThread implements Runnable {
+    final String accession;
+    public CacheExperimentThread(String acc) { this.accession = acc; }
+		@Override
+		public void run() {
+      String postString = String.format(SERVICES_URI, accession);
+      try {
+        // Create the cache file
+        System.out.println("Creating cache file");
+        mtx.createCache("File", accession);
+
+        // Wait until the cache is available
+        while (!mtx.hasCache()) {
+          Thread.sleep(1000);
+          System.out.println("mtx.hasCache = "+mtx.hasCache());
+        }
+
+        System.out.println("Sending file to server");
+        // OK, now send the file to the server
+        File expFile = mtx.getMatrixCache();
+        HTTPUtils.postFile(postString, expFile, null);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
 
 }
