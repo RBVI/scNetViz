@@ -48,6 +48,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.DifferentialExpression;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
+import edu.ucsf.rbvi.scNetViz.internal.model.Species;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.CreateNetworkTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ExportCSVTask;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.HeatMapTask;
@@ -291,6 +292,14 @@ public class DiffExpTab extends JPanel {
 				createNetwork.setFont(new Font("SansSerif", Font.BOLD, 10));
 				createNetwork.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+            // Check the species first
+            String species = (String)experiment.getMetadata().get(Metadata.SPECIES);
+            if (Species.getSpecies(species) == null) {
+              JOptionPane.showMessageDialog(thisComponent, 
+                                            "<html>Can't create networks.<br/>Species <i>"+species+"</i> is not recognized by STRING</html>", 
+                                            "Unknown species", JOptionPane.ERROR_MESSAGE);
+              return;
+            }
 						int maxNGenes = -1;
 						double log2FCCutoff = 1.0;
 						double fdr = .05;

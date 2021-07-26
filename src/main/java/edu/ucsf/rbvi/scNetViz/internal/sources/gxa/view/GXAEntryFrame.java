@@ -43,8 +43,10 @@ import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVSettings.SETTING;
+import edu.ucsf.rbvi.scNetViz.internal.model.Species;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAExperiment;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXAMetadata;
 import edu.ucsf.rbvi.scNetViz.internal.sources.gxa.GXASource;
@@ -101,6 +103,7 @@ public class GXAEntryFrame extends JFrame {
 							for (Integer row: matches) {
 								int modelRow = gxaEntryTable.getRowSorter().convertRowIndexToView(row);
 								gxaEntryTable.getSelectionModel().addSelectionInterval(modelRow, modelRow);
+                gxaEntryTable.scrollRectToVisible(gxaEntryTable.getCellRect(modelRow, 0, true));
 							}
 							search.setText("");
 						}
@@ -215,8 +218,15 @@ public class GXAEntryFrame extends JFrame {
 
 	public void enableButtons(String acc, boolean enable) {
 		this.selectedAcc = acc;
+    Metadata mdata = gxaSource.getMetadata(acc);
+    if (acc == null) return;
+
+    // See if we know the species for this accession
+    if (Species.getSpecies(mdata.get(Metadata.SPECIES).toString()) != null)
+		  createButton.setEnabled(enable);
+    else
+		  createButton.setEnabled(false);
 		viewButton.setEnabled(enable);
-		createButton.setEnabled(enable);
 	}
 
 	public void loadExperiment(String acc) {

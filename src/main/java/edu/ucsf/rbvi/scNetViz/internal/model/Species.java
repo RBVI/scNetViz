@@ -31,6 +31,14 @@ public class Species implements Comparable<Species> {
 		return this.toString().compareTo(t.toString());
 	}
 
+  public static Species getSpecies(String species) {
+    for (Species sp: allSpecies) {
+      if (sp.getName().equals(species))
+        return sp;
+    }
+    return null;
+  }
+
 	public static List<Species> getSpecies() { return allSpecies; }
 
 	public static void loadSpecies(final ScNVManager manager) {

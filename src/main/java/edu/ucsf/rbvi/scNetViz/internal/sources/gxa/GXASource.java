@@ -138,6 +138,12 @@ public class GXASource implements Source {
 		return new ArrayList<>(metadataMap.values());
 	}
 
+  public Metadata getMetadata(String accession) {
+    if (metadataMap.containsKey(accession))
+      return metadataMap.get(accession);
+    return null;
+  }
+
 	@Override
 	public Experiment getExperiment(String accession) {
 		return getExperiment(metadataMap.get(accession), null, false);
