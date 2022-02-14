@@ -68,7 +68,7 @@ public class FileExperiment implements Experiment {
 	int rowIndexKey = 1;
 	int columnIndexKey = 1;
 
-	public static String SERVICES_URI = "http://webservices.rbvi.ucsf.edu/scnetviz/api/v2/save/File/%s";
+	public static String SERVICES_URI = "https://webservices.rbvi.ucsf.edu/scnetviz/api/v2/save/File/%s";
 
 	public FileExperiment (ScNVManager manager, FileSource source, FileMetadata metadata) {
 		this.scNVManager = manager;
