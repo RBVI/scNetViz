@@ -26,6 +26,8 @@ import org.apache.log4j.Logger;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
+import org.json.simple.JSONObject;
+
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.TaskMonitor;
@@ -270,11 +272,40 @@ public class FileExperiment implements Experiment {
 		builder.append("\"columns\": "+getMatrix().getNCols()+",\n");
 		List<Category> categories = getCategories();
 		builder.append("\"categories\": [");
+		int nCat = categories.size();
 		for (Category cat: categories) {
-			builder.append(cat.toJSON()+",\n");
+			builder.append(cat.toJSON());
+			if (nCat-- > 1) builder.append(",\n");
 		}
-		return builder.substring(0, builder.length()-2)+"]}";
+		builder.append("]");
+		if (diffExp != null) {
+			builder.append(",\""+ScNVManager.DIFFEXP+"\":");
+			builder.append(diffExp.toJSON()+"\n");
+		}
+		builder.append("}");
+		return builder.toString();
 	}
+
+	public void readSessionFiles(String accession, Map<String, File> fileMap) throws Exception {
+    File mtxFile = null, rowFile = null, colFile = null;
+    for (String fileName: fileMap.keySet()) {
+      if (isMtxFile(fileName))
+        mtxFile = fileMap.get(fileName);
+      else if (isRowFile(fileName))
+        rowFile = fileMap.get(fileName);
+      else if (isColumnFile(fileName))
+        colFile = fileMap.get(fileName);
+    }
+
+    if (mtxFile == null  || rowFile == null || colFile == null) {
+      throw new Exception("Matrix, row, or column file missing from session!");
+    }
+
+    readFile(null, rowFile, false);
+    readFile(null, colFile, false);
+    readFile(null, mtxFile, false);
+    return;
+  }
 
 	public void createSessionFiles(String accession, List<File> files) throws Exception {
 		String tmpDir = System.getProperty("java.io.tmpdir");
@@ -324,7 +355,44 @@ public class FileExperiment implements Experiment {
 		}
 	}
 
-	private boolean isColumnFile(String fileName) {
+
+	public FileCategory loadCategoryFromSession(JSONObject jsonCategory, Map<String,File>fileMap) throws Exception {
+    File catFile = null;
+    String catName = URLEncoder.encode((String)jsonCategory.get("name")+".csv");
+    for (String fileName: fileMap.keySet()) {
+      if (fileName.endsWith(catName)) {
+        catFile = fileMap.get(fileName);
+        break;
+      }
+    }
+    if (catFile == null) {
+      throw new Exception ("Can't find category file for "+(String)jsonCategory.get("name"));
+    }
+
+    FileCategory cat = FileCategory.fetchCategory(scNVManager, this, catFile, (String)jsonCategory.get("type"), 
+                                                  (String)jsonCategory.get("name"), false, 1, 0, false, null);
+    addCategory(cat);
+    return cat;
+  }
+
+	public DifferentialExpression loadDiffExpFromSession(JSONObject jsonDiffExp, Map<String, File> fileMap) throws IOException {
+		// Get the file
+		String deFileName = URLEncoder.encode(source.getName()+"."+accession+".diffExp")+".csv";
+		if (fileMap.containsKey(deFileName)) {
+			File deFile = fileMap.get(deFileName);
+			try {
+				diffExp = new DifferentialExpression(scNVManager, this, jsonDiffExp, deFile);
+			} catch (Exception e) {
+				logger.error("Unable to read differential expression data for "+accession+" in session: "+e.toString());
+				e.printStackTrace();
+				return null;
+			}
+			return diffExp;
+		}
+		return null;
+	}
+
+	public boolean isColumnFile(String fileName) {
 		String name = FileUtils.baseName(fileName);
 		if (name.endsWith(".mtx_cols") || name.contains("colLabels") || name.startsWith("barcodes")) {
 			return true;
@@ -332,7 +400,7 @@ public class FileExperiment implements Experiment {
 		return false;
 	}
 
-	private boolean isRowFile(String fileName) {
+	public boolean isRowFile(String fileName) {
 		String name = FileUtils.baseName(fileName);
 		if (name.endsWith(".mtx_rows") || name.contains("rowLabels") || name.startsWith("features")) {
 			return true;
@@ -340,7 +408,7 @@ public class FileExperiment implements Experiment {
 		return false;
 	}
 
-	private boolean isMtxFile(String fileName) {
+	public boolean isMtxFile(String fileName) {
 		if (fileName.endsWith(".mtx") || fileName.endsWith(".mtx.gz"))
 			return true;
 		return false;
@@ -370,19 +438,17 @@ public class FileExperiment implements Experiment {
       String postString = String.format(SERVICES_URI, accession);
       try {
         // Create the cache file
-        System.out.println("Creating cache file");
         mtx.createCache("File", accession);
 
         // Wait until the cache is available
         while (!mtx.hasCache()) {
           Thread.sleep(1000);
-          System.out.println("mtx.hasCache = "+mtx.hasCache());
         }
 
-        System.out.println("Sending file to server");
         // OK, now send the file to the server
         File expFile = mtx.getMatrixCache();
         HTTPUtils.postFile(postString, expFile, null);
+        mtx.cacheSent(true);
       } catch (Exception e) {
         e.printStackTrace();
       }

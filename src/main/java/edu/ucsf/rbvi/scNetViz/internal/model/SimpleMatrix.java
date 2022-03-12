@@ -114,7 +114,7 @@ public abstract class SimpleMatrix implements Matrix {
 	@Override
 	public void setRowLabel(String rLabel, int row, int col) { 
     if (rowLabels == null) {
-      String[][] lbls = new String[nRows+hdrRows][];
+      String[][] lbls = new String[nRows][];
       Arrays.fill(lbls, null);
       rowLabels = Arrays.asList(lbls);
     }
@@ -123,6 +123,7 @@ public abstract class SimpleMatrix implements Matrix {
       rowLabels.set(row, new String[hdrCols]);
 
     rowLabels.get(row)[col] = rLabel;
+    System.out.println("setRowLabel -- rowLabels.size() = "+rowLabels.size());
   }
 
 	@Override

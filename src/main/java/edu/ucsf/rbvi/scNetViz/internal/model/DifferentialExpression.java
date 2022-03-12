@@ -72,9 +72,6 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 			}
 		}
 		this.category = catTemp;
-		this.categoryRow = ((Long)json.get("row")).intValue();
-		this.dDRCutoff = (Double)json.get("ddrCutoff");
-		this.log2FCCutoff = (Double)json.get("log2FCCutoff");
 
 		List<String[]> matrixLines = null;
 		try {
@@ -480,6 +477,8 @@ public class DifferentialExpression extends SimpleMatrix implements DoubleMatrix
 		return newArray;
 	}
 
+
+  @Override
 	public Double getValue(int row, int column) {
 		double v = getDoubleValue(row, column);
 		if (Double.isNaN(v)) return null;

@@ -152,6 +152,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 
 	private File cacheFile = null;
 	private boolean haveCache = false;
+	private boolean cacheSent = false;
 	private boolean cacheCreateInProgress = false;
 
 	public MatrixMarket(final ScNVManager manager) {
@@ -210,6 +211,8 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	}
 
 	public boolean hasCache() { return haveCache; }
+	public boolean cacheSent() { return cacheSent; }
+  public void cacheSent(boolean sent) { cacheSent = sent; }
 	public File getMatrixCache() { return cacheFile; }
 
 	public void createCache(String source, String accession) {
@@ -221,7 +224,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void setRowTable(List<String[]> rowTable) {
 		this.rowTable = rowTable;
 		if (rowTable != null) {
-      System.out.println("rowKey = "+rowKey);
+      // System.out.println("rowKey = "+rowKey);
 			if (rowTable.get(0).length <= rowKey)
 				rowLabels = getLabels(rowTable, rowTable.get(0).length-1, hdrCols, hdrRows-1, 0);
 			else
@@ -236,7 +239,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	}
 
 	public void setColumnTable(List<String[]> colTable, int index) {
-    System.out.println("mtx: setColumnTable, index = "+index+", colTable has "+colTable.size()+" entries");
+    // System.out.println("mtx: setColumnTable, index = "+index+", colTable has "+colTable.size()+" entries");
 		columnKey = index;
 		setColumnTable(colTable);
 	}
@@ -244,7 +247,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 	public void setColumnTable(List<String[]> colTable) {
 		this.colTable = colTable;
 		if (colTable != null) {
-      System.out.println("colKey = "+columnKey);
+      // System.out.println("colKey = "+columnKey);
 			if (colTable.get(0).length <= columnKey) {
 				colLabels = getLabels(colTable, colTable.get(0).length-1, hdrRows, hdrCols, 0);
 				// System.out.println("got column labels(1): "+colLabels);
@@ -347,13 +350,13 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 					throw e;
 				}
 				// if (index == 1) {
-				// 	System.out.println("intMatrix[0][0] = "+intMatrix[0][0]);
-				// 	System.out.println("intMatrix[1][0] = "+intMatrix[1][0]);
+				//  	System.out.println("intMatrix[0][0] = "+intMatrix[0][0]);
+				//  	System.out.println("intMatrix[1][0] = "+intMatrix[1][0]);
 				// }
 				if (index == 1 && intMatrix[0][0] > intMatrix[1][0]) {
 					// Ugh.  It's inverted.
 					invert = true;
-					// System.out.println("INVERT!");
+					System.out.println("INVERT!");
 					intMatrix[nonZeros-1][0] = intMatrix[0][0];
 					intMatrix[nonZeros-1][1] = intMatrix[0][1];
 					intMatrix[nonZeros-2][0] = intMatrix[1][0];
@@ -482,6 +485,17 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 		}
 		return null;
 	}
+
+  public Object getValue(int row, int col) {
+    if (type == MTXTYPE.INTEGER) {
+      Integer i = getIntegerValue(row, col);
+      return (Object)i;
+    } else if (type == MTXTYPE.REAL) {
+      Double d = getDoubleValue(row, col);
+      return (Object)d;
+    }
+    return null;
+  }
 
 	public int getIntegerValue(int row, int col) {
 		if (transposed) { int rtmp = row; row = col; col = rtmp; }
@@ -974,7 +988,7 @@ public class MatrixMarket extends SimpleMatrix implements DoubleMatrix, IntegerM
 				{
 					ZipEntry colEntry = new ZipEntry(source+"/"+accession+"/barcodes.tsv");
 					outStream.putNextEntry(colEntry);
-					CSVWriter.writeCSV(outStream, colTable, 2);
+					CSVWriter.writeCSV(outStream, colTable);
 					outStream.closeEntry();
 				}
 				outStream.close();

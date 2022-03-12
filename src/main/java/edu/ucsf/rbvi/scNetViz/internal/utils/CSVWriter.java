@@ -75,23 +75,26 @@ public class CSVWriter {
 			  for (int i = 0; i < colLabels.size()-1; i++) {
 				  output.write(quote(colLabels.get(i)[hdrRow], delimiter)+delimiter);
         }
-			  output.write(quote(colLabels.get(colLabels.size()-1)[hdrRow], delimiter)+"\n");
+        if (colLabels.get(colLabels.size()-1) == null)
+          output.write("\n");
+        else
+          output.write(quote(colLabels.get(colLabels.size()-1)[hdrRow], delimiter)+"\n");
 			}
 
 			// Get the matrix
-			if (matrix instanceof DoubleMatrix) {
+			if (matrix.getMatrixClass() == Double.class) {
 				for (int row = 0; row < rowLabels.size(); row++) {
-					writeDoubleRow(output, rowLabels.get(row), (DoubleMatrix)matrix, row, delimiter);
+					writeDoubleRow(output, rowLabels.get(row), matrix, row, delimiter);
 				}
-			} else if (matrix instanceof IntegerMatrix) {
+			} else if (matrix.getMatrixClass() == Integer.class) {
 				for (int row = 0; row < rowLabels.size(); row++) {
-					writeIntegerRow(output, rowLabels.get(row), (IntegerMatrix)matrix, row, delimiter);
+					writeIntegerRow(output, rowLabels.get(row), matrix, row, delimiter);
 				}
-			} else if (matrix instanceof StringMatrix) {
+			} else if (matrix.getMatrixClass() == String.class) {
 				for (int row = 0; row < rowLabels.size(); row++) {
-					writeStringRow(output, rowLabels.get(row), (StringMatrix)matrix, row, delimiter);
+					writeStringRow(output, rowLabels.get(row), matrix, row, delimiter);
 				}
-			}
+      }
 
 			output.close();
 		} catch (Exception fnf) {
@@ -106,52 +109,65 @@ public class CSVWriter {
 	}
 
 	private static void writeStringRow(BufferedWriter output, String[] rowLabel, 
-	                                   StringMatrix mat, int row, String delimiter) throws IOException {
+	                                   Matrix mat, int row, String delimiter) throws IOException {
 		int nCols = mat.getNCols();
+    System.out.println("writeStringRow: nCols = "+nCols);
+    System.out.println("writeStringRow: rowsLabel.length = "+rowLabel.length);
 		for (int hdr=0; hdr < rowLabel.length; hdr++) {
 		  output.write(quote(rowLabel[hdr], delimiter)+delimiter);
     }
 		for (int col = 0; col < nCols-1; col++) {
-			output.write(quote(mat.getValue(row, col), delimiter)+delimiter);
+      String value = (String)mat.getValue(row, col);
+      if (value == null)
+				output.write(delimiter);
+      else
+        output.write(quote(value, delimiter)+delimiter);
 		}
-		output.write(quote(mat.getValue(row,nCols-1), delimiter)+"\n");
+    String value = (String)mat.getValue(row, nCols-1);
+    if (value == null)
+      output.write("\n");
+    else
+      output.write(quote(value, delimiter)+"\n");
 	}
 
 	private static void writeIntegerRow(BufferedWriter output, String[] rowLabel, 
-	                                    IntegerMatrix mat, int row, String delimiter) throws IOException {
+	                                    Matrix mat, int row, String delimiter) throws IOException {
 		int nCols = mat.getNCols();
+    System.out.println("writeIntegerRow: nCols = "+nCols);
+    System.out.println("writeIntegerRow: rowsLabel.length = "+rowLabel.length);
 		for (int hdr=0; hdr < rowLabel.length; hdr++) {
 		  output.write(quote(rowLabel[hdr], delimiter)+delimiter);
     }
 		for (int col = 0; col < nCols-1; col++) {
-			int value = mat.getIntegerValue(row, col);
-			if (value == Integer.MIN_VALUE)
+			Integer value = (Integer)mat.getValue(row, col);
+			if (value == null || value == Integer.MIN_VALUE)
 				output.write(delimiter);
 			else
 				output.write(value+delimiter);
 		}
-		int value = mat.getIntegerValue(row, nCols-1);
-		if (value == Integer.MIN_VALUE)
+		Integer value = (Integer)mat.getValue(row, nCols-1);
+    // System.out.println("Value["+row+","+(nCols-1)+"] = "+value);
+		if (value == null || value == Integer.MIN_VALUE)
 			output.write("\n");
 		else
 			output.write(value+"\n");
 	}
 
 	private static void writeDoubleRow(BufferedWriter output, String[] rowLabel, 
-	                                   DoubleMatrix mat, int row, String delimiter) throws IOException {
+	                                   Matrix mat, int row, String delimiter) throws IOException {
 		int nCols = mat.getNCols();
 		for (int hdr=0; hdr < rowLabel.length; hdr++) {
 		  output.write(quote(rowLabel[hdr], delimiter)+delimiter);
     }
 		for (int col = 0; col < nCols-1; col++) {
-			double value = mat.getDoubleValue(row, col);
-			if (Double.isNaN(value))
+			Double value = (Double)mat.getValue(row, col);
+			if (value == null || Double.isNaN(value))
 				output.write(delimiter);
 			else
 				output.write(value+delimiter);
 		}
-		double value = mat.getDoubleValue(row, nCols-1);
-		if (Double.isNaN(value))
+		Double value = (Double)mat.getValue(row, nCols-1);
+		if (value == null || Double.isNaN(value))
 			output.write("\n");
 		else
 			output.write(value+"\n");

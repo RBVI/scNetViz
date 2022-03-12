@@ -24,6 +24,10 @@ public class FileMetadata extends HashMap<String, Object> implements Metadata {
 		put(FILE, file);
 	}
 
+  public FileMetadata() {
+    super();
+  }
+
 	public String toString() {
 		return get(ACCESSION)+": "+get(DESCRIPTION);
 	}
@@ -49,4 +53,13 @@ public class FileMetadata extends HashMap<String, Object> implements Metadata {
 		}
 		return json.substring(0, json.length()-1)+"}";
 	}
+
+  /*
+  Getting experiment: {"file":"\/var\/tmp\/TCGA_BRCA\/TCGA_BRCA.expression.fpkm.zip","species":"Homo sapiens","description":"Experiment loaded from file","accession":"TCGA_BRCA.expression.fpkm.zip","type":"File"}
+  */
+	public static FileMetadata fromJSON(JSONObject metadata) {
+    File f = new File((String)metadata.get("file"));
+    FileMetadata fm = new FileMetadata(f);
+    return fm;
+  }
 }

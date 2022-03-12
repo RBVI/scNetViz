@@ -98,6 +98,10 @@ public class FileSource implements Source {
 		return new ArrayList<>(metadataMap.values());
 	}
 
+  public void addMetadata(FileMetadata metadata) {
+    metadataMap.put((String)metadata.get(Metadata.ACCESSION), metadata);
+  }
+
 	public List<String> getAccessions() {
 		return new ArrayList<>(metadataMap.keySet());
 	}
@@ -118,20 +122,55 @@ public class FileSource implements Source {
 		FileExperiment exp = new FileExperiment(scNVManager, this, metadata);
 		if (exp != null) {
 			exp.readMTX(monitor, skipFirst);
-			metadataMap.put((String)metadata.get(Metadata.ACCESSION), metadata);
+      addMetadata(metadata);
 		}
 		return exp;
 	}
 
+
 	public Experiment loadExperimentFromSession(JSONObject jsonExperiment, Map<String, File> fileMap) {
-		return null;
+    // Create the metadata
+    FileMetadata metadata = FileMetadata.fromJSON((JSONObject)jsonExperiment.get("metadata"));
+    addMetadata(metadata);
+
+    FileExperiment exp = new FileExperiment(scNVManager, this, metadata);
+
+    try {
+      exp.readSessionFiles((String)metadata.get(Metadata.ACCESSION), fileMap);
+    } catch (Exception e) {
+			logger.error("Unable to load experiment from session: "+e.toString());
+			return null;
+    }
+
+		return exp;
 	}
 
-	public Category loadCategoryFromSession(JSONObject jsonExperiment, Experiment experiment, Map<String, File> fileMap) {
+	public Category loadCategoryFromSession(JSONObject jsonCategory, Experiment experiment, Map<String, File> fileMap) {
+		if (experiment instanceof FileExperiment) {
+			Category category = null;
+			try {
+				category = ((FileExperiment)experiment).loadCategoryFromSession(jsonCategory, fileMap);
+			} catch (Exception e) {
+				logger.error("Unable to load category from session: "+e.toString());
+				return null;
+			}
+			return category;
+		} else {
+      logger.error("Not a FileExperiment!");
+      System.out.println("Not a FileExperiment!");
+    }
+
 		return null;
 	}
 
 	public DifferentialExpression loadDiffExpFromSession(JSONObject jsonDiffExp, Experiment experiment, Map<String, File> fileMap) {
-		return null;
+    DifferentialExpression diffExp = null;
+    try {
+      diffExp = ((FileExperiment)experiment).loadDiffExpFromSession(jsonDiffExp, fileMap);
+    } catch (Exception e) {
+      logger.error("Unable to load differential expression from session: "+e.toString());
+      return null;
+    }
+    return diffExp;
 	}
 }

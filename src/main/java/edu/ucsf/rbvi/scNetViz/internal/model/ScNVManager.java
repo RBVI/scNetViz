@@ -43,6 +43,7 @@ import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.scNetViz.internal.api.Category;
 import edu.ucsf.rbvi.scNetViz.internal.api.Experiment;
+import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.api.Source;
 import edu.ucsf.rbvi.scNetViz.internal.tasks.ShowResultsPanelTask;
 import edu.ucsf.rbvi.scNetViz.internal.utils.LogUtils;
@@ -284,13 +285,10 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 		JSONArray experiments = (JSONArray) jsonExperiment.get(EXPERIMENTS);
 		for (Object exp: experiments) {
 			JSONObject jsonExp = (JSONObject) exp;
-			System.out.println("Getting experiment: "+jsonExp.toString());
 			Experiment experiment = getExperimentFromSession(jsonExp, fileMap);
-			System.out.println("Loaded expermient: "+experiment);
 			if (experiment == null) continue;
 
 			if (jsonExp.containsKey(CATEGORIES)) {
-				System.out.println("Getting categories");
 				JSONArray categories = (JSONArray) jsonExp.get(CATEGORIES);
 				for (Object cat: categories) {
 					Category category = getCategoryFromSession((JSONObject)cat, experiment, fileMap);
@@ -300,6 +298,8 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 			if (jsonExp.containsKey(DIFFEXP)) {
 				getDiffExpFromSession((JSONObject)jsonExp.get(DIFFEXP), experiment, fileMap);
 			}
+
+      addExperiment((String)experiment.getMetadata().get(Metadata.ACCESSION), experiment);
 		}
 
 		CyNetwork network = getService(CyApplicationManager.class).getCurrentNetwork();
@@ -354,7 +354,6 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 
 	private Experiment getExperimentFromSession(JSONObject jsonExp, Map<String,File> fileMap) {
 		String src = (String)jsonExp.get(SOURCE_NAME);
-		System.out.println("Getting an experiment from "+src);
 		if (sourceMap.containsKey(src))
 			return sourceMap.get(src).loadExperimentFromSession(jsonExp, fileMap);
 		return null;
@@ -362,14 +361,12 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 
 	private Category getCategoryFromSession(JSONObject jsonCategory, Experiment experiment, Map<String,File> fileMap) {
 		String src = (String)jsonCategory.get(SOURCE_NAME);
-		System.out.println("Getting a category from "+src);
 		if (sourceMap.containsKey(src))
 			return sourceMap.get(src).loadCategoryFromSession(jsonCategory, experiment, fileMap);
 		return null;
 	}
 
 	private void getDiffExpFromSession(JSONObject jsonDiffExp, Experiment experiment, Map<String,File> fileMap) {
-		System.out.println("Getting differential expression for experiment "+experiment);
 		experiment.getSource().loadDiffExpFromSession(jsonDiffExp, experiment, fileMap);
 	}
 }

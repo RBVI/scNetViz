@@ -49,6 +49,11 @@ public class FileCategory extends AbstractCategory implements Category {
 
 	boolean zeroRelative = false;
 
+  /**
+   * NOTE: the number of rows and columns should always reflect the
+   * underlying matrix -- that is, should not include column or row
+   * headers.
+   */
 	public FileCategory(final ScNVManager scManager, 
 	                    final Experiment experiment, final String name,
 	                    final String type, int nRows, int nCols) {
@@ -75,6 +80,7 @@ public class FileCategory extends AbstractCategory implements Category {
 		builder.append("\"name\": \""+toString()+"\",");
 		builder.append("\"source\": \""+source+"\",");
 		builder.append("\"source name\": \""+source.getName()+"\",");
+		builder.append("\"type\": \""+dataType+"\",");
 		builder.append("\"rows\": "+getMatrix().getNRows()+",");
 		builder.append("\"columns\": "+getMatrix().getNCols()+",");
 		builder.append("\"default row\": "+getDefaultRow());
@@ -153,17 +159,21 @@ public class FileCategory extends AbstractCategory implements Category {
 	}
 
 	public static FileCategory fetchCategory(ScNVManager scManager, Experiment experiment,
-	                                         File file, String dataCategory, boolean transpose, int hdrCols,
+	                                         File file, String dataCategory, String name, 
+                                           boolean transpose, int hdrCols,
 	                                         int keyCol, boolean zeroRelative,
 	                                         TaskMonitor monitor) throws Exception {
 
     try {
 		  List<String[]> input = CSVReader.readCSV(monitor, file);
   		if (input == null || input.size() < 2) {
-  			// System.out.println("No input!");
+  			System.out.println("No input!");
   			return null;
   		}
-  		return createCategory(scManager, experiment, file.getName(), dataCategory, input,
+
+      if (name == null) 
+        name = file.getName();
+  		return createCategory(scManager, experiment, name, dataCategory, input,
   		                      transpose, hdrCols, keyCol, zeroRelative, null, monitor);
     } catch (FileNotFoundException e) {
 		  LogUtils.log(monitor, TaskMonitor.Level.ERROR, "File not found: "+file.getName());
@@ -188,28 +198,43 @@ public class FileCategory extends AbstractCategory implements Category {
 
 		int nRows = lines.size()-1; // Rows don't include the header
 		int nCols = lines.get(0).length;
+    System.out.println("nCols = "+nCols+", nRows = "+nRows);
+
 		if (transpose) {
 			int x = nCols;
-			nCols = nRows+hdrCols;
+			// Is this the matrix nCols?  If so, it should just be nRows
+      // nCols = nRows+hdrCols;
+      nCols = nRows;
       if (hdrCols == 0 && rowLabels != null)
-        nCols++;
+        hdrCols = 1;
 			nRows = x-1;
-		}
-
-		System.out.println("nCols = "+nCols+", nRows = "+nRows);
+		} else {
+      // Fixup the hdrCols
+      if (hdrCols == 0 && rowLabels != null) {
+        hdrCols = 1;
+        nCols = nCols-1;
+      } else if (rowLabels != null) {
+        nCols = nCols-hdrCols;
+      } else {
+        if (hdrCols == 0)
+          hdrCols = 1;
+        nCols = nCols-hdrCols;
+      }
+    }
+    System.out.println("Adjusted: nCols = "+nCols+", nRows = "+nRows);
+    System.out.println("Adjusted: hdrCols = "+hdrCols+", rowLabels = "+rowLabels);
 
 		FileCategory fileCategory = new FileCategory(scManager, experiment, name, dataCategory, nRows, nCols);
-    if (hdrCols == 0 && rowLabels != null)
-		  fileCategory.setHdrCols(1);
-    else
-		  fileCategory.setHdrCols(hdrCols);
+    fileCategory.setHdrCols(hdrCols);
 		fileCategory.setHdrRows(1);  // XXX: Do we need multiple row headers?
     fileCategory.setColKey(keyCol);
 		fileCategory.zeroRelative = zeroRelative;
 
 		if (!transpose) {
+      System.out.println("!tranpose");
       for (int row = 0; row < fileCategory.getHdrRows(); row++) {
         if (keyCol == 0) {
+          // System.out.println("colLabels.size = "+lines.get(row).length);
 			    fileCategory.setColLabels(lines.get(row), row);
         } else {
           // Set the key column as the first column
@@ -237,11 +262,12 @@ public class FileCategory extends AbstractCategory implements Category {
 		int lineNumber = 0;
 		for (String[] line: lines) {
 			if (first) {
+        // Skip over the header row
 				first = false;
 			} else {
 				if (!transpose) {
           setRowLabels(fileCategory, line, keyCol, lineNumber);
-					for (int col = 0; col < fileCategory.nCols-hdrCols; col++) {
+					for (int col = 0; col < fileCategory.nCols; col++) {
             try {
               fileCategory.setValue(lineNumber-1, col, line[col+hdrCols]);
             } catch (Exception e) {
@@ -261,7 +287,7 @@ public class FileCategory extends AbstractCategory implements Category {
           } else {
             setColLabels(fileCategory, line, keyCol, lineNumber);
           }
-					for (int row = 0; row < fileCategory.nRows-hdrCols; row++) {
+					for (int row = 0; row < fileCategory.nRows; row++) {
             try {
               fileCategory.setValue(row, lineNumber-1, line[row+fileCategory.getHdrRows()]);
             } catch (Exception e) {
@@ -336,7 +362,7 @@ public class FileCategory extends AbstractCategory implements Category {
 		}
 
 		@Override
-		public int getColumnCount() { return category.getNCols(); }
+		public int getColumnCount() { return category.getNCols()+category.getHdrCols(); }
 
 		@Override
 		public String getColumnName(int column) {

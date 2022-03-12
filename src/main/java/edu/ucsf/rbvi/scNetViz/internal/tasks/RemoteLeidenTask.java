@@ -27,7 +27,7 @@ import edu.ucsf.rbvi.scNetViz.internal.view.ExperimentFrame;
 // TODO: Consider random subsampling?
 // TODO: Expose filter criteria
 public class RemoteLeidenTask extends AbstractEmbeddingTask implements ObservableTask {
-	public static String SHORTNAME = "louvain";
+	public static String SHORTNAME = "leiden";
 	public static String NAME = "Leiden clustering";
 	public final static String GROUP_ATTRIBUTE = "__Leiden.SUID";
   String[] labels = {"Clusters"};
@@ -79,6 +79,17 @@ public class RemoteLeidenTask extends AbstractEmbeddingTask implements Observabl
 		// Get the experiment
 		Experiment exp = manager.getExperiment(accession.getSelectedValue());
 
+		Matrix mtx = exp.getMatrix();
+		if ((mtx instanceof MatrixMarket)) {
+      try {
+        while (((MatrixMarket)mtx).cacheSent())
+          Thread.sleep(1000);
+      } catch (Exception e) {
+        monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: Sleep interrupted!");
+        return;
+      }
+    }
+
     /*
 		// Get the MatrixMarket matrix
 		Matrix mtx = exp.getMatrix();
@@ -106,11 +117,10 @@ public class RemoteLeidenTask extends AbstractEmbeddingTask implements Observabl
 				return;
 			}
 			int lineNumber = 0;
-			List<String[]> input = new ArrayList<>(lines.size());
+			List<String[]> input = new ArrayList<>();
 			String[] rowLabel = {"", "Leiden"};
 			input.add(rowLabel);
 			for (String line: lines) {
-				// System.out.println("Line: "+line);
 				String[] tokens = line.split(",");
 				if (tokens.length < 2) continue;
 				input.add(tokens);
@@ -127,15 +137,15 @@ public class RemoteLeidenTask extends AbstractEmbeddingTask implements Observabl
 	                                                               categoryName, "integer", input,
 	                                                               true, 0, 0, true, labels, monitor);
       try {
-			exp.addCategory(louvainCategory);
-			ExperimentFrame expFrame = manager.getExperimentFrame(exp);
-			if (expFrame != null) {
-				String accession = (String)exp.getMetadata().get(Metadata.ACCESSION);
-				CategoriesTab catTab = expFrame.getCategoriesTab();
-				catTab = new CategoriesTab(manager, exp, expFrame);
-      	expFrame.addCategoriesContent(accession+": Categories Tab", catTab);
-				catTab.changeCategory(louvainCategory, -1);
-			}
+        exp.addCategory(louvainCategory);
+        ExperimentFrame expFrame = manager.getExperimentFrame(exp);
+        if (expFrame != null) {
+          String accession = (String)exp.getMetadata().get(Metadata.ACCESSION);
+          CategoriesTab catTab = expFrame.getCategoriesTab();
+          catTab = new CategoriesTab(manager, exp, expFrame);
+          expFrame.addCategoriesContent(accession+": Categories Tab", catTab);
+          catTab.changeCategory(louvainCategory, -1);
+        }
       } catch (Exception e) {
         e.printStackTrace();
         throw e;

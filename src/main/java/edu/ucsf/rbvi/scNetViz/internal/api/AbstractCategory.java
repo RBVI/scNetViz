@@ -116,7 +116,6 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 			iMat = (IntegerMatrix)mtx;
 		}
 
-
 		int [] totalCount = new int[geneRows];
 		Arrays.fill(totalCount, 0);
 
@@ -152,14 +151,10 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 
 	public Map<String, Object> calculateMeans(Object key, DoubleMatrix dMat, IntegerMatrix iMat, 
 	                                          int rowCount, int[] totalCount) {
-		// System.out.println("Category: "+key);
-		
 		List<Integer> arrays = catMap.get(key);
 		double[] catMean = new double[geneRows];
 		int[] catCount = new int[geneRows];
 		double[] catMTDC = new double[geneRows];
-
-		// System.out.println("Category: "+key+": "+arrays);
 
 		int rowNumber = 0;
 		for (int row = 0; row < rowCount; row++) {
@@ -393,8 +388,6 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 		}
 		return Math.log((1.0/size1)/mean2);
 	}
-
-	abstract public Object getValue(int row, int col);
 
 	/**
 	 * Note this returns an array of indices in the *experiment* matrix,

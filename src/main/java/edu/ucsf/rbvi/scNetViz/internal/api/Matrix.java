@@ -42,6 +42,8 @@ public interface Matrix {
 
 	public String getColumnLabel(int col);
 	public String getColumnLabel(int row, int col);
+
+  public abstract Object getValue(int row, int col);
 }
 
 

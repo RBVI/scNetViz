@@ -60,6 +60,8 @@ public class CSVReader {
 
 	public static List<String[]> readCSV(TaskMonitor taskMonitor, BufferedReader input, int skipLines) 
 	                                     throws IOException, FileNotFoundException {
+    // Initialize the delimiter
+    delimiter = null;
 		// Read each row
 		List<String[]> rowList = new ArrayList<>();
 		do {
@@ -110,9 +112,9 @@ public class CSVReader {
 
 	private static String[] readRow(BufferedReader input) throws IOException {
 		String row = input.readLine();
-		// System.out.println("Row: "+row);
 		if (row == null) return null;
-		return smartSplit(row);
+    String[] tokens = smartSplit(row);
+		return tokens;
 	}
 
 	public static String[] smartSplit(String input) {
