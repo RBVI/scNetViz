@@ -221,8 +221,6 @@ public class FileCategory extends AbstractCategory implements Category {
         nCols = nCols-hdrCols;
       }
     }
-    System.out.println("Adjusted: nCols = "+nCols+", nRows = "+nRows);
-    System.out.println("Adjusted: hdrCols = "+hdrCols+", rowLabels = "+rowLabels);
 
 		FileCategory fileCategory = new FileCategory(scManager, experiment, name, dataCategory, nRows, nCols);
     fileCategory.setHdrCols(hdrCols);
