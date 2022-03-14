@@ -121,8 +121,7 @@ public class RemoteUMAPTask extends AbstractEmbeddingTask implements ObservableT
 				e.printStackTrace();
 			}
 			scale(embedding); // Scale everything between 0 and 1 so that it appears unitless
-			exp.setTSNE(embedding);
-			exp.setPlotType("UMAP");
+      updateCellPlot(exp, "UMAP");
 		} catch (Exception e) {
 			monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: UMAP failed"+e.toString());
 			return;

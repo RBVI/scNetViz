@@ -136,8 +136,7 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 				lineNumber++;
 			}
 			scale(embedding); // Scale everything between 0 and 1 so that it appears unitless
-			exp.setTSNE(embedding);
-			exp.setPlotType("tSNE");
+      updateCellPlot(exp, "tSNE");
 		} catch (Exception e) {
 			monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: t-SME failed"+e.toString());
 			return;

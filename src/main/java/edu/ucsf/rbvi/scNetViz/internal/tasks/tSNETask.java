@@ -159,9 +159,7 @@ public class tSNETask extends AbstractEmbeddingTask implements ObservableTask {
 			monitor.setStatusMessage("Cancelled by user");
 			return;
 		}
-		if (experiment != null) {
-			experiment.setPlotType("tSNE");
-		}
+    updateCellPlot(experiment, "tSNE");
 		monitor.showMessage(TaskMonitor.Level.INFO, "tSNE complete in "+(System.currentTimeMillis()-start)/1000+" seconds");
 	}
 

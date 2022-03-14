@@ -451,12 +451,12 @@ public abstract class AbstractCategory extends SimpleMatrix implements Category 
 	}
 
 	private int mapColumn(int col, int tpmHeaders, Map<String, Integer> colLabelMap) {
-		String lbl = getColumnLabel(col);
+    String lbl = getColumnLabel(col);
 		if (colLabelMap.get(lbl) == null) {
 			System.out.println("Can't find column label: "+lbl);
 			return -1;
 		}
-		int mtxCol =  colLabelMap.get(lbl);
+    int mtxCol =  colLabelMap.get(lbl);
 		colLabelMap.remove(lbl);
 		return mtxCol;
 	}

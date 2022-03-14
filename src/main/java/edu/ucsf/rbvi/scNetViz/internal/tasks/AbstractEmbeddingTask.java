@@ -21,6 +21,7 @@ import edu.ucsf.rbvi.scNetViz.internal.api.Metadata;
 import edu.ucsf.rbvi.scNetViz.internal.model.MatrixMarket;
 import edu.ucsf.rbvi.scNetViz.internal.model.ScNVManager;
 import edu.ucsf.rbvi.scNetViz.internal.utils.HTTPUtils;
+import edu.ucsf.rbvi.scNetViz.internal.view.ExperimentFrame;
 import edu.ucsf.rbvi.scNetViz.internal.view.ViewUtils;
 
 
@@ -73,6 +74,13 @@ abstract public class AbstractEmbeddingTask extends AbstractTask implements Obse
 			}
 		}
 	}
+
+  protected void updateCellPlot(Experiment exp, String plotType) {
+    exp.setTSNE(embedding);
+    exp.setPlotType(plotType);
+	  ExperimentFrame frame = manager.getExperimentFrame(exp);
+    frame.getTPMTab().updateCellPlot();
+  }
 
 	@Override
 	public List<Class<?>> getResultClasses() {

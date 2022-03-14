@@ -100,19 +100,23 @@ public class TPMTab extends JPanel implements TaskObserver {
 				return;
 			experiment.setTSNE(embedding);
 			showPlot();
-			cellPlotButton.setEnabled(true);
-			cellPlotButton.setText("View "+experiment.getPlotType());
-			CategoriesTab cTab = expFrame.getCategoriesTab();
-			if (cTab != null) {
-				cTab.cellPlotButton.setEnabled(true);
-				cTab.cellPlotButton.setText("View "+experiment.getPlotType());
-			}
-			if (manager.getCytoPanel() != null) {
-				manager.getCytoPanel().updatePlotMenu();
-			}
+      updateCellPlot();
 		}
 		expFrame.toFront();
 	}
+
+  public void updateCellPlot() {
+    cellPlotButton.setEnabled(true);
+    cellPlotButton.setText("View "+experiment.getPlotType());
+    CategoriesTab cTab = expFrame.getCategoriesTab();
+    if (cTab != null) {
+      cTab.cellPlotButton.setEnabled(true);
+      cTab.cellPlotButton.setText("View "+experiment.getPlotType());
+    }
+    if (manager.getCytoPanel() != null) {
+      manager.getCytoPanel().updatePlotMenu();
+    }
+  }
 	
 	private void init() {
 

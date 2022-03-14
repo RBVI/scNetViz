@@ -144,9 +144,19 @@ public class ViewUtils {
 		if (ttl == null)
 			ttl = type+" Plot for "+accession;
 
+    // Get our labels.  Note that we want to skip over the hdr columns
+    List<String[]> columnLabels = exp.getMatrix().getColLabels();
+    List<String[]> labels = new ArrayList<>(columnLabels.size());
+    labels.addAll(columnLabels);
+    if (exp.getMatrix().getHdrCols() > 0) {
+      for (int i = 0; i < exp.getMatrix().getHdrCols(); i++) {
+        labels.remove(0);
+      }
+    }
+
 		if (category == null) {
 			// See if a gene is selected and provide a color trace if it is
-			String names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels(), 0)+"}";
+			String names = "{\"trace\": "+CyPlotUtils.listToJSON(labels, 0)+"}";
 			String xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
 			String yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
 			String zValues = null;
@@ -194,11 +204,11 @@ public class ViewUtils {
 				// for (Object key: sortedKeys) {
 				// 	sortedLabels.add(category.mkLabel(key));
 				// }
-				names = CyPlotUtils.listToMap(newMap, exp.getMatrix().getColLabels(), 0);
+				names = CyPlotUtils.listToMap(newMap, labels, 0);
 				xValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 0);
 				yValues = CyPlotUtils.coordsToMap(newMap, tSNEresults, 1);
 			} else {
-				names = "{\"trace\": "+CyPlotUtils.listToJSON(exp.getMatrix().getColLabels(), 0)+"}";
+				names = "{\"trace\": "+CyPlotUtils.listToJSON(labels, 0)+"}";
 				xValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 0)+"}";
 				yValues = "{\"trace\": "+CyPlotUtils.coordinatesToJSON(tSNEresults, 1)+"}";
 			}

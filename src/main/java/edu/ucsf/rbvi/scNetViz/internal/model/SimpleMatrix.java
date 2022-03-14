@@ -123,7 +123,6 @@ public abstract class SimpleMatrix implements Matrix {
       rowLabels.set(row, new String[hdrCols]);
 
     rowLabels.get(row)[col] = rLabel;
-    System.out.println("setRowLabel -- rowLabels.size() = "+rowLabels.size());
   }
 
 	@Override

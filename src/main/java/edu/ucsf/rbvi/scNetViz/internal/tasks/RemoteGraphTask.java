@@ -118,8 +118,7 @@ public class RemoteGraphTask extends AbstractEmbeddingTask implements Observable
 				lineNumber++;
 			}
 			scale(embedding); // Scale everything between 0 and 1 so that it appears unitless
-			exp.setTSNE(embedding);
-			exp.setPlotType("Graph");
+      updateCellPlot(exp, "Graph");
 		} catch (Exception e) {
 			monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: Graph failed"+e.toString());
 			return;
