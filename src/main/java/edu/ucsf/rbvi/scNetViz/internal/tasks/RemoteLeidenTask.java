@@ -82,7 +82,7 @@ public class RemoteLeidenTask extends AbstractEmbeddingTask implements Observabl
 		Matrix mtx = exp.getMatrix();
 		if ((mtx instanceof MatrixMarket)) {
       try {
-        while (((MatrixMarket)mtx).cacheSent())
+        while (!((MatrixMarket)mtx).cacheSent())
           Thread.sleep(1000);
       } catch (Exception e) {
         monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: Sleep interrupted!");
