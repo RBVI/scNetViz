@@ -193,6 +193,9 @@ public class ScNVManager implements SessionAboutToBeSavedListener, SessionLoaded
 			return;
 		}
 
+    if (args == null)
+      args = new HashMap<>();
+
 		if (synchronous)
 			syncTaskManager.execute(ceTaskFactory.createTaskIterator(namespace, command, args, observer));
 		else
