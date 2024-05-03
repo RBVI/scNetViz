@@ -132,7 +132,7 @@ public class ViewUtils {
 	public static void showtSNE(final ScNVManager manager, final Experiment exp, 
 	                            final Category category, final int catRow, 
 	                            final int geneRow, final String title) {
-		double[][] tSNEresults = exp.getTSNE();
+		Map<String,double[]> tSNEresults = exp.getTSNE();
 		String type = exp.getPlotType();
 
 		if (tSNEresults == null) {
@@ -175,7 +175,7 @@ public class ViewUtils {
 			if (category != null && catRow >= 0) {
 				Map<Object, List<Integer>> catMap = category.getCatMap(catRow);
 				// Reformat the catmap so we have reasonable labels
-				Map<Object, List<Integer>> newMap = new LinkedHashMap<>();
+				Map<Object, List<String>> newMap = new LinkedHashMap<>();
 
 				List sortedKeys = new ArrayList(catMap.keySet());
 
@@ -191,7 +191,14 @@ public class ViewUtils {
 				Collections.sort(sortedKeys);
 
 				for (Object key: sortedKeys) {
-					newMap.put(category.mkLabel(key), catMap.get(key));
+					List<String> newMapColumns = new ArrayList<String>();
+					// newMap.put(category.mkLabel(key), catMap.get(key));
+					List<Integer> catIndexes = catMap.get(key);
+					for (Integer index: catIndexes) {
+						String column = labels.get(index)[0];
+						newMapColumns.add(column);
+					}
+					newMap.put(category.mkLabel(key), newMapColumns);
 				}
 
 				// Sort the keys now.  We need to do this now because clusters are integers and this

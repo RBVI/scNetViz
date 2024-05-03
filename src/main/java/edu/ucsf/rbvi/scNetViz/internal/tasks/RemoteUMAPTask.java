@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.Map;
 
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ContainsTunables;
@@ -107,19 +108,7 @@ public class RemoteUMAPTask extends AbstractEmbeddingTask implements ObservableT
 				monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: UMAP failed: unable to read return");
 				return;
 			}
-			embedding = new double[lines.size()-1][2];
-			int lineNumber = 0;
-			try {
-			for (String line: lines) {
-				String[] tokens = line.split(",");
-				if (tokens.length <= 2) continue;
-				embedding[lineNumber][0] = Double.valueOf(tokens[tokens.length-2]);
-				embedding[lineNumber][1] = Double.valueOf(tokens[tokens.length-1]);
-				lineNumber++;
-			}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			embedding = createEmbedding(lines);
 			scale(embedding); // Scale everything between 0 and 1 so that it appears unitless
       updateCellPlot(exp, "UMAP");
 		} catch (Exception e) {

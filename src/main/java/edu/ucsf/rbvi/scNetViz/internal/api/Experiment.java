@@ -2,6 +2,7 @@ package edu.ucsf.rbvi.scNetViz.internal.api;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import javax.swing.table.TableModel;
 
 // TODO: move this to API?
@@ -24,8 +25,8 @@ public interface Experiment {
 	public String toJSON();
 	public String toHTML();
 
-	public double[][] getTSNE();
-	public void setTSNE(double[][] tnse);
+	public Map<String,double[]> getTSNE();
+	public void setTSNE(Map<String,double[]> tnse);
 	public String getPlotType();
 	public void setPlotType(String type);
 

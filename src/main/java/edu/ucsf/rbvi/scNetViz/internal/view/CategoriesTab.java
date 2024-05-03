@@ -153,7 +153,7 @@ public class CategoriesTab extends JPanel implements TaskObserver {
 			expFrame.addDiffExpContent("Diff Exp", diffETab);
 			diffExpButton.setEnabled(true);
 		} else if (obsTask instanceof AbstractEmbeddingTask) {
-			double[][] embedding = ((AbstractEmbeddingTask)obsTask).getResults();
+			Map<String,double[]> embedding = ((AbstractEmbeddingTask)obsTask).getResults();
 			if (embedding == null)
 				return;
 			experiment.setTSNE(embedding);

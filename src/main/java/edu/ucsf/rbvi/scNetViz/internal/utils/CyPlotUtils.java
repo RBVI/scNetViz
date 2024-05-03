@@ -1,5 +1,6 @@
 package edu.ucsf.rbvi.scNetViz.internal.utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +159,20 @@ public class CyPlotUtils {
 		return builder.substring(0, builder.length()-1)+"]";
 	}
 
+	public static String coordinatesToJSON(Map<String,double[]> coords, int index) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("[");
+
+		// This assumes that the coords map is an ordered map (i.e. a LinkedHashMap)
+		for (String cell: coords.keySet()) {
+			double[] coord = coords.get(cell);
+			builder.append(coord[index]+",");
+		}
+		builder.setCharAt(builder.length()-1, ']');
+		return builder.toString();
+	}
+
+	/*
 	public static String coordinatesToJSON(double[][] coords, int index) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("[");
@@ -167,6 +182,7 @@ public class CyPlotUtils {
 		builder.append(coords[coords.length-1][index]+"]");
 		return builder.toString();
 	}
+	*/
 
 	public static String valuesToJSON(DoubleMatrix matrix, int row, boolean log) {
 		StringBuilder builder = new StringBuilder();
@@ -178,13 +194,13 @@ public class CyPlotUtils {
 		return builder.toString();
 	}
 
-	public static String listToMap(Map<Object, List<Integer>> map, List<String[]> list, int hdr) {
+	public static String listToMap(Map<Object, List<String>> map, List<String[]> list, int hdr) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
 		for (Object trace: map.keySet()) {
 			builder.append("\""+trace.toString()+"\":[");
-			for (Integer index: map.get(trace)) {
-				builder.append("\""+list.get(index)[hdr]+"\",");
+			for (String cell: map.get(trace)) {
+				builder.append("\""+cell+"\",");
 			}
 			builder.setCharAt(builder.length()-1, ']');
 			builder.append(",");
@@ -193,6 +209,24 @@ public class CyPlotUtils {
 		return builder.toString();
 	}
 
+	public static String coordsToMap(Map<Object, List<String>> map, Map<String,double[]> coords, int index) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		for (Object trace: map.keySet()) {
+			builder.append("\""+trace.toString()+"\":[");
+			for (String cell: map.get(trace)) {
+				if (coords.containsKey(cell)) {
+					builder.append(coords.get(cell)[index]+",");
+				}
+			}
+			builder.setCharAt(builder.length()-1, ']');
+			builder.append(",");
+		}
+		builder.setCharAt(builder.length()-1, '}');
+		return builder.toString();
+	}
+
+	/*
 	public static String coordsToMap(Map<Object, List<Integer>> map, double[][] coords, int index) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{");
@@ -207,6 +241,7 @@ public class CyPlotUtils {
 		builder.setCharAt(builder.length()-1, '}');
 		return builder.toString();
 	}
+	*/
 
 	public static double getNonNaNValue(double v, double missing, boolean log) {
 		if (!Double.isNaN(v))

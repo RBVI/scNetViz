@@ -126,15 +126,7 @@ public class RemoteTSNETask extends AbstractEmbeddingTask {
 				monitor.showMessage(TaskMonitor.Level.ERROR, "ERROR: TSNE failed: unable to read return");
 				return;
 			}
-			embedding = new double[lines.size()-1][2];
-			int lineNumber = 0;
-			for (String line: lines) {
-				String[] tokens = line.split(",");
-				if (tokens.length <= 2) continue;
-				embedding[lineNumber][0] = Double.valueOf(tokens[tokens.length-2]);
-				embedding[lineNumber][1] = Double.valueOf(tokens[tokens.length-1]);
-				lineNumber++;
-			}
+			embedding = createEmbedding(lines);
 			scale(embedding); // Scale everything between 0 and 1 so that it appears unitless
       updateCellPlot(exp, "tSNE");
 		} catch (Exception e) {

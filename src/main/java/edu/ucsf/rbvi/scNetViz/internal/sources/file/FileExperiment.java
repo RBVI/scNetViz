@@ -54,7 +54,7 @@ public class FileExperiment implements Experiment {
 	List<String[]> colTable = null;
 	MatrixMarket mtx = null;
 	final List<Category> categories;
-	double[][] tSNE;
+	Map<String,double[]> tSNE;
 	String plotType = null;
 	// GXACluster fileCluster = null;
 	// GXAIDF fileIDF = null;
@@ -110,12 +110,12 @@ public class FileExperiment implements Experiment {
 	}
 
 	@Override
-	public void setTSNE(double[][] tsne) {
+	public void setTSNE(Map<String,double[]> tsne) {
 		tSNE = tsne;
 	}
 
 	@Override
-	public double[][] getTSNE() {
+	public Map<String,double[]> getTSNE() {
 		return tSNE;
 	}
 

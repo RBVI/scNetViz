@@ -95,7 +95,7 @@ public class TPMTab extends JPanel implements TaskObserver {
 		if (obsTask instanceof FileCategoryTask) {
 			expFrame.addCategoriesContent(accession+": Categories Tab", new CategoriesTab(manager, experiment, expFrame));
 		} else if (obsTask instanceof AbstractEmbeddingTask) {
-			double[][] embedding = ((AbstractEmbeddingTask)obsTask).getResults();
+			Map<String,double[]> embedding = ((AbstractEmbeddingTask)obsTask).getResults();
 			if (embedding == null)
 				return;
 			experiment.setTSNE(embedding);

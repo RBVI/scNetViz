@@ -2,7 +2,9 @@ package edu.ucsf.rbvi.scNetViz.internal.tasks;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ContainsTunables;
@@ -154,11 +156,19 @@ public class tSNETask extends AbstractEmbeddingTask implements ObservableTask {
 
 		if (context.cancelled) return;
 
-		embedding = tsne.tsne(context, monitor);
-		if (embedding == null && context.cancelled) {
+		double[][] results = tsne.tsne(context, monitor);
+		if (results == null && context.cancelled) {
 			monitor.setStatusMessage("Cancelled by user");
 			return;
 		}
+
+		embedding = new LinkedHashMap<>();
+		int cellNumber = 0;
+		for (String cell: matrix.getColLabels(0)) {
+			double[] coords = results[cellNumber++];
+			embedding.put(cell, coords);
+		}
+
     updateCellPlot(experiment, "tSNE");
 		monitor.showMessage(TaskMonitor.Level.INFO, "tSNE complete in "+(System.currentTimeMillis()-start)/1000+" seconds");
 	}
@@ -167,7 +177,7 @@ public class tSNETask extends AbstractEmbeddingTask implements ObservableTask {
 		context.cancelled = true;
 	}
 
-	public double[][] getResults() { return embedding; }
+	public Map<String, double[]> getResults() { return embedding; }
 
 	@Override
 	public <R> R getResults(Class<? extends R> type) {

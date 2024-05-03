@@ -4,7 +4,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ContainsTunables;
@@ -29,7 +31,7 @@ import edu.ucsf.rbvi.scNetViz.internal.view.ViewUtils;
 // TODO: Expose filter criteria
 abstract public class AbstractEmbeddingTask extends AbstractTask implements ObservableTask{
 
-	protected double[][] embedding;
+	protected Map<String,double[]> embedding;
 	final ScNVManager manager;
 		
 	public AbstractEmbeddingTask(final ScNVManager manager) {
@@ -40,25 +42,44 @@ abstract public class AbstractEmbeddingTask extends AbstractTask implements Obse
 		cancelled = true;
 	}
 
-	public double[][] getResults() { return embedding; }
+	public Map<String,double[]> getResults() { return embedding; }
 
-	public void scale(double[][] values) {
+	protected Map<String,double[]> createEmbedding(List<String> lines) {
+		embedding = new LinkedHashMap<String, double[]>();
+		for (String line: lines) {
+			String[] tokens = line.split(",");
+			if (tokens.length <= 2) continue;
+			double[] coords = new double[2];
+			coords[0] = Double.valueOf(tokens[tokens.length-2]);
+			coords[1] = Double.valueOf(tokens[tokens.length-1]);
+			String cell = tokens[0];
+			for (int i = 1; i < tokens.length-2; i++) {
+				cell += ","+tokens[i];
+			}
+			embedding.put(cell, coords);
+		}
+		return embedding;
+	}
+
+	public void scale(Map<String, double[]> values) {
 		double xMax = Double.MIN_VALUE;
 		double xMin = Double.MAX_VALUE;
 		double yMax = Double.MIN_VALUE;
 		double yMin = Double.MAX_VALUE;
-		for (int i = 0; i < values.length; i++) {
-			xMin = Math.min(xMin, values[i][0]);
-			xMax = Math.max(xMax, values[i][0]);
-			yMin = Math.min(yMin, values[i][1]);
-			yMax = Math.max(yMax, values[i][1]);
+		for (String cell: values.keySet()) {
+			double[] coords = values.get(cell);
+			xMin = Math.min(xMin, coords[0]);
+			xMax = Math.max(xMax, coords[0]);
+			yMin = Math.min(yMin, coords[1]);
+			yMax = Math.max(yMax, coords[1]);
 		}
 		double xScale = xMax - xMin;
 		double yScale = yMax - yMin;
 
-		for (int i = 0; i < values.length; i++) {
-			values[i][0] = (values[i][0]-xMin)/xScale;
-			values[i][1] = (values[i][1]-yMin)/yScale;
+		for (String cell: values.keySet()) {
+			double[] coords = values.get(cell);
+			coords[0] = (coords[0]-xMin)/xScale;
+			coords[1] = (coords[1]-yMin)/yScale;
 		}
 	}
 
@@ -97,8 +118,8 @@ abstract public class AbstractEmbeddingTask extends AbstractTask implements Obse
         JSONResult res = () -> {
         StringBuilder builder = new StringBuilder();
         builder.append("[");
-        for (int row = 0; row < embedding.length; row++) {
-          builder.append("{"+row+": ["+embedding[row][0]+","+embedding[row][1]+"]},");
+        for (String row: embedding.keySet()) {
+          builder.append("{"+row+": ["+embedding.get(row)[0]+","+embedding.get(row)[1]+"]},");
         }
         return builder.substring(0, builder.length()-1)+"]";
       };

@@ -56,7 +56,7 @@ public class HCAExperiment implements Experiment {
 	MatrixMarket mtx = null;
 	HCAMetadata hcaMetadata = null;
 	List<Category> categories;
-	double[][] tSNE;
+	Map<String,double[]> tSNE;
 	String plotType = null;
 
 	final ScNVManager scNVManager;
@@ -103,12 +103,12 @@ public class HCAExperiment implements Experiment {
 	public Source getSource() { return source; }
 
 	@Override
-	public void setTSNE(double[][] tsne) {
+	public void setTSNE(Map<String,double[]> tsne) {
 		tSNE = tsne;
 	}
 
 	@Override
-	public double[][] getTSNE() {
+	public Map<String,double[]> getTSNE() {
 		return tSNE;
 	}
 
